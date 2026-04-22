@@ -1,0 +1,158 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { familiesAPI } from '@/lib/api';
+import { Users, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+
+const STEPS = ['Category', 'Basic Info', 'Address', 'Review'];
+
+export default function NewFamilyPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    category: '', area: '', city: '', full_address: '', housing_type: 'rented',
+  });
+
+  const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const submit = async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await familiesAPI.create(form);
+      router.push(`/families/${res.data.family_id}`);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } };
+      setError(err?.response?.data?.detail || 'Failed to register family.');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <div>
+            <Link href="/families" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <ArrowLeft size={14} /> Back to Families
+            </Link>
+            <h1 style={{ marginTop: 8 }}>Register New Family</h1>
+            <p>Enter family details to begin the beneficiary process</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Step indicator */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="steps">
+          {STEPS.map((s, i) => (
+            <div key={s} className="step" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <div className={`step-num ${i < step ? 'done' : i === step ? 'active' : ''}`}>
+                {i < step ? <CheckCircle size={14} /> : i + 1}
+              </div>
+              <div className={`step-label ${i === step ? 'active' : ''}`}>{s}</div>
+              {i < STEPS.length - 1 && <div className="step-line" style={{ flex: 1, height: 2, background: i < step ? 'var(--green)' : 'var(--border)', margin: '0 8px' }} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card" style={{ maxWidth: 640 }}>
+        {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
+
+        {/* Step 0 — Category */}
+        {step === 0 && (
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Select Program Category</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 24 }}>Choose the appropriate program for this family. This cannot be changed after approval.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {[
+                { value: 'FA', label: 'FA — Financial Aid', desc: 'For general needy families. Donor supports the entire family unit.', color: 'var(--accent)', bg: 'var(--accent-glow)' },
+                { value: 'SB', label: 'SB — Saiban Orphan', desc: 'For families with orphaned children. Each orphan tracked individually.', color: 'var(--purple)', bg: 'var(--purple-bg)' },
+              ].map(opt => (
+                <div key={opt.value} onClick={() => set('category', opt.value)} style={{
+                  padding: 20, borderRadius: 12, cursor: 'pointer',
+                  border: `2px solid ${form.category === opt.value ? opt.color : 'var(--border)'}`,
+                  background: form.category === opt.value ? opt.bg : 'var(--bg-secondary)',
+                  transition: 'all 0.15s',
+                }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>{opt.value === 'FA' ? '👨‍👩‍👧‍👦' : '👶'}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: form.category === opt.value ? opt.color : 'var(--text-primary)' }}>{opt.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{opt.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 1 — Basic Info */}
+        {step === 1 && (
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Basic Information</h2>
+            <div className="form-grid form-grid-2">
+              <div className="form-group">
+                <label className="form-label">Area / District</label>
+                <input className="form-control" value={form.area} onChange={e => set('area', e.target.value)} placeholder="e.g. Gulshan, Model Town" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">City</label>
+                <input className="form-control" value={form.city} onChange={e => set('city', e.target.value)} placeholder="e.g. Lahore, Karachi" />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Housing Type</label>
+              <select className="form-control" value={form.housing_type} onChange={e => set('housing_type', e.target.value)}>
+                <option value="rented">Rented</option>
+                <option value="owned">Owned</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2 — Address */}
+        {step === 2 && (
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Full Address</h2>
+            <div className="form-group">
+              <label className="form-label">Complete Postal Address</label>
+              <textarea className="form-control" value={form.full_address} onChange={e => set('full_address', e.target.value)} placeholder="House #, Street #, Block, Area, City..." rows={4} style={{ resize: 'vertical' }} />
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Enter the complete address as it appears on official documents.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3 — Review */}
+        {step === 3 && (
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Review & Submit</h2>
+            <div className="info-grid" style={{ marginBottom: 20 }}>
+              <div className="info-item"><label>Program</label><p>{form.category === 'FA' ? 'FA — Financial Aid' : 'SB — Saiban Orphan'}</p></div>
+              <div className="info-item"><label>Area</label><p>{form.area || '—'}</p></div>
+              <div className="info-item"><label>City</label><p>{form.city || '—'}</p></div>
+              <div className="info-item"><label>Housing</label><p style={{ textTransform: 'capitalize' }}>{form.housing_type}</p></div>
+            </div>
+            <div className="info-item"><label>Full Address</label><p>{form.full_address || '—'}</p></div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-secondary" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
+            <ArrowLeft size={14} /> Previous
+          </button>
+          {step < STEPS.length - 1 ? (
+            <button className="btn btn-primary" onClick={() => setStep(s => s + 1)} disabled={step === 0 && !form.category}>
+              Next <ArrowRight size={14} />
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={submit} disabled={loading}>
+              {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Registering…</> : <><CheckCircle size={14} /> Register Family</>}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
