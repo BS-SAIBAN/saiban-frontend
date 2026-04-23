@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
-import { Users, Plus, Search, Filter, Eye, MapPin, Tag } from 'lucide-react';
+import { Users, Plus, Search, Filter, Eye, Edit, Trash2, MapPin, Tag } from 'lucide-react';
 
 interface Family {
   family_id: string;
@@ -36,6 +36,18 @@ export default function FamiliesPage() {
       setFiltered(data);
     }).finally(() => setLoading(false));
   }, []);
+
+  const handleDelete = async (familyId: string) => {
+    if (!confirm('Are you sure you want to delete this family? This action cannot be undone.')) return;
+    try {
+      await familiesAPI.delete(familyId);
+      setFamilies(families.filter(f => f.family_id !== familyId));
+      setFiltered(filtered.filter(f => f.family_id !== familyId));
+    } catch (e) {
+      console.error('Failed to delete family:', e);
+      alert('Failed to delete family');
+    }
+  };
 
   useEffect(() => {
     let result = [...families];
@@ -124,9 +136,17 @@ export default function FamiliesPage() {
                   <td><span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{f.housing_type}</span></td>
                   <td style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
                   <td>
-                    <Link href={`/families/${f.family_id}`} className="btn btn-secondary btn-sm">
-                      <Eye size={12} /> View
-                    </Link>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Link href={`/families/${f.family_id}`} className="btn btn-secondary btn-sm">
+                        <Eye size={12} /> View
+                      </Link>
+                      <Link href={`/families/${f.family_id}/edit`} className="btn btn-secondary btn-sm">
+                        <Edit size={12} />
+                      </Link>
+                      <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

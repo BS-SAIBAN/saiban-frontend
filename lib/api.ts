@@ -44,6 +44,7 @@ export const familiesAPI = {
   get: (id: string) => api.get(`/families/${id}`),
   create: (data: Record<string, unknown>) => api.post('/families', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/families/${id}`, data),
+  delete: (id: string) => api.delete(`/families/${id}`),
 };
 
 // ── Individuals ───────────────────────────────────────
