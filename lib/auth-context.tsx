@@ -48,10 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('access_token', access_token);
     
     // Fetch user data after successful login
-    const userRes = await authAPI.me();
-    const userData = userRes.data;
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+    try {
+      const userRes = await authAPI.me();
+      const userData = userRes.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    } catch (e) {
+      console.error('Failed to fetch user data:', e);
+      // Create minimal user from email for now
+      const minimalUser = { user_id: '', full_name: email.split('@')[0], email, role: 'admin', active: true };
+      localStorage.setItem('user', JSON.stringify(minimalUser));
+      setUser(minimalUser as User);
+    }
     router.push('/dashboard');
   };
 

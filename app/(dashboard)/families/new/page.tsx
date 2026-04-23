@@ -12,21 +12,60 @@ export default function NewFamilyPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
   const [form, setForm] = useState({
     category: '', area: '', city: '', full_address: '', housing_type: 'rented',
   });
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
+  const safeSetError = (err: unknown) => {
+    if (typeof err === 'string') {
+      setError(err);
+    } else if (err && typeof err === 'object') {
+      setError(JSON.stringify(err));
+    } else {
+      setError(String(err));
+    }
+  };
+
   const submit = async () => {
     setLoading(true); setError('');
     try {
+      console.log('Submitting form data:', form);
       const res = await familiesAPI.create(form);
+      console.log('Registration response:', res.data);
       router.push(`/families/${res.data.family_id}`);
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } };
-      setError(err?.response?.data?.detail || 'Failed to register family.');
+      console.error('Registration error:', e);
+      let errorMsg = 'Failed to register family.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response: { data?: unknown; status?: number } }).response;
+        console.error('Response data:', response?.data);
+        console.error('Response status:', response?.status);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === 'string') {
+            errorMsg = data;
+          } else if (typeof data === 'object' && data !== null) {
+            if ('detail' in data) {
+              const detail = (data as { detail: unknown }).detail;
+              if (typeof detail === 'string') {
+                errorMsg = detail;
+              } else if (typeof detail === 'object' && detail !== null && 'msg' in detail) {
+                errorMsg = String((detail as { msg: string }).msg);
+              } else if (typeof detail === 'object' && detail !== null && 'type' in detail) {
+                errorMsg = String((detail as { msg?: string }).msg || 'Validation error');
+              }
+            } else if ('message' in data) {
+              errorMsg = String((data as { message: string }).message);
+            }
+          }
+        }
+      } else if (e instanceof Error) {
+        errorMsg = e.message;
+      }
+      safeSetError(errorMsg);
     } finally { setLoading(false); }
   };
 
