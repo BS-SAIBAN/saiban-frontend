@@ -3,16 +3,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #0f1629;
-  --bg-card: #131d35;
-  --bg-card-hover: #1a2540;
-  --bg-sidebar: #0c1020;
-  --border: #1e2d4a;
-  --border-light: #253352;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-sidebar: #ffffff;
+  --border: #e2e8f0;
+  --border-light: #cbd5e1;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
-  --accent-glow: rgba(59,130,246,0.15);
+  --accent-glow: rgba(59,130,246,0.1);
   --green: #10b981;
   --green-bg: rgba(16,185,129,0.1);
   --yellow: #f59e0b;
@@ -21,9 +21,9 @@
   --red-bg: rgba(239,68,68,0.1);
   --purple: #8b5cf6;
   --purple-bg: rgba(139,92,246,0.1);
-  --text-primary: #e2e8f0;
-  --text-secondary: #8da2c0;
-  --text-muted: #4a6080;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
   --sidebar-w: 260px;
 }
 
@@ -31,7 +31,7 @@
 
 html, body {
   font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
+  background: #ffffff !important;
   color: var(--text-primary);
   min-height: 100vh;
   font-size: 14px;
@@ -47,7 +47,7 @@ html, body {
 
 /* Layout */
 .layout { display: flex; min-height: 100vh; }
-.main-content { flex: 1; margin-left: var(--sidebar-w); min-height: 100vh; padding: 28px; background: var(--bg-primary); }
+.main-content { flex: 1; margin-left: var(--sidebar-w); min-height: 100vh; padding: 28px; background: #ffffff !important; }
 
 /* Sidebar */
 .sidebar {
