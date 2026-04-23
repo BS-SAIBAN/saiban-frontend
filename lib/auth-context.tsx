@@ -31,16 +31,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem('user');
     const token = localStorage.getItem('access_token');
-    if (stored && token) {
-      setUser(JSON.parse(stored));
+    if (stored && token && stored !== 'undefined') {
+      try {
+        setUser(JSON.parse(stored));
+      } catch (e) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+      }
     }
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await authAPI.login(email, password);
-    const { access_token, user: userData } = res.data;
+    const { access_token } = res.data;
     localStorage.setItem('access_token', access_token);
+    
+    // Fetch user data after successful login
+    const userRes = await authAPI.me();
+    const userData = userRes.data;
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     router.push('/dashboard');
