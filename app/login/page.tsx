@@ -33,18 +33,7 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '340px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '40px', height: '40px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05))',
-            border: '1px solid rgba(59,130,246,0.2)',
-            marginBottom: '10px',
-          }}>
-            <span style={{ fontSize: '18px' }}>🏛️</span>
-          </div>
-          <h1 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            Saiban BMS
-          </h1>
+          <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '90px', height: '90px', display: 'block', margin: '0 auto' }} />
         </div>
 
         {/* Card */}
