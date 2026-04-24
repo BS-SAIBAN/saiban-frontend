@@ -1,21 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { reportsAPI } from '@/lib/api';
 import { FileText, Plus, Calendar, Download, Eye } from 'lucide-react';
 
 export default function FamilyReportsPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    reportsAPI.list({ family_id: id }).then(r => {
-      setReports(Array.isArray(r.data) ? r.data : []);
-    }).finally(() => setLoading(false));
+    setLoading(true);
+    reportsAPI
+      .listByFamily(id)
+      .then((r) => {
+        setReports(Array.isArray(r.data) ? r.data : []);
+      })
+      .catch(() => {
+        setReports([]);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const reportTypeColors: Record<string, string> = {
@@ -63,25 +69,25 @@ export default function FamilyReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {reports.map(r => (
+                {reports.map((r) => (
                   <tr key={r.report_id}>
                     <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--accent)' }}>
-                      {r.report_id.slice(0, 8)}…
+                      {r.report_id.slice(0, 8)}...
                     </td>
                     <td>
                       <span className={`badge badge-${reportTypeColors[r.report_type] || 'gray'}`}>
-                        {r.report_type || '—'}
+                        {r.report_type || '-'}
                       </span>
                     </td>
                     <td>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <Calendar size={12} /> {r.report_date ? new Date(r.report_date).toLocaleDateString() : '—'}
+                        <Calendar size={12} /> {r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '-'}
                       </span>
                     </td>
-                    <td>{r.submitted_by || '—'}</td>
+                    <td>{r.submitted_by_name || '-'}</td>
                     <td>
-                      <span className={`badge badge-${r.status === 'reviewed' ? 'green' : r.status === 'submitted' ? 'blue' : 'gray'}`}>
-                        {r.status || '—'}
+                      <span className={`badge badge-${r.status === 'reviewed' ? 'green' : r.status === 'submitted' ? 'blue' : r.status === 'pending' ? 'yellow' : 'gray'}`}>
+                        {r.status || '-'}
                       </span>
                     </td>
                     <td>

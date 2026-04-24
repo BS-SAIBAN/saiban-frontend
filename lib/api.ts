@@ -121,6 +121,8 @@ export const paymentsAPI = {
 // ── Reports ───────────────────────────────────────────
 export const reportsAPI = {
   list: (params?: QueryParams) => api.get('/reports', { params }),
+  listByFamily: (familyId: string, params?: QueryParams) =>
+    api.get(`/reports/family/${familyId}/reports`, { params }),
   create: (data: Record<string, unknown>) => api.post('/reports', data),
   analytics: () => api.get('/reports/analytics'),
 };
