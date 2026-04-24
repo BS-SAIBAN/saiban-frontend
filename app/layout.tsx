@@ -5,6 +5,9 @@ import { AuthProvider } from '@/lib/auth-context';
 export const metadata: Metadata = {
   title: 'Saiban BMS — Baitussalam Beneficiary Management',
   description: 'Production-grade NGO beneficiary management system for Baitussalam',
+  icons: {
+    icon: '/assets/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
