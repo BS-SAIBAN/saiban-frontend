@@ -61,8 +61,8 @@ export default function Sidebar() {
 
   return (
     <div className="sidebar">
-      <div className="sidebar-logo">
-        <h1>🏛️ Saiban</h1>
+      <div className="sidebar-logo" style={{ textAlign: 'center' }}>
+        <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '80px', height: '80px', display: 'block', margin: '0 auto 4px auto' }} />
         <p>Beneficiary Management System</p>
       </div>
 
