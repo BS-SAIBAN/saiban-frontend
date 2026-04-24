@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Saiban BMS — Baitussalam Beneficiary Management',
   description: 'Production-grade NGO beneficiary management system for Baitussalam',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/assets/logo.png',
   },
 };
 
