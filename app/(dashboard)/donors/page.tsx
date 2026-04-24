@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { donorsAPI, sponsorshipsAPI } from '@/lib/api';
+import { donorsAPI } from '@/lib/api';
 import { Heart, Plus, Search, Phone, Mail, Building2, User, X, CheckCircle } from 'lucide-react';
 
 interface Donor {
-  donor_id: string; full_name: string; email: string; phone: string;
-  address: string; donor_type: 'individual' | 'organization'; organization_name?: string;
-  contact_person?: string; active: boolean; created_at: string;
+  donor_id: string;
+  full_name: string;
+  donor_type: 'individual' | 'organization';
+  organization_name?: string;
+  active: boolean;
+  total_sponsorships: number;
+  total_donated: number;
+  last_donation_date?: string;
+  created_at: string;
 }
 
 const emptyDonor = { full_name: '', email: '', phone: '', address: '', donor_type: 'individual', organization_name: '', contact_person: '', notes: '' };
@@ -35,8 +41,7 @@ export default function DonorsPage() {
     if (!search) { setFiltered(donors); return; }
     setFiltered(donors.filter(d =>
       d.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      d.email?.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone?.includes(search)
+      d.organization_name?.toLowerCase().includes(search.toLowerCase())
     ));
   }, [search, donors]);
 
@@ -111,8 +116,9 @@ export default function DonorsPage() {
                 <span className={`badge ${d.active ? 'badge-green' : 'badge-gray'}`}>{d.active ? 'Active' : 'Inactive'}</span>
               </div>
               <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {d.email && <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Mail size={13} />{d.email}</div>}
-                {d.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Phone size={13} />{d.phone}</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Heart size={13} />{d.total_sponsorships} sponsorships</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Mail size={13} />PKR {d.total_donated?.toLocaleString() || 0} donated</div>
+                {d.last_donation_date && <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Phone size={13} />Last donation {new Date(d.last_donation_date).toLocaleDateString()}</div>}
               </div>
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Since {d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}</span>

@@ -55,10 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
     } catch (e) {
       console.error('Failed to fetch user data:', e);
-      // Create minimal user from email for now
-      const minimalUser = { user_id: '', full_name: email.split('@')[0], email, role: 'admin', active: true };
-      localStorage.setItem('user', JSON.stringify(minimalUser));
-      setUser(minimalUser as User);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      setUser(null);
+      throw e;
     }
     router.push('/dashboard');
   };

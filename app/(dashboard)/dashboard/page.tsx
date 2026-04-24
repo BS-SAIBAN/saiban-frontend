@@ -24,10 +24,12 @@ interface AlertItem {
   alert_id: string;
   alert_type: string;
   title: string;
-  message: string;
   priority: string;
   due_date?: string;
-  is_resolved: boolean;
+  resolved: boolean;
+  family_registration_number: string;
+  family_area: string;
+  individual_name?: string;
 }
 
 const alertTypeColor: Record<string, string> = {
@@ -58,7 +60,7 @@ export default function DashboardPage() {
   useEffect(() => {
     Promise.allSettled([
       familiesAPI.list(),
-      alertsAPI.list({ is_resolved: 'false' }),
+      alertsAPI.list({ resolved: false }),
       donorsAPI.analytics(),
       paymentsAPI.analytics(),
       orphansAPI.list(),
@@ -174,7 +176,9 @@ export default function DashboardPage() {
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{alert.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.message}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {alert.family_registration_number} - {alert.family_area}{alert.individual_name ? ` - ${alert.individual_name}` : ''}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '12px', flexShrink: 0 }}>
                     {alertTypeIcon[alert.alert_type]}

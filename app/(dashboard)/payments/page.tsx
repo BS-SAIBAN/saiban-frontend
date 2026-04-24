@@ -1,22 +1,35 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { paymentsAPI, sponsorshipsAPI, donorsAPI } from '@/lib/api';
-import { DollarSign, Plus, Search, Receipt, CheckCircle, X } from 'lucide-react';
+import { paymentsAPI, sponsorshipsAPI } from '@/lib/api';
+import { DollarSign, Plus, Receipt, CheckCircle, X } from 'lucide-react';
 
 interface Payment {
-  payment_id: string; sponsorship_id: string; amount: number;
-  payment_date: string; payment_method: string; transaction_reference?: string; notes?: string;
+  payment_id: string;
+  donor_name: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  status: string;
+  target_name: string;
+  transaction_reference?: string;
+  notes?: string;
+  receipt_url?: string;
 }
-interface Sponsorship { sponsorship_id: string; donor_id: string; sponsorship_type: string; amount: number; }
-interface Donor { donor_id: string; full_name: string; }
+interface Sponsorship {
+  sponsorship_id: string;
+  donor_id?: string;
+  donor_name: string;
+  sponsorship_type: string;
+  amount: number;
+  target_name: string;
+}
 
 const methodColor: Record<string, string> = { cash: 'green', bank_transfer: 'blue', cheque: 'yellow', online: 'purple' };
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,12 +43,10 @@ export default function PaymentsPage() {
     Promise.all([
       paymentsAPI.list(),
       sponsorshipsAPI.list(),
-      donorsAPI.list(),
       paymentsAPI.analytics(),
-    ]).then(([p, s, d, a]) => {
+    ]).then(([p, s, a]) => {
       setPayments(Array.isArray(p.data) ? p.data : []);
-      setSponsorships(Array.isArray(s.data) ? s.data : []);
-      setDonors(Array.isArray(d.data) ? d.data : []);
+      setSponsorships(Array.isArray(s.data) ? s.data.map((item: Sponsorship) => ({ ...item, donor_id: item.donor_name })) : []);
       setAnalytics(a.data || {});
     }).finally(() => setLoading(false));
   };
@@ -59,6 +70,7 @@ export default function PaymentsPage() {
 
   const donorName = (donorId: string) => donors.find(d => d.donor_id === donorId)?.full_name || '—';
 
+  const donors = sponsorships.map(s => ({ donor_id: s.donor_id || '', full_name: s.donor_name }));
   return (
     <div>
       <div className="page-header">

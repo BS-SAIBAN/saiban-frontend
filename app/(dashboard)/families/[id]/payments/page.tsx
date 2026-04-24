@@ -1,20 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { paymentsAPI } from '@/lib/api';
-import { DollarSign, Plus, Calendar, Receipt, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { paymentsAPI, familiesAPI } from '@/lib/api';
+import { DollarSign, Plus, Calendar, Receipt } from 'lucide-react';
+
+interface PaymentSummary {
+  payment_id: string;
+  payment_date?: string;
+  amount?: number;
+  payment_method?: string;
+  status?: string;
+  receipt_url?: string;
+  target_type?: string;
+  target_name?: string;
+}
 
 export default function FamilyPaymentsPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    paymentsAPI.list({ family_id: id }).then(r => {
-      setPayments(Array.isArray(r.data) ? r.data : []);
+    Promise.all([familiesAPI.get(id), paymentsAPI.list()]).then(([familyRes, paymentRes]) => {
+      const registrationNumber = familyRes.data?.registration_number;
+      const items = Array.isArray(paymentRes.data) ? paymentRes.data : [];
+      setPayments(items.filter(p => p.target_type === 'family' && p.target_name === registrationNumber));
     }).finally(() => setLoading(false));
   }, [id]);
 

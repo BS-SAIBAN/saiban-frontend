@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { approvalsAPI } from '@/lib/api';
-import { CheckSquare, CheckCircle, XCircle, RotateCcw, X, AlertCircle } from 'lucide-react';
+import { CheckSquare, CheckCircle, XCircle, RotateCcw, X } from 'lucide-react';
 
 interface Approval {
-  approval_id: string; assessment_id: string; decision?: string;
-  remarks?: string; decided_at?: string; reviewed_by?: string;
-  assessment?: { status: string; family_id: string; family?: { registration_number: string; category: string } };
+  approval_id: string;
+  assessment_id?: string;
+  family_registration_number: string;
+  family_area: string;
+  decision?: string;
+  decided_at?: string;
+  reviewer_name?: string;
+  assessment_score?: number;
+  eligibility_status?: string;
+  remarks?: string;
+  assessment?: { status?: string; family_id?: string; family?: { registration_number?: string; category?: string } };
 }
 
 export default function ApprovalsPage() {
@@ -19,7 +27,20 @@ export default function ApprovalsPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    approvalsAPI.list().then(r => setApprovals(Array.isArray(r.data) ? r.data : [])).finally(() => setLoading(false));
+    approvalsAPI.list().then(r => {
+      const data = Array.isArray(r.data) ? r.data : [];
+      setApprovals(data.map((item: Approval) => ({
+        ...item,
+        assessment_id: item.assessment_id || item.approval_id,
+        remarks: item.reviewer_name,
+        assessment: {
+          family: {
+            registration_number: item.family_registration_number,
+            category: item.eligibility_status,
+          },
+        },
+      })));
+    }).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
 
@@ -27,10 +48,22 @@ export default function ApprovalsPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await approvalsAPI.decide(selected.assessment_id, { decision, remarks });
+      await approvalsAPI.decide(selected.assessment_id || selected.approval_id, { decision, remarks });
       setSelected(null); setDecision(''); setRemarks('');
       load();
     } catch { /* handled */ } finally { setSaving(false); }
+  };
+
+  const openReview = async (approval: Approval) => {
+    try {
+      const { data } = await approvalsAPI.get(approval.approval_id);
+      setSelected({
+        ...approval,
+        assessment_id: data.assessment?.assessment_id || approval.assessment_id || approval.approval_id,
+      });
+    } catch {
+      setSelected(approval);
+    }
   };
 
   const decisionConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
@@ -82,7 +115,7 @@ export default function ApprovalsPage() {
                     <td style={{ color: 'var(--text-muted)' }}>{a.decided_at ? new Date(a.decided_at).toLocaleDateString() : '—'}</td>
                     <td>
                       {!a.decision && (
-                        <button className="btn btn-primary btn-sm" onClick={() => setSelected(a)}>
+                        <button className="btn btn-primary btn-sm" onClick={() => openReview(a)}>
                           <CheckSquare size={12} /> Review
                         </button>
                       )}

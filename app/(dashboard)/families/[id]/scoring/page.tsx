@@ -4,36 +4,81 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { scoringAPI, assessmentsAPI } from '@/lib/api';
-import { Star, Calculator, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Star, Calculator } from 'lucide-react';
+
+interface AssessmentSummary {
+  assessment_id: string;
+  status: string;
+}
 
 export default function FamilyScoringPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [assessments, setAssessments] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentSummary[]>([]);
   const [score, setScore] = useState(0);
-  const [category, setCategory] = useState('');
+  const [scoreId, setScoreId] = useState('');
+  const [eligibilityStatus, setEligibilityStatus] = useState('need_review');
+  const [overrideRemarks, setOverrideRemarks] = useState('');
 
   useEffect(() => {
     assessmentsAPI.list({ family_id: id }).then(r => {
-      setAssessments(Array.isArray(r.data) ? r.data : []);
+      const data = Array.isArray(r.data) ? r.data : [];
+      setAssessments(data);
+
+      const latestAssessment = data[0];
+      if (!latestAssessment?.assessment_id) return;
+      if (['SCORED', 'APPROVED', 'REJECTED', 'REASSESSMENT_REQUIRED'].includes(latestAssessment.status)) {
+        scoringAPI.calculate(latestAssessment.assessment_id).then(({ data: result }) => {
+          if (result?.success) {
+            setScore(result.auto_score || 0);
+            setEligibilityStatus(result.eligibility_status || 'need_review');
+            setScoreId(result.score_id || '');
+          }
+        }).catch(() => {});
+      }
     });
   }, [id]);
 
-  const calculateScore = () => {
-    // Mock scoring calculation
-    let calculatedScore = 0;
-    assessments.forEach(a => {
-      calculatedScore += 50; // Mock calculation
-    });
-    setScore(calculatedScore);
-    setCategory(calculatedScore > 70 ? 'FA' : 'SB');
+  const currentAssessment = assessments[0];
+
+  const calculateScore = async (recalculate = true) => {
+    if (!currentAssessment?.assessment_id) return;
+    setLoading(true);
+    try {
+      const { data } = await scoringAPI.calculate(currentAssessment.assessment_id, recalculate);
+      if (data?.success) {
+        setScore(data.auto_score || 0);
+        setEligibilityStatus(data.eligibility_status || 'need_review');
+        setScoreId(data.score_id || '');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitScore = async () => {
     setLoading(true);
     try {
-      await scoringAPI.override(assessments[0]?.assessment_id, { score, category });
+      let resultId = scoreId;
+
+      if (!resultId && currentAssessment?.assessment_id) {
+        const { data } = await scoringAPI.calculate(currentAssessment.assessment_id, false);
+        if (data?.success) {
+          resultId = data.score_id || '';
+          setScoreId(resultId);
+          setScore(data.auto_score || score);
+          setEligibilityStatus(data.eligibility_status || eligibilityStatus);
+        }
+      }
+
+      if (resultId) {
+        await scoringAPI.override(resultId, {
+          manual_override_score: score,
+          eligibility_status: eligibilityStatus,
+          override_remarks: overrideRemarks || undefined,
+        });
+      }
       router.push(`/families/${id}`);
     } catch (e) {
       console.error('Error submitting score:', e);
@@ -71,9 +116,9 @@ export default function FamilyScoringPage() {
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 4 }}>out of 100</div>
               </div>
               <div style={{ padding: 20, background: 'var(--purple-bg)', borderRadius: 8, border: '1px solid rgba(168, 85, 247, 0.2)', textAlign: 'center' }}>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8 }}>Recommended Category</div>
-                <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--purple)' }}>{category}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 4 }}>Program Type</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8 }}>Eligibility Status</div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--purple)', textTransform: 'capitalize' }}>{eligibilityStatus.replace(/_/g, ' ')}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 4 }}>Current recommendation</div>
               </div>
             </div>
 
@@ -107,20 +152,31 @@ export default function FamilyScoringPage() {
                   <input type="number" className="form-control" value={score} onChange={e => setScore(Number(e.target.value))} max={100} min={0} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Category Override</label>
-                  <select className="form-control" value={category} onChange={e => setCategory(e.target.value)}>
-                    <option value="FA">FA - Financial Aid</option>
-                    <option value="SB">SB - Saiban Orphan</option>
+                  <label className="form-label">Eligibility Override</label>
+                  <select className="form-control" value={eligibilityStatus} onChange={e => setEligibilityStatus(e.target.value)}>
+                    <option value="eligible">Eligible</option>
+                    <option value="need_review">Need Review</option>
+                    <option value="not_eligible">Not Eligible</option>
                   </select>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Override Remarks</label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={overrideRemarks}
+                  onChange={e => setOverrideRemarks(e.target.value)}
+                  placeholder="Optional notes explaining the manual override"
+                />
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={calculateScore} className="btn btn-secondary" style={{ flex: 1 }}>
+              <button onClick={() => calculateScore(true)} className="btn btn-secondary" style={{ flex: 1 }} disabled={loading}>
                 <Calculator size={14} /> Recalculate
               </button>
-              <button onClick={submitScore} disabled={loading} className="btn btn-primary" style={{ flex: 1 }}>
+              <button onClick={submitScore} disabled={loading || !currentAssessment?.assessment_id} className="btn btn-primary" style={{ flex: 1 }}>
                 <Star size={14} /> {loading ? 'Submitting...' : 'Submit Score'}
               </button>
             </div>

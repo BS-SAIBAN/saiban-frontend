@@ -6,11 +6,17 @@ import Link from 'next/link';
 import { approvalsAPI, assessmentsAPI } from '@/lib/api';
 import { CheckSquare, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react';
 
+interface AssessmentSummary {
+  assessment_id: string;
+  assessment_date?: string;
+  status: string;
+}
+
 export default function FamilyApprovalPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [assessments, setAssessments] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentSummary[]>([]);
   const [decision, setDecision] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -27,7 +33,7 @@ export default function FamilyApprovalPage() {
     }
     setLoading(true);
     try {
-      await approvalsAPI.decide(assessments[0]?.assessment_id, { decision, notes });
+      await approvalsAPI.decide(assessments[0]?.assessment_id, { decision, remarks: notes || undefined });
       router.push(`/families/${id}`);
     } catch (e) {
       console.error('Error submitting decision:', e);

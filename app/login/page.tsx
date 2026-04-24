@@ -33,7 +33,7 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '340px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '90px', height: '90px', display: 'block', margin: '0 auto' }} />
+          <img src="/favicon.ico" alt="Saiban BMS Logo" style={{ width: '90px', height: '90px', display: 'block', margin: '0 auto' }} />
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px', fontWeight: '500' }}>Beneficiary Management System</p>
         </div>
 

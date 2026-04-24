@@ -5,9 +5,18 @@ import { sponsorshipsAPI, donorsAPI } from '@/lib/api';
 import { BookOpen, Plus, X, Calendar } from 'lucide-react';
 
 interface Sponsorship {
-  sponsorship_id: string; donor_id: string; sponsorship_type: string;
-  family_id?: string; individual_id?: string; amount: number;
-  start_date: string; end_date?: string; active: boolean; payment_frequency: string;
+  sponsorship_id: string;
+  donor_id: string;
+  donor_name?: string;
+  sponsorship_type: string;
+  family_id?: string;
+  individual_id?: string;
+  amount: number;
+  start_date: string;
+  end_date?: string;
+  active: boolean;
+  payment_frequency: string;
+  target_name?: string;
 }
 interface Donor { donor_id: string; full_name: string; }
 
@@ -18,7 +27,7 @@ export default function SponsorshipsPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    donor_id: '', sponsorship_type: 'family_assistance', family_id: '', individual_id: '',
+    donor_id: '', sponsorship_type: 'family', family_id: '', individual_id: '',
     amount: '', start_date: new Date().toISOString().split('T')[0], end_date: '',
     payment_method: 'bank_transfer', payment_frequency: 'monthly', auto_renew: 'true', notes: '',
   });
@@ -26,7 +35,7 @@ export default function SponsorshipsPage() {
   const load = () => {
     Promise.all([sponsorshipsAPI.list(), donorsAPI.list()])
       .then(([s, d]) => {
-        setSponsorships(Array.isArray(s.data) ? s.data : []);
+        setSponsorships(Array.isArray(s.data) ? s.data.map((item: Sponsorship) => ({ ...item, donor_id: item.donor_name || item.donor_id })) : []);
         setDonors(Array.isArray(d.data) ? d.data : []);
       }).finally(() => setLoading(false));
   };
@@ -71,7 +80,7 @@ export default function SponsorshipsPage() {
                 </td></tr>
               ) : sponsorships.map(s => (
                 <tr key={s.sponsorship_id}>
-                  <td style={{ fontWeight: 600 }}>{donorName(s.donor_id)}</td>
+                  <td style={{ fontWeight: 600 }}>{s.donor_name || donorName(s.donor_id)}</td>
                   <td><span className={`badge badge-${s.sponsorship_type?.includes('orphan') ? 'purple' : 'blue'}`}>{s.sponsorship_type?.replace(/_/g, ' ')}</span></td>
                   <td><strong style={{ color: 'var(--green)' }}>PKR {s.amount?.toLocaleString()}</strong></td>
                   <td style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{s.payment_frequency}</td>
@@ -104,9 +113,8 @@ export default function SponsorshipsPage() {
                 <div className="form-group">
                   <label className="form-label">Sponsorship Type</label>
                   <select className="form-control" value={form.sponsorship_type} onChange={e => set('sponsorship_type', e.target.value)}>
-                    <option value="family_assistance">Family Assistance</option>
-                    <option value="orphan_sponsorship">Orphan Sponsorship</option>
-                    <option value="education">Education Support</option>
+                    <option value="family">Family</option>
+                    <option value="orphan">Orphan</option>
                   </select>
                 </div>
                 <div className="form-group">
@@ -143,7 +151,8 @@ export default function SponsorshipsPage() {
                   <select className="form-control" value={form.payment_frequency} onChange={e => set('payment_frequency', e.target.value)}>
                     <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly</option>
-                    <option value="annually">Annually</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="one-time">One-time</option>
                   </select>
                 </div>
               </div>

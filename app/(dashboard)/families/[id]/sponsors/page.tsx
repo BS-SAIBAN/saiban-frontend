@@ -1,20 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { sponsorshipsAPI, donorsAPI } from '@/lib/api';
-import { Heart, Plus, User, Calendar, DollarSign, AlertCircle } from 'lucide-react';
+import { sponsorshipsAPI, familiesAPI } from '@/lib/api';
+import { Heart, Plus, User, Calendar, DollarSign } from 'lucide-react';
+
+interface SponsorshipSummary {
+  sponsorship_id: string;
+  donor_name?: string;
+  sponsorship_type: string;
+  start_date?: string;
+  end_date?: string;
+  amount?: number;
+  active: boolean;
+  target_name?: string;
+}
 
 export default function FamilySponsorsPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const [sponsors, setSponsors] = useState<any[]>([]);
+  const [sponsors, setSponsors] = useState<SponsorshipSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    sponsorshipsAPI.list({ family_id: id }).then(r => {
-      setSponsors(Array.isArray(r.data) ? r.data : []);
+    Promise.all([familiesAPI.get(id), sponsorshipsAPI.list({ target_type: 'family' })]).then(([familyRes, sponsorRes]) => {
+      const registrationNumber = familyRes.data?.registration_number;
+      const items = Array.isArray(sponsorRes.data) ? sponsorRes.data : [];
+      setSponsors(items.filter(s => s.target_name === registrationNumber));
     }).finally(() => setLoading(false));
   }, [id]);
 
