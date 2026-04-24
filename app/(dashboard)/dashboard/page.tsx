@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { familiesAPI, alertsAPI, donorsAPI, paymentsAPI } from '@/lib/api';
+import { familiesAPI, alertsAPI, donorsAPI, paymentsAPI, orphansAPI, individualsAPI } from '@/lib/api';
 import {
   Users, Bell, Heart, DollarSign, CheckCircle,
   Clock, AlertTriangle, TrendingUp, ArrowRight,
@@ -16,6 +16,8 @@ interface Stats {
   activeAlerts: number;
   totalPayments: number;
   monthlyAmount: number;
+  totalOrphans: number;
+  totalIndividuals: number;
 }
 
 interface AlertItem {
@@ -48,6 +50,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalFamilies: 0, pendingApprovals: 0, totalDonors: 0,
     activeAlerts: 0, totalPayments: 0, monthlyAmount: 0,
+    totalOrphans: 0, totalIndividuals: 0,
   });
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +61,15 @@ export default function DashboardPage() {
       alertsAPI.list({ is_resolved: 'false' }),
       donorsAPI.analytics(),
       paymentsAPI.analytics(),
-    ]).then(([fams, alts, donors, payments]) => {
+      orphansAPI.list(),
+      individualsAPI.list(),
+    ]).then(([fams, alts, donors, payments, orphans, individuals]) => {
       const famData = fams.status === 'fulfilled' ? fams.value.data : [];
       const altData = alts.status === 'fulfilled' ? alts.value.data : [];
       const donorsData = donors.status === 'fulfilled' ? donors.value.data : {};
       const paymentsData = payments.status === 'fulfilled' ? payments.value.data : {};
+      const orphansData = orphans.status === 'fulfilled' ? orphans.value.data : [];
+      const individualsData = individuals.status === 'fulfilled' ? individuals.value.data : [];
 
       setStats({
         totalFamilies: Array.isArray(famData) ? famData.length : 0,
@@ -71,6 +78,8 @@ export default function DashboardPage() {
         activeAlerts: Array.isArray(altData) ? altData.length : 0,
         totalPayments: paymentsData.total_payments || 0,
         monthlyAmount: paymentsData.total_amount || 0,
+        totalOrphans: Array.isArray(orphansData) ? orphansData.length : 0,
+        totalIndividuals: Array.isArray(individualsData) ? individualsData.length : 0,
       });
       setAlerts(Array.isArray(altData) ? altData.slice(0, 8) : []);
     }).finally(() => setLoading(false));
@@ -78,11 +87,13 @@ export default function DashboardPage() {
 
   const statCards = [
     { label: 'Total Families', value: stats.totalFamilies, icon: <Users size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Registered cases' },
-    { label: 'Pending Approvals', value: stats.pendingApprovals, icon: <Clock size={20} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)', change: 'Awaiting review' },
+    { label: 'Total Individuals', value: stats.totalIndividuals, icon: <Users size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'All individuals' },
+    { label: 'Total Orphans', value: stats.totalOrphans, icon: <Baby size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Registered orphans' },
     { label: 'Active Donors', value: stats.totalDonors, icon: <Heart size={20} />, color: 'var(--red)', bg: 'var(--red-bg)', change: 'Supporting cases' },
-    { label: 'Active Alerts', value: stats.activeAlerts, icon: <Bell size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'Require attention' },
     { label: 'Total Payments', value: stats.totalPayments, icon: <DollarSign size={20} />, color: 'var(--green)', bg: 'var(--green-bg)', change: 'Recorded payments' },
     { label: 'Monthly Amount (PKR)', value: `${(stats.monthlyAmount / 1000).toFixed(0)}k`, icon: <TrendingUp size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Total disbursed' },
+    { label: 'Pending Approvals', value: stats.pendingApprovals, icon: <Clock size={20} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)', change: 'Awaiting review' },
+    { label: 'Active Alerts', value: stats.activeAlerts, icon: <Bell size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'Require attention' },
   ];
 
   return (
@@ -104,7 +115,7 @@ export default function DashboardPage() {
       {/* Stats */}
       {loading ? (
         <div className="stats-grid">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="stat-card" style={{ opacity: 0.5 }}>
               <div className="stat-icon" style={{ background: 'var(--border)', width: 44, height: 44, borderRadius: 10 }} />
               <div><div style={{ height: 28, width: 60, background: 'var(--border)', borderRadius: 4, marginBottom: 6 }} /><div style={{ height: 14, width: 100, background: 'var(--border)', borderRadius: 4 }} /></div>
