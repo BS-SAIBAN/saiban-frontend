@@ -106,7 +106,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <Link href="/families/new" className="btn btn-primary">
-              <Users size={14} /> Register Family
+              <Users size={14} /> Register Beneficiary
             </Link>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
           <h2 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px' }}>⚡ Quick Actions</h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {[
-              { label: 'Register Family', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
+              { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
               { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },
               { label: 'Record Payment', href: '/payments', icon: <DollarSign size={18} />, color: 'var(--green)', bg: 'var(--green-bg)' },
               { label: 'Submit Report', href: '/reports', icon: <FileText size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },

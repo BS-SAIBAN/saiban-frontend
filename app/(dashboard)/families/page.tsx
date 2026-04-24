@@ -70,7 +70,7 @@ export default function FamiliesPage() {
             <p>Manage all registered FA and SB beneficiary families</p>
           </div>
           <Link href="/families/new" className="btn btn-primary">
-            <Plus size={14} /> Register Family
+            <Plus size={14} /> Register Beneficiary
           </Link>
         </div>
       </div>

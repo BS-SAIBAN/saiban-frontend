@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI, individualsAPI } from '@/lib/api';
-import { ArrowLeft, Save, ClipboardList, User, Home, DollarSign, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardList, User, Home, DollarSign, FileText, AlertCircle, Users, Star, CheckSquare, Heart } from 'lucide-react';
 
 export default function FamilyAssessmentPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,6 +60,24 @@ export default function FamilyAssessmentPage() {
           <h1>Family Assessment</h1>
           <p>Conduct needs assessment for this family</p>
         </div>
+      </div>
+
+      {/* Sub-nav */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {[
+          { href: `/families/${id}`, label: 'Overview', icon: <Users size={13} /> },
+          { href: `/families/${id}/members`, label: 'Members', icon: <User size={13} /> },
+          { href: `/families/${id}/assessment`, label: 'Assessment', icon: <ClipboardList size={13} /> },
+          { href: `/families/${id}/scoring`, label: 'Scoring', icon: <Star size={13} /> },
+          { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} /> },
+          { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} /> },
+          { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} /> },
+          { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} /> },
+        ].map(link => (
+          <Link key={link.href} href={link.href} className="btn btn-secondary btn-sm">
+            {link.icon} {link.label}
+          </Link>
+        ))}
       </div>
 
       <div className="card" style={{ maxWidth: 800 }}>

@@ -38,7 +38,7 @@ export default function NewFamilyPage() {
       router.push(`/families/${res.data.family_id}`);
     } catch (e: unknown) {
       console.error('Registration error:', e);
-      let errorMsg = 'Failed to register family.';
+      let errorMsg = 'Failed to register beneficiary.';
       if (e && typeof e === 'object' && 'response' in e) {
         const response = (e as { response: { data?: unknown; status?: number } }).response;
         console.error('Response data:', response?.data);
@@ -77,7 +77,7 @@ export default function NewFamilyPage() {
             <Link href="/families" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
               <ArrowLeft size={14} /> Back to Families
             </Link>
-            <h1 style={{ marginTop: 8 }}>Register New Family</h1>
+            <h1 style={{ marginTop: 8 }}>Register New Beneficiary</h1>
             <p>Enter family details to begin the beneficiary process</p>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function NewFamilyPage() {
             </button>
           ) : (
             <button className="btn btn-primary" onClick={submit} disabled={loading}>
-              {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Registering…</> : <><CheckCircle size={14} /> Register Family</>}
+              {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Registering…</> : <><CheckCircle size={14} /> Register Beneficiary</>}
             </button>
           )}
         </div>
