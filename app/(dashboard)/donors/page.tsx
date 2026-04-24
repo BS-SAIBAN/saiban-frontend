@@ -79,10 +79,17 @@ export default function DonorsPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {loading ? (
-            [...Array(6)].map((_, i) => (
-              <div key={i} className="card" style={{ opacity: 0.4, padding: 16 }}>
-                <div style={{ height: 18, width: '60%', background: 'var(--border)', borderRadius: 4, marginBottom: 8 }} />
-                <div style={{ height: 14, width: '80%', background: 'var(--border)', borderRadius: 4 }} />
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="card" style={{ padding: 16 }}>
+                <div className="skeleton-row" style={{ marginBottom: 12 }}>
+                  <div className="skeleton skeleton-avatar" />
+                  <div className="skeleton-col">
+                    <div className="skeleton skeleton-text" style={{ width: '60%' }} />
+                    <div className="skeleton skeleton-text-sm" style={{ width: '40%' }} />
+                  </div>
+                </div>
+                <div className="skeleton skeleton-text-sm" style={{ width: '70%' }} />
+                <div className="skeleton skeleton-text-sm" style={{ width: '60%' }} />
               </div>
             ))
           ) : filtered.length === 0 ? (

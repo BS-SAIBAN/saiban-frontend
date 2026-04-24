@@ -97,7 +97,18 @@ export default function OrphansPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40 }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i}>
+                    <td><div className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '80px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '50px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '90px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '80px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '50px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '60px' }} /></td>
+                    <td><div className="skeleton skeleton-col-sm" style={{ width: '28px', height: '28px' }} /></td>
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={8}>
                   <div className="empty-state">

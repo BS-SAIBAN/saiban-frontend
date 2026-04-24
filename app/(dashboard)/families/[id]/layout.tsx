@@ -59,9 +59,6 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
         {[
           { href: `/families/${id}`, label: 'Overview', icon: <Users size={13} /> },
           { href: `/families/${id}/members`, label: 'Members', icon: <User size={13} /> },
-          { href: `/families/${id}/assessment`, label: 'Assessment', icon: <ClipboardList size={13} /> },
-          { href: `/families/${id}/scoring`, label: 'Scoring', icon: <Star size={13} /> },
-          { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} /> },
           { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} /> },
           { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} /> },
           { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} /> },

@@ -116,9 +116,21 @@ export default function FamiliesPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  <div className="spinner" style={{ margin: '0 auto' }} />
-                </td></tr>
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i}>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '100px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '60px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '80px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '120px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '70px' }} /></td>
+                    <td><div className="skeleton skeleton-text-sm" style={{ width: '80px' }} /></td>
+                    <td><div className="skeleton-row" style={{ marginBottom: 0, gap: 6 }}>
+                      <div className="skeleton skeleton-col-sm" style={{ width: '40px', height: '28px' }} />
+                      <div className="skeleton skeleton-col-sm" style={{ width: '28px', height: '28px' }} />
+                      <div className="skeleton skeleton-col-sm" style={{ width: '28px', height: '28px' }} />
+                    </div></td>
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7}>
                   <div className="empty-state">

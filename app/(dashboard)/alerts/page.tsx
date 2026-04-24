@@ -93,7 +93,15 @@ export default function AlertsPage() {
         </div>
 
         {loading ? (
-          <div className="loading-screen" style={{ minHeight: 200 }}><div className="spinner" /></div>
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="alert-item" style={{ opacity: 0.5 }}>
+              <div className="skeleton skeleton-avatar" style={{ width: 8, height: 8 }} />
+              <div style={{ flex: 1 }}>
+                <div className="skeleton skeleton-text" style={{ width: '60%' }} />
+                <div className="skeleton skeleton-text-sm" style={{ width: '40%' }} />
+              </div>
+            </div>
+          ))
         ) : alerts.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon"><CheckCircle size={22} style={{ color: 'var(--green)' }} /></div>

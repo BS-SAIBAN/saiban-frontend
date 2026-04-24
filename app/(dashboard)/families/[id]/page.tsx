@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { familiesAPI, individualsAPI, assessmentsAPI } from '@/lib/api';
-import { User, Plus, MapPin, Home, ClipboardList } from 'lucide-react';
+import { familiesAPI, individualsAPI } from '@/lib/api';
+import { User, Plus, MapPin, Home } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -15,7 +15,6 @@ interface Individual {
   individual_id: string; full_name: string; gender: string; relationship_to_head: string;
   is_orphan: boolean; is_child: boolean; occupation: string; monthly_income: number;
 }
-interface Assessment { assessment_id: string; status: string; assessment_date: string; }
 
 const statusColor: Record<string, string> = {
   pending_assessment: 'gray', assessed: 'blue', scoring: 'yellow',
@@ -26,18 +25,15 @@ export default function FamilyProfilePage() {
   const { id } = useParams<{ id: string }>();
   const [family, setFamily] = useState<Family | null>(null);
   const [members, setMembers] = useState<Individual[]>([]);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       familiesAPI.get(id),
       individualsAPI.list(id),
-      assessmentsAPI.list({ family_id: id }),
-    ]).then(([fam, inds, assmts]) => {
+    ]).then(([fam, inds]) => {
       setFamily(fam.data);
       setMembers(Array.isArray(inds.data) ? inds.data : []);
-      setAssessments(Array.isArray(assmts.data) ? assmts.data : []);
     }).finally(() => setLoading(false));
   }, [id]);
 
@@ -90,36 +86,6 @@ export default function FamilyProfilePage() {
                 </div>
               ))}
               {members.length > 5 && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>+{members.length - 5} more members</p>}
-            </div>
-          )}
-        </div>
-
-        {/* Assessments */}
-        <div className="card" style={{ gridColumn: '1/-1' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="section-title" style={{ marginBottom: 0 }}>Assessment History</div>
-            <Link href={`/families/${id}/assessment`} className="btn btn-primary btn-sm"><Plus size={12} /> New Assessment</Link>
-          </div>
-          {assessments.length === 0 ? (
-            <div className="empty-state" style={{ padding: '30px 20px' }}>
-              <div className="empty-state-icon"><ClipboardList size={20} /></div>
-              <p>No assessments conducted yet.</p>
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Assessment ID</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody>
-                  {assessments.map(a => (
-                    <tr key={a.assessment_id}>
-                      <td style={{ fontFamily: 'monospace', color: 'var(--accent)', fontSize: 12 }}>{a.assessment_id.slice(0, 8)}…</td>
-                      <td>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
-                      <td><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
-                      <td><Link href={`/families/${id}/assessment`} className="btn btn-secondary btn-sm">View</Link></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
         </div>
