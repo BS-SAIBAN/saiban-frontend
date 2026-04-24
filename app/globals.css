@@ -63,7 +63,7 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 .sidebar-logo h1 { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
-.sidebar-logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sidebar-logo p { font-size: 11px; color: var(--text-muted); margin-top: 0px; }
 .sidebar-nav { padding: 12px 10px; flex: 1; }
 .nav-section { margin-bottom: 6px; }
 .nav-section-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px 4px; }
