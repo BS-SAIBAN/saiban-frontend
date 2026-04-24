@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
-import { ArrowLeft, Save, MapPin, Home, Tag, Users, User, ClipboardList, Star, CheckSquare, Heart, DollarSign, FileText } from 'lucide-react';
+import { Save, MapPin, Home, Tag } from 'lucide-react';
 
 export default function EditFamilyPage() {
   const { id } = useParams<{ id: string }>();
@@ -68,32 +68,11 @@ export default function EditFamilyPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <Link href={`/families/${id}`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <ArrowLeft size={14} /> Back to Family
-        </Link>
-        <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
           <h1>Edit Family</h1>
           <p>Update family information</p>
         </div>
-      </div>
-
-      {/* Sub-nav */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {[
-          { href: `/families/${id}`, label: 'Overview', icon: <Users size={13} /> },
-          { href: `/families/${id}/members`, label: 'Members', icon: <User size={13} /> },
-          { href: `/families/${id}/assessment`, label: 'Assessment', icon: <ClipboardList size={13} /> },
-          { href: `/families/${id}/scoring`, label: 'Scoring', icon: <Star size={13} /> },
-          { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} /> },
-          { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} /> },
-          { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} /> },
-          { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} /> },
-        ].map(link => (
-          <Link key={link.href} href={link.href} className="btn btn-secondary btn-sm">
-            {link.icon} {link.label}
-          </Link>
-        ))}
       </div>
 
       <div className="card" style={{ maxWidth: 640 }}>
