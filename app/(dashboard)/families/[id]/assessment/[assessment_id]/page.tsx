@@ -1,0 +1,229 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { assessmentsAPI } from '@/lib/api';
+import { ArrowLeft, ClipboardList, Calendar, FileText, Edit, Trash2, AlertCircle } from 'lucide-react';
+
+interface Assessment {
+  assessment_id: string;
+  family_id: string;
+  assessment_date: string;
+  status: string;
+  field_worker_notes?: string;
+  field_worker_companion?: string;
+  additional_info?: string;
+  submitted_at?: string;
+  created_at: string;
+}
+
+const statusColor: Record<string, string> = {
+  draft: 'gray',
+  submitted: 'blue',
+  scored: 'yellow',
+  approved: 'green',
+  rejected: 'red',
+  reassessment_required: 'purple',
+};
+
+export default function AssessmentDetailPage() {
+  const { id, assessment_id } = useParams<{ id: string; assessment_id: string }>();
+  const router = useRouter();
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  useEffect(() => {
+    assessmentsAPI.get(assessment_id).then(r => {
+      setAssessment(r.data);
+    }).catch(err => {
+      setError('Failed to load assessment');
+      console.error(err);
+    }).finally(() => setLoading(false));
+  }, [assessment_id]);
+
+  const handleDelete = async () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false);
+    try {
+      await assessmentsAPI.delete(assessment_id);
+      router.push(`/families/${id}/assessment`);
+    } catch (err) {
+      setDeleteError('Failed to delete assessment');
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
+
+  if (error || !assessment) {
+    return (
+      <div>
+        <div style={{ marginBottom: 20 }}>
+          <Link href={`/families/${id}/assessment`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <ArrowLeft size={14} /> Back to Assessment
+          </Link>
+        </div>
+        <div className="card">
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <AlertCircle size={32} style={{ color: 'var(--error)', marginBottom: 16 }} />
+            <h3>Error</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>{error || 'Assessment not found'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <Link href={`/families/${id}/assessment`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <ArrowLeft size={14} /> Back to Assessment
+        </Link>
+      </div>
+
+      <div className="card">
+        <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ClipboardList size={24} /> Assessment Details
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
+              Assessment ID: <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{assessment.assessment_id.slice(0, 8)}…</span>
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {assessment.status === 'draft' && (
+              <>
+                <Link href={`/families/${id}/assessment/${assessment_id}/edit`} className="btn btn-secondary btn-sm">
+                  <Edit size={14} /> Edit
+                </Link>
+                <button onClick={handleDelete} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Calendar size={12} /> Assessment Date
+            </div>
+            <div style={{ fontWeight: 600 }}>{assessment.assessment_date ? new Date(assessment.assessment_date).toLocaleDateString() : '—'}</div>
+          </div>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Status</div>
+            <span className={`badge badge-${statusColor[assessment.status] || 'gray'}`}>
+              {assessment.status?.replace(/_/g, ' ')}
+            </span>
+          </div>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Submitted At</div>
+            <div style={{ fontWeight: 600 }}>{assessment.submitted_at ? new Date(assessment.submitted_at).toLocaleString() : '—'}</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={16} /> Assessment Information
+          </h3>
+          <div style={{ display: 'grid', gap: 16 }}>
+            {assessment.field_worker_notes && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Notes</label>
+                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
+                  {assessment.field_worker_notes}
+                </div>
+              </div>
+            )}
+            {assessment.field_worker_companion && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Companion</label>
+                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                  {assessment.field_worker_companion}
+                </div>
+              </div>
+            )}
+            {assessment.additional_info && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Additional Information</label>
+                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
+                  {assessment.additional_info}
+                </div>
+              </div>
+            )}
+            {!assessment.field_worker_notes && !assessment.field_worker_companion && !assessment.additional_info && (
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
+                No additional information recorded
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          Created: {assessment.created_at ? new Date(assessment.created_at).toLocaleString() : '—'}
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div className="card" style={{ maxWidth: 400, width: '90%' }}>
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <AlertCircle size={20} style={{ color: 'var(--red)' }} /> Delete Assessment
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                Are you sure you want to delete this assessment? This action cannot be undone.
+              </p>
+            </div>
+            {deleteError && (
+              <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: 10, borderRadius: 6, marginBottom: 16, fontSize: '13px' }}>
+                {deleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={cancelDelete}
+                className="btn btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--red)', border: '1px solid var(--red)' }}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

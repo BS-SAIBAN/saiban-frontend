@@ -71,6 +71,7 @@ export const assessmentsAPI = {
   get: (id: string) => api.get(`/assessments/${id}`),
   create: (data: Record<string, unknown>) => api.post('/assessments', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/assessments/${id}`, data),
+  delete: (id: string) => api.delete(`/assessments/${id}`),
   submit: (id: string) => api.post(`/assessments/${id}/submit`),
 };
 
