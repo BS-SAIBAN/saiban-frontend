@@ -141,7 +141,11 @@ export default function FamiliesPage() {
                 </td></tr>
               ) : filtered.map(f => (
                 <tr key={f.family_id}>
-                  <td><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{f.registration_number}</span></td>
+                  <td>
+                    <Link href={`/families/${f.family_id}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>
+                      {f.registration_number}
+                    </Link>
+                  </td>
                   <td><span className={`badge ${f.category === 'FA' ? 'badge-blue' : 'badge-purple'}`}><Tag size={10} /> {f.category}</span></td>
                   <td><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{f.status?.replace(/_/g, ' ')}</span></td>
                   <td><span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}><MapPin size={12} />{f.area}, {f.city}</span></td>
@@ -149,9 +153,6 @@ export default function FamiliesPage() {
                   <td style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <Link href={`/families/${f.family_id}`} className="btn btn-secondary btn-sm">
-                        <Eye size={12} /> View
-                      </Link>
                       <Link href={`/families/${f.family_id}/edit`} className="btn btn-secondary btn-sm">
                         <Edit size={12} />
                       </Link>
