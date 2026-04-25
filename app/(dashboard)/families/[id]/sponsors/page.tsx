@@ -93,8 +93,8 @@ export default function FamilySponsorsPage() {
                       </span>
                     </td>
                     <td>
-                      <span className={`badge badge-${s.status === 'active' ? 'green' : s.status === 'expired' ? 'red' : 'gray'}`}>
-                        {s.status || '—'}
+                      <span className={`badge badge-${s.active ? 'green' : 'red'}`}>
+                        {s.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>
