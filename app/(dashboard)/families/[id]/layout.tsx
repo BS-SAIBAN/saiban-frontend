@@ -55,24 +55,34 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
         {[
           { href: `/families/${id}`, label: 'Overview', icon: <Users size={13} /> },
           { href: `/families/${id}/members`, label: 'Members', icon: <User size={13} /> },
-          { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} /> },
-          { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} /> },
-          { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} /> },
           { href: `/families/${id}/assessment`, label: 'Assessment', icon: <ClipboardList size={13} />, prefix: true },
-          { href: `/families/${id}/scoring`, label: 'Scoring', icon: <Star size={13} /> },
-          { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} /> },
+          { href: `/families/${id}/scoring`, label: 'Scoring', icon: <Star size={13} />, prefix: true },
+          { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} />, prefix: true },
+          { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} />, prefix: true },
+          { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} />, disabled: true },
+          { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} />, disabled: true },
         ].map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`btn btn-sm ${(
-              link.prefix 
-                ? pathname.startsWith(link.href) 
-                : pathname === link.href
-            ) ? 'btn-primary' : 'btn-secondary'}`}
-          >
-            {link.icon} {link.label}
-          </Link>
+          link.disabled ? (
+            <span
+              key={link.href}
+              className="btn btn-sm btn-secondary"
+              style={{ opacity: 0.4, cursor: 'not-allowed' }}
+            >
+              {link.icon} {link.label}
+            </span>
+          ) : (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`btn btn-sm ${(
+                link.prefix 
+                  ? pathname.startsWith(link.href) 
+                  : pathname === link.href
+              ) ? 'btn-primary' : 'btn-secondary'}`}
+            >
+              {link.icon} {link.label}
+            </Link>
+          )
         ))}
       </div>
 
