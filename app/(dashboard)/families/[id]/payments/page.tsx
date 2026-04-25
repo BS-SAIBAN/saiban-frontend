@@ -93,7 +93,7 @@ export default function FamilyPaymentsPage() {
                     </td>
                     <td><span className="badge badge-gray">{p.payment_method || '—'}</span></td>
                     <td>
-                      <span className={`badge badge-${statusColors[p.status] || 'gray'}`}>
+                      <span className={`badge badge-${statusColors[p.status || 'pending'] || 'gray'}`}>
                         {p.status || '—'}
                       </span>
                     </td>
