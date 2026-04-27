@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { familiesAPI, individualsAPI } from '@/lib/api';
-import { User, Plus, MapPin, Home, X, Save, Heart, Shield } from 'lucide-react';
+import { familiesAPI, individualsAPI, storageAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
+import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -14,6 +15,8 @@ interface Individual {
   individual_id: string; full_name: string; gender: string; relationship_to_head: string;
   is_orphan: boolean; is_child: boolean; occupation: string; monthly_income: number;
   dob?: string; cnic_or_bform?: string; is_disabled?: boolean; is_patient?: boolean;
+  debt_amount?: number; school_name?: string; current_class?: string; monthly_school_fee?: number;
+  religion?: string; caste?: string; photo_url?: string;
 }
 
 const statusColor: Record<string, string> = {
@@ -30,6 +33,7 @@ export default function FamilyProfilePage() {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
@@ -44,6 +48,13 @@ export default function FamilyProfilePage() {
     is_patient: false,
     occupation: '',
     monthly_income: 0,
+    debt_amount: 0,
+    school_name: '',
+    current_class: '',
+    monthly_school_fee: 0,
+    religion: '',
+    caste: '',
+    photo_url: '',
   });
 
   useEffect(() => {
@@ -69,6 +80,13 @@ export default function FamilyProfilePage() {
       is_patient: false,
       occupation: '',
       monthly_income: 0,
+      debt_amount: 0,
+      school_name: '',
+      current_class: '',
+      monthly_school_fee: 0,
+      religion: '',
+      caste: '',
+      photo_url: '',
     });
     setFieldErrors({});
     setError('');
@@ -181,31 +199,34 @@ export default function FamilyProfilePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="card" style={{ width: '100%', maxWidth: 760 }}>
-          <div className="skeleton skeleton-text" style={{ width: '220px', marginBottom: 16 }} />
-          <div className="info-grid" style={{ marginBottom: 18 }}>
-            <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 34 }} />
-            <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 34 }} />
-            <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 34 }} />
-            <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 34 }} />
-          </div>
-          <div className="skeleton skeleton-text" style={{ width: '180px', marginBottom: 14 }} />
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="skeleton-row" style={{ marginBottom: 10 }}>
-              <div className="skeleton skeleton-avatar" />
-              <div className="skeleton-col">
-                <div className="skeleton skeleton-text" style={{ width: '55%' }} />
-                <div className="skeleton skeleton-text-sm" style={{ width: '40%' }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const uploadPhotoToR2 = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file for member photo');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo size must be 5MB or less');
+      return;
+    }
+
+    setPhotoUploading(true);
+    setError('');
+    try {
+      const res = await storageAPI.uploadMemberPhoto(id, file);
+      const url = res.data?.file_url as string | undefined;
+      if (!url) {
+        throw new Error('Upload succeeded but no photo URL returned');
+      }
+      set('photo_url', url);
+    } catch (e) {
+      console.error('Photo upload failed:', e);
+      setError('Failed to upload photo. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  if (loading) return <FamilySubPageSkeleton />;
   if (!family) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Family not found.</div>;
 
   return (
@@ -331,6 +352,72 @@ export default function FamilyProfilePage() {
               </div>
 
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Additional Details</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Debt Amount (PKR)</label>
+                    <input type="number" className="form-control" value={form.debt_amount} onChange={e => set('debt_amount', Number(e.target.value))} placeholder="0" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Monthly School Fee (PKR)</label>
+                    <input type="number" className="form-control" value={form.monthly_school_fee} onChange={e => set('monthly_school_fee', Number(e.target.value))} placeholder="0" />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">School Name</label>
+                    <input className="form-control" value={form.school_name} onChange={e => set('school_name', e.target.value)} placeholder="School or madrasa" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Current Class</label>
+                    <input className="form-control" value={form.current_class} onChange={e => set('current_class', e.target.value)} placeholder="e.g. Grade 5" />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Religion</label>
+                    <input className="form-control" value={form.religion} onChange={e => set('religion', e.target.value)} placeholder="Religion" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Caste</label>
+                    <input className="form-control" value={form.caste} onChange={e => set('caste', e.target.value)} placeholder="Caste" />
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: 12, marginBottom: 0 }}>
+                  <label className="form-label">Photo Upload</label>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                    <label className="btn btn-secondary btn-sm" style={{ cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.7 : 1 }}>
+                      <Upload size={12} /> {photoUploading ? 'Uploading...' : 'Upload Photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        disabled={photoUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) await uploadPhotoToR2(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    {form.photo_url && (
+                      <span style={{ fontSize: 12, color: 'var(--green)' }}>Photo uploaded</span>
+                    )}
+                  </div>
+                  {form.photo_url && (
+                    <img
+                      src={form.photo_url}
+                      alt="Member preview"
+                      style={{ marginTop: 10, width: 84, height: 84, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Special Flags</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -354,7 +441,7 @@ export default function FamilyProfilePage() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={closeAddModal} disabled={submitting}>Cancel</button>
-              <button className="btn btn-primary" onClick={submitAddMember} disabled={submitting}>
+              <button className="btn btn-primary" onClick={submitAddMember} disabled={submitting || photoUploading}>
                 <Save size={14} /> {submitting ? 'Adding...' : 'Add Member'}
               </button>
             </div>
@@ -379,6 +466,13 @@ export default function FamilyProfilePage() {
                 <div className="info-item"><label>CNIC/B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
                 <div className="info-item"><label>Occupation</label><p>{selectedMember.occupation || '—'}</p></div>
                 <div className="info-item"><label>Monthly Income</label><p>PKR {selectedMember.monthly_income || 0}</p></div>
+                <div className="info-item"><label>Debt Amount</label><p>PKR {selectedMember.debt_amount || 0}</p></div>
+                <div className="info-item"><label>School Name</label><p>{selectedMember.school_name || '—'}</p></div>
+                <div className="info-item"><label>Current Class</label><p>{selectedMember.current_class || '—'}</p></div>
+                <div className="info-item"><label>Monthly School Fee</label><p>PKR {selectedMember.monthly_school_fee || 0}</p></div>
+                <div className="info-item"><label>Religion</label><p>{selectedMember.religion || '—'}</p></div>
+                <div className="info-item"><label>Caste</label><p>{selectedMember.caste || '—'}</p></div>
+                <div className="info-item" style={{ gridColumn: '1/-1' }}><label>Photo URL</label><p>{selectedMember.photo_url || '—'}</p></div>
               </div>
               <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}

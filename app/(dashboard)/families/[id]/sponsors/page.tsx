@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { sponsorshipsAPI, familiesAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Heart, Plus, User, Calendar, DollarSign } from 'lucide-react';
 
 interface SponsorshipSummary {
@@ -30,6 +31,8 @@ export default function FamilySponsorsPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
+  if (loading) return <FamilySubPageSkeleton />;
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -43,9 +46,7 @@ export default function FamilySponsorsPage() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" style={{ margin: '0 auto' }} /></div>
-        ) : sponsors.length === 0 ? (
+        {sponsors.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon"><Heart size={22} /></div>
             <h3>No Sponsors Found</h3>

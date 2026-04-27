@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { reportsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { FileText, Plus, Calendar, Download, Eye } from 'lucide-react';
 
 export default function FamilyReportsPage() {
@@ -23,6 +24,8 @@ export default function FamilyReportsPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  if (loading) return <FamilySubPageSkeleton />;
 
   const reportTypeColors: Record<string, string> = {
     progress: 'blue',
@@ -44,9 +47,7 @@ export default function FamilyReportsPage() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" style={{ margin: '0 auto' }} /></div>
-        ) : reports.length === 0 ? (
+        {reports.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon"><FileText size={22} /></div>
             <h3>No Reports Found</h3>

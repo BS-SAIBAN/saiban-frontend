@@ -9,9 +9,54 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let refreshRequest: Promise<string | null> | null = null;
+
+const isBrowser = () => typeof window !== 'undefined';
+
+const clearAuthStorage = () => {
+  if (!isBrowser()) return;
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+};
+
+const redirectToLogin = () => {
+  if (!isBrowser()) return;
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+};
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  if (!isBrowser()) return null;
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return null;
+
+  try {
+    const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+      refresh_token: refreshToken,
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const nextAccessToken = response.data?.access_token as string | undefined;
+    const nextRefreshToken = response.data?.refresh_token as string | undefined;
+
+    if (!nextAccessToken) return null;
+
+    localStorage.setItem('access_token', nextAccessToken);
+    if (nextRefreshToken) {
+      localStorage.setItem('refresh_token', nextRefreshToken);
+    }
+    return nextAccessToken;
+  } catch {
+    return null;
+  }
+};
+
 // Attach token on every request
 api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
+  if (isBrowser()) {
     const token = localStorage.getItem('access_token');
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,12 +66,39 @@ api.interceptors.request.use((config) => {
 // Handle 401 globally
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  async (error) => {
+    const status = error.response?.status;
+    const originalRequest = error.config as {
+      _retry?: boolean;
+      url?: string;
+      headers?: Record<string, string>;
+    };
+    const requestUrl = originalRequest?.url || '';
+    const isAuthRoute = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh');
+
+    if (status === 401 && isBrowser() && !isAuthRoute && !originalRequest?._retry) {
+      originalRequest._retry = true;
+
+      if (!refreshRequest) {
+        refreshRequest = refreshAccessToken().finally(() => {
+          refreshRequest = null;
+        });
+      }
+
+      const newAccessToken = await refreshRequest;
+      if (newAccessToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      }
+
+      clearAuthStorage();
+      redirectToLogin();
+    } else if (status === 401 && isBrowser() && isAuthRoute) {
+      clearAuthStorage();
+      redirectToLogin();
     }
+
     return Promise.reject(error);
   }
 );
@@ -37,6 +109,8 @@ export default api;
 export const authAPI = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+  refresh: (refreshToken: string) =>
+    api.post('/auth/refresh', { refresh_token: refreshToken }),
   me: () => api.get('/auth/me'),
 };
 
@@ -143,4 +217,18 @@ export const usersAPI = {
   list: () => api.get('/users'),
   create: (data: Record<string, unknown>) => api.post('/users', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/users/${id}`, data),
+};
+
+// ── Storage (R2) ───────────────────────────────────────
+export const storageAPI = {
+  uploadMemberPhoto: (familyId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('family_id', familyId);
+    // Use OTHER for generic member photos with current backend enum.
+    formData.append('document_type', 'OTHER');
+    return api.post('/storage/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { ArrowLeft, ClipboardList, Calendar, FileText, Edit, Trash2, AlertCircle } from 'lucide-react';
 
 interface Assessment {
@@ -63,7 +64,7 @@ export default function AssessmentDetailPage() {
     setShowDeleteConfirm(false);
   };
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
+  if (loading) return <FamilySubPageSkeleton />;
 
   if (error || !assessment) {
     return (

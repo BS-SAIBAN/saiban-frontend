@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { paymentsAPI, familiesAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { DollarSign, Plus, Calendar, Receipt } from 'lucide-react';
 
 interface PaymentSummary {
@@ -30,6 +31,8 @@ export default function FamilyPaymentsPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
+  if (loading) return <FamilySubPageSkeleton />;
+
   const statusColors: Record<string, string> = {
     pending: 'yellow',
     completed: 'green',
@@ -50,9 +53,7 @@ export default function FamilyPaymentsPage() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" style={{ margin: '0 auto' }} /></div>
-        ) : payments.length === 0 ? (
+        {payments.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon"><DollarSign size={22} /></div>
             <h3>No Payments Found</h3>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { individualsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { ArrowLeft, Save, User, Calendar, Briefcase, DollarSign, Shield, Heart } from 'lucide-react';
 
 export default function EditMemberPage() {
@@ -146,7 +147,7 @@ export default function EditMemberPage() {
     }
   };
 
-  if (fetchLoading) return <div className="loading-screen"><div className="spinner" /></div>;
+  if (fetchLoading) return <FamilySubPageSkeleton />;
 
   return (
     <div>

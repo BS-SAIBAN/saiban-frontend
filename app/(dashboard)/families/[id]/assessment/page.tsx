@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Plus, ClipboardList } from 'lucide-react';
 
 interface Assessment {
@@ -31,7 +32,7 @@ export default function FamilyAssessmentPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
+  if (loading) return <FamilySubPageSkeleton />;
 
   return (
     <div>

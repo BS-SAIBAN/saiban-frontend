@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Users, User, ClipboardList, Star, CheckSquare, Heart, DollarSign, FileText, ArrowLeft } from 'lucide-react';
 
 interface Family {
@@ -28,7 +29,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
+  if (loading) return <FamilySubPageSkeleton />;
 
   return (
     <div>
