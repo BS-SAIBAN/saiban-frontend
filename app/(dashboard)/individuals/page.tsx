@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { individualsAPI } from '@/lib/api';
-import { User, Plus, Search, Filter, Eye, MapPin, Calendar, Shield } from 'lucide-react';
+import { User, Search, Filter, Eye, MapPin, Calendar, X } from 'lucide-react';
 
 interface Individual {
   individual_id: string;
@@ -44,6 +44,8 @@ export default function IndividualsPage() {
   const [search, setSearch] = useState('');
   const [orphanFilter, setOrphanFilter] = useState('');
   const [childFilter, setChildFilter] = useState('');
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
 
   useEffect(() => {
     individualsAPI.list().then(r => {
@@ -76,6 +78,23 @@ export default function IndividualsPage() {
       age--;
     }
     return age;
+  };
+
+  const openMemberModal = (member: Individual) => {
+    setSelectedMember(member);
+    setShowMemberModal(true);
+  };
+
+  const closeMemberModal = () => {
+    setShowMemberModal(false);
+    setSelectedMember(null);
+  };
+
+  const formatDate = (date: string) => {
+    if (!date) return '—';
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return parsed.toLocaleDateString('en-PK');
   };
 
   return (
@@ -181,9 +200,14 @@ export default function IndividualsPage() {
                     </div>
                   </td>
                   <td>
-                    <Link href={`/families/${i.family_id}`} className="btn btn-secondary btn-sm">
-                      <Eye size={12} /> View Family
-                    </Link>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => openMemberModal(i)} className="btn btn-secondary btn-sm">
+                        <Eye size={12} /> View Member
+                      </button>
+                      <Link href={`/families/${i.family_id}`} className="btn btn-secondary btn-sm">
+                        View Family
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -191,6 +215,43 @@ export default function IndividualsPage() {
           </table>
         </div>
       </div>
+
+      {showMemberModal && selectedMember && (
+        <div className="modal-overlay" onClick={closeMemberModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Member Details</h2>
+              <button className="modal-close" onClick={closeMemberModal}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <div className="info-grid">
+                <div className="info-item"><label>Name</label><p>{selectedMember.full_name || '—'}</p></div>
+                <div className="info-item"><label>Gender</label><p style={{ textTransform: 'capitalize' }}>{selectedMember.gender || '—'}</p></div>
+                <div className="info-item"><label>Date of Birth</label><p>{formatDate(selectedMember.dob)}</p></div>
+                <div className="info-item"><label>Age</label><p>{selectedMember.dob ? `${calculateAge(selectedMember.dob)} years` : '—'}</p></div>
+                <div className="info-item"><label>CNIC / B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
+                <div className="info-item"><label>Relationship</label><p>{relationshipMap[selectedMember.relationship_to_head] || selectedMember.relationship_to_head}</p></div>
+                <div className="info-item"><label>Occupation</label><p>{selectedMember.occupation || '—'}</p></div>
+                <div className="info-item"><label>Monthly Income</label><p>PKR {selectedMember.monthly_income || 0}</p></div>
+                <div className="info-item"><label>Family</label><p>{selectedMember.family?.registration_number || '—'}</p></div>
+                <div className="info-item"><label>Area / City</label><p>{selectedMember.family ? `${selectedMember.family.area || '—'} / ${selectedMember.family.city || '—'}` : '—'}</p></div>
+              </div>
+              <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}
+                {selectedMember.is_child && <span className="badge badge-blue">Child</span>}
+                {selectedMember.is_disabled && <span className="badge badge-yellow">Disabled</span>}
+                {selectedMember.is_patient && <span className="badge badge-red">Patient</span>}
+                {!selectedMember.is_orphan && !selectedMember.is_child && !selectedMember.is_disabled && !selectedMember.is_patient && (
+                  <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>No special flags</span>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={closeMemberModal}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

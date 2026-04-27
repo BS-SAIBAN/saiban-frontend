@@ -98,7 +98,7 @@ export default function NewFamilyPage() {
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card" style={{ maxWidth: 640, margin: '0 auto' }}>
         {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
         {/* Step 0 — Category */}

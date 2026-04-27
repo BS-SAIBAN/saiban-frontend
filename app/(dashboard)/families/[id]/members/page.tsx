@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { individualsAPI } from '@/lib/api';
-import { User, Plus, Edit, Trash2, Calendar, MapPin, Shield, Briefcase, DollarSign, X, Save, Heart } from 'lucide-react';
+import { User, Plus, Edit, Trash2, Calendar, Shield, Briefcase, DollarSign, X, Save, Heart, Eye } from 'lucide-react';
 
 interface Individual {
   individual_id: string;
@@ -34,12 +33,15 @@ const relationshipMap: Record<string, string> = {
 
 export default function FamilyMembersPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [members, setMembers] = useState<Individual[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -107,6 +109,17 @@ export default function FamilyMembersPage() {
   const closeAddModal = () => {
     setShowAddModal(false);
     resetForm();
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingMemberId(null);
+    resetForm();
+  };
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setSelectedMember(null);
   };
 
   const safeSetError = (err: unknown) => {
@@ -214,6 +227,77 @@ export default function FamilyMembersPage() {
     }
   };
 
+  const openViewModal = (member: Individual) => {
+    setSelectedMember(member);
+    setShowViewModal(true);
+  };
+
+  const openEditModal = (member: Individual) => {
+    const dobForInput = member.dob?.includes('T') ? member.dob.split('T')[0] : member.dob;
+    setForm({
+      full_name: member.full_name || '',
+      gender: member.gender || 'male',
+      dob: dobForInput || '',
+      cnic_or_bform: member.cnic_or_bform || '',
+      relationship_to_head: member.relationship_to_head || 'head',
+      is_orphan: Boolean(member.is_orphan),
+      is_child: Boolean(member.is_child),
+      is_disabled: Boolean(member.is_disabled),
+      is_patient: Boolean(member.is_patient),
+      occupation: member.occupation || '',
+      monthly_income: Number(member.monthly_income || 0),
+    });
+    setEditingMemberId(member.individual_id);
+    setShowEditModal(true);
+    setError('');
+    setFieldErrors({});
+  };
+
+  const submitEditMember = async () => {
+    if (!editingMemberId) return;
+    if (!validateField('all')) {
+      setError('Please fix the validation errors');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await individualsAPI.update(editingMemberId, form);
+      setMembers(prev => prev.map(m => (
+        m.individual_id === editingMemberId ? res.data : m
+      )));
+      closeEditModal();
+    } catch (e: unknown) {
+      console.error('Error updating member:', e);
+      let errorMsg = 'Failed to update member';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response: { data?: unknown } }).response;
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === 'string') {
+            errorMsg = data;
+          } else if (typeof data === 'object' && data !== null && 'detail' in data) {
+            const detail = (data as { detail: unknown }).detail;
+            if (typeof detail === 'string') {
+              errorMsg = detail;
+            } else if (Array.isArray(detail) && detail.length > 0) {
+              const firstError = detail[0];
+              if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
+                errorMsg = String((firstError as { msg: string }).msg);
+              }
+            }
+          }
+        }
+      } else if (e instanceof Error) {
+        errorMsg = e.message;
+      }
+      safeSetError(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
 
   return (
@@ -288,9 +372,12 @@ export default function FamilyMembersPage() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <Link href={`/families/${id}/members/${m.individual_id}/edit`} className="btn btn-secondary btn-sm">
+                        <button onClick={() => openViewModal(m)} className="btn btn-secondary btn-sm" title="View member">
+                          <Eye size={12} />
+                        </button>
+                        <button onClick={() => openEditModal(m)} className="btn btn-secondary btn-sm" title="Edit member">
                           <Edit size={12} />
-                        </Link>
+                        </button>
                         <button onClick={() => handleDelete(m.individual_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
                           <Trash2 size={12} />
                         </button>
@@ -304,12 +391,12 @@ export default function FamilyMembersPage() {
         )}
       </div>
 
-      {showAddModal && (
-        <div className="modal-overlay" onClick={closeAddModal}>
+      {(showAddModal || showEditModal) && (
+        <div className="modal-overlay" onClick={showAddModal ? closeAddModal : closeEditModal}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Add Family Member</h2>
-              <button className="modal-close" onClick={closeAddModal}><X size={18} /></button>
+              <h2>{showEditModal ? 'Edit Family Member' : 'Add Family Member'}</h2>
+              <button className="modal-close" onClick={showAddModal ? closeAddModal : closeEditModal}><X size={18} /></button>
             </div>
             <div className="modal-body">
               {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
@@ -387,9 +474,51 @@ export default function FamilyMembersPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={closeAddModal} disabled={submitting}>Cancel</button>
-              <button className="btn btn-primary" onClick={submitAddMember} disabled={submitting}>
-                <Save size={14} /> {submitting ? 'Adding...' : 'Add Member'}
+              <button className="btn btn-secondary" onClick={showAddModal ? closeAddModal : closeEditModal} disabled={submitting}>Cancel</button>
+              <button className="btn btn-primary" onClick={showEditModal ? submitEditMember : submitAddMember} disabled={submitting}>
+                <Save size={14} /> {submitting ? (showEditModal ? 'Updating...' : 'Adding...') : (showEditModal ? 'Update Member' : 'Add Member')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showViewModal && selectedMember && (
+        <div className="modal-overlay" onClick={closeViewModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Member Details</h2>
+              <button className="modal-close" onClick={closeViewModal}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <div className="info-grid" style={{ marginBottom: 16 }}>
+                <div className="info-item"><label>Full Name</label><p>{selectedMember.full_name || '—'}</p></div>
+                <div className="info-item"><label>CNIC / B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
+                <div className="info-item"><label>Age</label><p>{selectedMember.dob ? `${calculateAge(selectedMember.dob)} years` : '—'}</p></div>
+                <div className="info-item"><label>Date of Birth</label><p>{selectedMember.dob ? (selectedMember.dob.includes('T') ? selectedMember.dob.split('T')[0] : selectedMember.dob) : '—'}</p></div>
+                <div className="info-item"><label>Gender</label><p style={{ textTransform: 'capitalize' }}>{selectedMember.gender || '—'}</p></div>
+                <div className="info-item"><label>Relationship</label><p>{relationshipMap[selectedMember.relationship_to_head] || selectedMember.relationship_to_head || '—'}</p></div>
+                <div className="info-item"><label>Occupation</label><p>{selectedMember.occupation || '—'}</p></div>
+                <div className="info-item"><label>Monthly Income</label><p>PKR {selectedMember.monthly_income || 0}</p></div>
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: 10, fontSize: 13 }}>Special Flags</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}
+                  {selectedMember.is_child && <span className="badge badge-blue">Child</span>}
+                  {selectedMember.is_disabled && <span className="badge badge-yellow">Disabled</span>}
+                  {selectedMember.is_patient && <span className="badge badge-red">Patient</span>}
+                  {!selectedMember.is_orphan && !selectedMember.is_child && !selectedMember.is_disabled && !selectedMember.is_patient && (
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No special flags</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={closeViewModal}>Close</button>
+              <button className="btn btn-primary" onClick={() => { closeViewModal(); openEditModal(selectedMember); }}>
+                <Edit size={14} /> Edit Member
               </button>
             </div>
           </div>
