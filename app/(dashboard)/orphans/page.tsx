@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { orphansAPI } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import { familiesAPI, individualsAPI, orphansAPI } from '@/lib/api';
 import { Baby, Search, User, Eye, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Orphan {
-  orphan_profile_id: string; individual_id: string; family_id: string;
+  orphan_profile_id: string; individual_id: string; family_id?: string;
   deceased_father_name: string; mother_name: string; mother_alive: boolean;
   mother_remarried: boolean; priority_flag: boolean; age_at_registration: number;
   zakat_eligibility: string; school_name: string; current_class: string;
@@ -14,33 +14,64 @@ interface Orphan {
   family?: { registration_number: string };
 }
 
+interface IndividualLite {
+  individual_id: string;
+  full_name?: string;
+  family_id?: string;
+}
+
+interface FamilyLite {
+  family_id: string;
+  registration_number: string;
+}
+
 const hasValidFamilyId = (familyId?: string): familyId is string =>
   typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
 
 export default function OrphansPage() {
   const [orphans, setOrphans] = useState<Orphan[]>([]);
-  const [filtered, setFiltered] = useState<Orphan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [individualsById, setIndividualsById] = useState<Record<string, IndividualLite>>({});
+  const [familiesById, setFamiliesById] = useState<Record<string, FamilyLite>>({});
 
   useEffect(() => {
-    orphansAPI.list().then(r => {
-      const data = Array.isArray(r.data) ? r.data : [];
-      setOrphans(data); setFiltered(data);
+    Promise.all([orphansAPI.list(), individualsAPI.list(), familiesAPI.list()]).then(([orphansRes, individualsRes, familiesRes]) => {
+      const orphanData = Array.isArray(orphansRes.data) ? orphansRes.data : [];
+      setOrphans(orphanData);
+      const individuals = Array.isArray(individualsRes.data) ? individualsRes.data : [];
+      const individualsMap = individuals.reduce((acc: Record<string, IndividualLite>, individual: IndividualLite) => {
+        if (individual?.individual_id) acc[individual.individual_id] = individual;
+        return acc;
+      }, {});
+      setIndividualsById(individualsMap);
+      const families = Array.isArray(familiesRes.data?.data) ? familiesRes.data.data : [];
+      const familiesMap = families.reduce((acc: Record<string, FamilyLite>, family: FamilyLite) => {
+        if (family?.family_id) acc[family.family_id] = family;
+        return acc;
+      }, {});
+      setFamiliesById(familiesMap);
     }).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
+  const filtered = useMemo(() => {
     let result = [...orphans];
-    if (search) result = result.filter(o =>
-      o.individual?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      o.family?.registration_number?.toLowerCase().includes(search.toLowerCase())
-    );
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(o => {
+        const linkedIndividual = individualsById[o.individual_id];
+        const linkedFamilyId = o.family_id || linkedIndividual?.family_id;
+        const linkedFamily = linkedFamilyId ? familiesById[linkedFamilyId] : null;
+        const name = linkedIndividual?.full_name || o.individual?.full_name || '';
+        const registration = linkedFamily?.registration_number || o.family?.registration_number || '';
+        return name.toLowerCase().includes(q) || registration.toLowerCase().includes(q);
+      });
+    }
     if (priorityFilter === 'priority') result = result.filter(o => o.priority_flag);
     if (priorityFilter === 'non_priority') result = result.filter(o => !o.priority_flag);
-    setFiltered(result);
-  }, [search, priorityFilter, orphans]);
+    return result;
+  }, [search, priorityFilter, orphans, individualsById, familiesById]);
 
   const zakatLabel: Record<string, { label: string; color: string }> = {
     not_sahib_e_nisab: { label: 'Zakat Eligible', color: 'green' },
@@ -122,13 +153,16 @@ export default function OrphansPage() {
                 </td></tr>
               ) : filtered.map(o => {
                 const zakat = zakatLabel[o.zakat_eligibility] || { label: '—', color: 'gray' };
+                const linkedIndividual = individualsById[o.individual_id];
+                const linkedFamilyId = o.family_id || linkedIndividual?.family_id;
+                const linkedFamily = linkedFamilyId ? familiesById[linkedFamilyId] : null;
                 return (
                   <tr key={o.orphan_profile_id}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{o.individual?.full_name || '—'}</div>
+                      <div style={{ fontWeight: 600 }}>{linkedIndividual?.full_name || o.individual?.full_name || '—'}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.deceased_father_name ? `Father: ${o.deceased_father_name}` : ''}</div>
                     </td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{o.family?.registration_number || '—'}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{linkedFamily?.registration_number || o.family?.registration_number || '—'}</td>
                     <td style={{ textAlign: 'center' }}>
                       <span style={{ color: (o.age_at_registration || 0) > 12 ? 'var(--red)' : 'var(--text-primary)', fontWeight: 600 }}>
                         {o.age_at_registration || '—'}
@@ -143,8 +177,8 @@ export default function OrphansPage() {
                     <td>{o.priority_flag ? <span className="badge badge-yellow">⭐ Priority</span> : <span className="badge badge-gray">Normal</span>}</td>
                     <td>{o.mother_alive ? <span className="badge badge-green">Yes</span> : <span className="badge badge-red">No</span>}</td>
                     <td>
-                      {hasValidFamilyId(o.family_id) ? (
-                        <Link href={`/families/${o.family_id}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
+                      {hasValidFamilyId(linkedFamilyId) ? (
+                        <Link href={`/families/${linkedFamilyId}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>No Family Link</span>
                       )}

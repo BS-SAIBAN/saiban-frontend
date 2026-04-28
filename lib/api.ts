@@ -141,7 +141,7 @@ export const individualsAPI = {
 
 // ── Orphans ───────────────────────────────────────────
 export const orphansAPI = {
-  list: (familyId?: string) => api.get('/orphans', { params: isValidEntityId(familyId) ? { family_id: familyId } : {} }),
+  list: (params?: QueryParams) => api.get('/orphans', { params }),
   get: (id: string) => api.get(`/orphans/${id}`),
   create: (data: Record<string, unknown>) => api.post('/orphans', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/orphans/${id}`, data),
@@ -171,6 +171,7 @@ export const scoringAPI = {
 // ── Approvals ─────────────────────────────────────────
 export const approvalsAPI = {
   list: (params?: QueryParams) => api.get('/approvals', { params }),
+  queue: (params?: QueryParams) => api.get('/approvals/queue', { params }),
   get: (id: string) => api.get(`/approvals/${id}`),
   decide: (assessmentId: string, data: { decision: string; remarks?: string }) =>
     api.post('/approvals/workflow', { assessment_id: assessmentId, ...data }),

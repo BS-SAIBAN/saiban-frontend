@@ -108,8 +108,6 @@ export default function EditFamilyPage() {
           <select className="form-control" value={form.housing_type} onChange={e => setForm(prev => ({ ...prev, housing_type: e.target.value }))}>
             <option value="rented">Rented</option>
             <option value="owned">Owned</option>
-            <option value="shared">Shared</option>
-            <option value="temporary">Temporary</option>
           </select>
         </div>
 

@@ -66,7 +66,9 @@ export default function DashboardPage() {
       orphansAPI.list(),
       individualsAPI.list(),
     ]).then(([fams, alts, donors, payments, orphans, individuals]) => {
-      const famData = fams.status === 'fulfilled' ? fams.value.data : [];
+      const famData = fams.status === 'fulfilled'
+        ? (Array.isArray(fams.value.data?.data) ? fams.value.data.data : [])
+        : [];
       const altData = alts.status === 'fulfilled' ? alts.value.data : [];
       const donorsData = donors.status === 'fulfilled' ? donors.value.data : {};
       const paymentsData = payments.status === 'fulfilled' ? payments.value.data : {};

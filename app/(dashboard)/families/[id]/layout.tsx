@@ -16,6 +16,7 @@ const statusColor: Record<string, string> = {
   pending_assessment: 'gray', assessed: 'blue', scoring: 'yellow',
   approved: 'green', rejected: 'red', reassessment: 'purple',
 };
+const finalDecisionStatuses = ['approved', 'rejected', 'reassessment'];
 
 const isValidFamilyRouteId = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
@@ -57,6 +58,11 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
                 <span className={`badge badge-${family.category === 'FA' ? 'blue' : 'purple'}`}>{family.category}</span>
                 <span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span>
               </div>
+              {finalDecisionStatuses.includes(family.status) && (
+                <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                  Scoring completed before this final decision.
+                </div>
+              )}
               <p style={{ marginTop: 4 }}>{family.area}, {family.city}</p>
             </div>
           </div>

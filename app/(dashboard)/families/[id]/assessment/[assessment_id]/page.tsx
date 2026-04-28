@@ -53,6 +53,7 @@ export default function AssessmentDetailPage() {
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const formatDate = (value?: string | null) => {
     if (!value) return '—';
@@ -99,13 +100,25 @@ export default function AssessmentDetailPage() {
     try {
       await assessmentsAPI.delete(assessment_id);
       router.push(`/families/${id}/assessment`);
-    } catch (err) {
+    } catch {
       setDeleteError('Failed to delete assessment');
     }
   };
 
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
+  };
+
+  const submitAssessment = async () => {
+    setSubmitting(true);
+    try {
+      await assessmentsAPI.submit(assessment_id);
+      router.push(`/families/${id}/assessment`);
+    } catch {
+      setDeleteError('Failed to submit assessment');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <FamilySubPageSkeleton variant="detail" />;
@@ -153,6 +166,9 @@ export default function AssessmentDetailPage() {
                 <Link href={`/families/${id}/assessment/${assessment_id}/edit`} className="btn btn-secondary btn-sm">
                   <Edit size={14} /> Edit
                 </Link>
+                <button onClick={submitAssessment} className="btn btn-primary btn-sm" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit'}
+                </button>
                 <button onClick={handleDelete} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
                   <Trash2 size={14} />
                 </button>

@@ -2,20 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { approvalsAPI } from '@/lib/api';
-import { CheckSquare, CheckCircle, XCircle, RotateCcw, X } from 'lucide-react';
+import { CheckSquare, X } from 'lucide-react';
 
 interface Approval {
-  approval_id: string;
-  assessment_id?: string;
+  assessment_id: string;
   family_registration_number: string;
   family_area: string;
-  decision?: string;
-  decided_at?: string;
-  reviewer_name?: string;
-  assessment_score?: number;
+  submitted_at?: string;
+  score?: number;
   eligibility_status?: string;
-  remarks?: string;
-  assessment?: { status?: string; family_id?: string; family?: { registration_number?: string; category?: string } };
+  priority?: boolean;
+  days_in_queue?: number;
 }
 
 export default function ApprovalsPage() {
@@ -27,19 +24,9 @@ export default function ApprovalsPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    approvalsAPI.list().then(r => {
+    approvalsAPI.queue().then(r => {
       const data = Array.isArray(r.data) ? r.data : [];
-      setApprovals(data.map((item: Approval) => ({
-        ...item,
-        assessment_id: item.assessment_id || item.approval_id,
-        remarks: item.reviewer_name,
-        assessment: {
-          family: {
-            registration_number: item.family_registration_number,
-            category: item.eligibility_status,
-          },
-        },
-      })));
+      setApprovals(data);
     }).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
@@ -48,29 +35,13 @@ export default function ApprovalsPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await approvalsAPI.decide(selected.assessment_id || selected.approval_id, { decision, remarks });
+      await approvalsAPI.decide(selected.assessment_id, { decision, remarks });
       setSelected(null); setDecision(''); setRemarks('');
       load();
     } catch { /* handled */ } finally { setSaving(false); }
   };
 
-  const openReview = async (approval: Approval) => {
-    try {
-      const { data } = await approvalsAPI.get(approval.approval_id);
-      setSelected({
-        ...approval,
-        assessment_id: data.assessment?.assessment_id || approval.assessment_id || approval.approval_id,
-      });
-    } catch {
-      setSelected(approval);
-    }
-  };
-
-  const decisionConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-    approved: { color: 'green', icon: <CheckCircle size={14} />, label: 'Approved' },
-    rejected: { color: 'red', icon: <XCircle size={14} />, label: 'Rejected' },
-    reassessment: { color: 'yellow', icon: <RotateCcw size={14} />, label: 'Reassessment' },
-  };
+  const openReview = async (approval: Approval) => setSelected(approval);
 
   return (
     <div>
@@ -85,10 +56,10 @@ export default function ApprovalsPage() {
               <tr>
                 <th>Assessment ID</th>
                 <th>Family Reg. #</th>
-                <th>Category</th>
-                <th>Decision</th>
-                <th>Remarks</th>
-                <th>Decided At</th>
+                <th>Area</th>
+                <th>Score</th>
+                <th>Eligibility</th>
+                <th>Submitted</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -103,26 +74,21 @@ export default function ApprovalsPage() {
                     <p>All assessments have been reviewed.</p>
                   </div>
                 </td></tr>
-              ) : approvals.map(a => {
-                const cfg = a.decision ? decisionConfig[a.decision] : null;
-                return (
-                  <tr key={a.approval_id}>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{a.assessment_id?.slice(0, 8)}…</td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.assessment?.family?.registration_number || '—'}</td>
-                    <td>{a.assessment?.family?.category ? <span className={`badge badge-${a.assessment.family.category === 'FA' ? 'blue' : 'purple'}`}>{a.assessment.family.category}</span> : '—'}</td>
-                    <td>{cfg ? <span className={`badge badge-${cfg.color}`}>{cfg.icon} {cfg.label}</span> : <span className="badge badge-gray">Pending</span>}</td>
-                    <td style={{ color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.remarks || '—'}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{a.decided_at ? new Date(a.decided_at).toLocaleDateString() : '—'}</td>
+              ) : approvals.map(a => (
+                  <tr key={a.assessment_id}>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{a.assessment_id.slice(0, 8)}…</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.family_registration_number || '—'}</td>
+                    <td>{a.family_area || '—'}</td>
+                    <td>{a.score ?? '—'}</td>
+                    <td>{a.eligibility_status ? <span className="badge badge-blue">{a.eligibility_status.replace(/_/g, ' ')}</span> : '—'}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
                     <td>
-                      {!a.decision && (
-                        <button className="btn btn-primary btn-sm" onClick={() => openReview(a)}>
-                          <CheckSquare size={12} /> Review
-                        </button>
-                      )}
+                      <button className="btn btn-primary btn-sm" onClick={() => openReview(a)}>
+                        <CheckSquare size={12} /> Review
+                      </button>
                     </td>
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>

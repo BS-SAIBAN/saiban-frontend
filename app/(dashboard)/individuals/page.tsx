@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { individualsAPI } from '@/lib/api';
+import { familiesAPI, individualsAPI } from '@/lib/api';
 import { User, Search, Filter, Eye, MapPin, Calendar, X } from 'lucide-react';
 
 interface Individual {
@@ -27,6 +27,13 @@ interface Individual {
   };
 }
 
+interface FamilyLite {
+  family_id: string;
+  registration_number: string;
+  area?: string;
+  city?: string;
+}
+
 const hasValidFamilyId = (familyId?: string): familyId is string =>
   typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
 
@@ -42,23 +49,28 @@ const relationshipMap: Record<string, string> = {
 
 export default function IndividualsPage() {
   const [individuals, setIndividuals] = useState<Individual[]>([]);
-  const [filtered, setFiltered] = useState<Individual[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [orphanFilter, setOrphanFilter] = useState('');
   const [childFilter, setChildFilter] = useState('');
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
+  const [familiesById, setFamiliesById] = useState<Record<string, FamilyLite>>({});
 
   useEffect(() => {
-    individualsAPI.list().then(r => {
-      const data = Array.isArray(r.data) ? r.data : [];
+    Promise.all([individualsAPI.list(), familiesAPI.list()]).then(([individualRes, familyRes]) => {
+      const data = Array.isArray(individualRes.data) ? individualRes.data : [];
       setIndividuals(data);
-      setFiltered(data);
+      const families = Array.isArray(familyRes.data?.data) ? familyRes.data.data : [];
+      const map = families.reduce((acc: Record<string, FamilyLite>, family: FamilyLite) => {
+        if (family?.family_id) acc[family.family_id] = family;
+        return acc;
+      }, {});
+      setFamiliesById(map);
     }).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
+  const filtered = useMemo(() => {
     let result = [...individuals];
     if (search) result = result.filter(i =>
       i.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,7 +81,7 @@ export default function IndividualsPage() {
     if (orphanFilter === 'non-orphan') result = result.filter(i => !i.is_orphan);
     if (childFilter === 'child') result = result.filter(i => i.is_child);
     if (childFilter === 'adult') result = result.filter(i => !i.is_child);
-    setFiltered(result);
+    return result;
   }, [search, orphanFilter, childFilter, individuals]);
 
   const calculateAge = (dob: string) => {
@@ -186,10 +198,10 @@ export default function IndividualsPage() {
                   <td><span style={{ textTransform: 'capitalize' }}>{i.gender}</span></td>
                   <td>{relationshipMap[i.relationship_to_head] || i.relationship_to_head}</td>
                   <td>
-                    {i.family && hasValidFamilyId(i.family.family_id) ? (
-                      <Link href={`/families/${i.family.family_id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+                    {hasValidFamilyId(i.family_id) ? (
+                      <Link href={`/families/${i.family_id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
-                          <MapPin size={12} /> {i.family.registration_number}
+                          <MapPin size={12} /> {familiesById[i.family_id]?.registration_number || i.family?.registration_number || '—'}
                         </span>
                       </Link>
                     ) : '—'}
@@ -240,8 +252,8 @@ export default function IndividualsPage() {
                 <div className="info-item"><label>Relationship</label><p>{relationshipMap[selectedMember.relationship_to_head] || selectedMember.relationship_to_head}</p></div>
                 <div className="info-item"><label>Occupation</label><p>{selectedMember.occupation || '—'}</p></div>
                 <div className="info-item"><label>Monthly Income</label><p>PKR {selectedMember.monthly_income || 0}</p></div>
-                <div className="info-item"><label>Family</label><p>{selectedMember.family?.registration_number || '—'}</p></div>
-                <div className="info-item"><label>Area / City</label><p>{selectedMember.family ? `${selectedMember.family.area || '—'} / ${selectedMember.family.city || '—'}` : '—'}</p></div>
+                <div className="info-item"><label>Family</label><p>{selectedMember.family_id ? (familiesById[selectedMember.family_id]?.registration_number || selectedMember.family?.registration_number || '—') : '—'}</p></div>
+                <div className="info-item"><label>Area / City</label><p>{selectedMember.family_id ? `${familiesById[selectedMember.family_id]?.area || selectedMember.family?.area || '—'} / ${familiesById[selectedMember.family_id]?.city || selectedMember.family?.city || '—'}` : '—'}</p></div>
               </div>
               <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}

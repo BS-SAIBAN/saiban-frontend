@@ -9,6 +9,7 @@ import { Star, Calculator } from 'lucide-react';
 
 interface AssessmentSummary {
   assessment_id: string;
+  assessment_date?: string;
   status: string;
 }
 
@@ -22,6 +23,8 @@ export default function FamilyScoringPage() {
   const [scoreId, setScoreId] = useState('');
   const [eligibilityStatus, setEligibilityStatus] = useState('need_review');
   const [overrideRemarks, setOverrideRemarks] = useState('');
+  const [error, setError] = useState('');
+  const [scoreMessage, setScoreMessage] = useState('');
 
   useEffect(() => {
     assessmentsAPI.list({ family_id: id }).then(r => {
@@ -30,14 +33,17 @@ export default function FamilyScoringPage() {
 
       const latestAssessment = data[0];
       if (!latestAssessment?.assessment_id) return;
-      if (['SCORED', 'APPROVED', 'REJECTED', 'REASSESSMENT_REQUIRED'].includes(latestAssessment.status)) {
+      if (['scored', 'approved', 'rejected', 'reassessment_required'].includes(latestAssessment.status)) {
         scoringAPI.calculate(latestAssessment.assessment_id).then(({ data: result }) => {
           if (result?.success) {
             setScore(result.auto_score || 0);
             setEligibilityStatus(result.eligibility_status || 'need_review');
             setScoreId(result.score_id || '');
+            setScoreMessage(result.message || '');
           }
-        }).catch(() => {});
+        }).catch(() => {
+          setError('Unable to load saved scoring result.');
+        });
       }
     }).catch(() => {
       setAssessments([]);
@@ -51,13 +57,22 @@ export default function FamilyScoringPage() {
   const calculateScore = async (recalculate = true) => {
     if (!currentAssessment?.assessment_id) return;
     setLoading(true);
+    setError('');
     try {
       const { data } = await scoringAPI.calculate(currentAssessment.assessment_id, recalculate);
       if (data?.success) {
         setScore(data.auto_score || 0);
         setEligibilityStatus(data.eligibility_status || 'need_review');
         setScoreId(data.score_id || '');
+        setScoreMessage(data.message || '');
       }
+    } catch (e: unknown) {
+      let message = 'Failed to calculate score';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response?: { data?: { detail?: string } } }).response;
+        if (response?.data?.detail) message = response.data.detail;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -65,6 +80,7 @@ export default function FamilyScoringPage() {
 
   const submitScore = async () => {
     setLoading(true);
+    setError('');
     try {
       let resultId = scoreId;
 
@@ -75,6 +91,7 @@ export default function FamilyScoringPage() {
           setScoreId(resultId);
           setScore(data.auto_score || score);
           setEligibilityStatus(data.eligibility_status || eligibilityStatus);
+          setScoreMessage(data.message || '');
         }
       }
 
@@ -88,7 +105,7 @@ export default function FamilyScoringPage() {
       router.push(`/families/${id}`);
     } catch (e) {
       console.error('Error submitting score:', e);
-      alert('Failed to submit score');
+      setError('Failed to submit score');
     } finally {
       setLoading(false);
     }
@@ -115,6 +132,33 @@ export default function FamilyScoringPage() {
           </div>
         ) : (
           <>
+            {currentAssessment && (
+              <div style={{ padding: 12, marginBottom: 16, background: 'var(--accent-glow)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                    Assessment status: <strong style={{ textTransform: 'capitalize', color: 'var(--text-primary)' }}>{currentAssessment.status.replace(/_/g, ' ')}</strong>
+                  </span>
+                  {scoreId && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      Score record: {scoreId.slice(0, 8)}...
+                    </span>
+                  )}
+                </div>
+                {['approved', 'rejected', 'reassessment_required'].includes(currentAssessment.status) && (
+                  <p style={{ marginTop: 8, marginBottom: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
+                    Decision has already been recorded. Displayed score is the saved scoring evidence used in workflow.
+                  </p>
+                )}
+                {scoreMessage && (
+                  <p style={{ marginTop: 8, marginBottom: 0, color: 'var(--text-muted)', fontSize: 12 }}>{scoreMessage}</p>
+                )}
+              </div>
+            )}
+            {error && (
+              <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
             <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div style={{ padding: 20, background: 'var(--accent-glow)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'center' }}>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8 }}>Calculated Score</div>

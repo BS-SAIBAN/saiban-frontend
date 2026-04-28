@@ -16,14 +16,19 @@ interface Assessment {
 }
 
 const statusColor: Record<string, string> = {
-  pending_assessment: 'gray', assessed: 'blue', scoring: 'yellow',
-  approved: 'green', rejected: 'red', reassessment: 'purple',
+  draft: 'gray',
+  submitted: 'blue',
+  scored: 'yellow',
+  approved: 'green',
+  rejected: 'red',
+  reassessment_required: 'purple',
 };
 
 export default function FamilyAssessmentPage() {
   const { id } = useParams<{ id: string }>();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   useEffect(() => {
     assessmentsAPI.list({ family_id: id }).then(r => {
@@ -33,6 +38,20 @@ export default function FamilyAssessmentPage() {
   }, [id]);
 
   if (loading) return <FamilySubPageSkeleton variant="table" />;
+
+  const submitAssessment = async (assessmentId: string) => {
+    setSubmittingId(assessmentId);
+    try {
+      await assessmentsAPI.submit(assessmentId);
+      const refreshed = await assessmentsAPI.list({ family_id: id });
+      setAssessments(Array.isArray(refreshed.data) ? refreshed.data : []);
+    } catch (e) {
+      console.error('Failed to submit assessment:', e);
+      alert('Failed to submit assessment');
+    } finally {
+      setSubmittingId(null);
+    }
+  };
 
   return (
     <div>
@@ -51,7 +70,7 @@ export default function FamilyAssessmentPage() {
           <div className="empty-state">
             <div className="empty-state-icon"><ClipboardList size={22} /></div>
             <h3>No assessments conducted yet</h3>
-            <p>Conduct an assessment to evaluate the family's needs</p>
+            <p>Conduct an assessment to evaluate the family&apos;s needs</p>
             <Link href={`/families/${id}/assessment/new`} className="btn btn-primary" style={{ marginTop: 16 }}>
               <Plus size={14} /> Conduct First Assessment
             </Link>
@@ -73,7 +92,20 @@ export default function FamilyAssessmentPage() {
                     <td style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)', fontSize: 12 }}>{a.assessment_id.slice(0, 8)}…</td>
                     <td>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
                     <td><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
-                    <td><Link href={`/families/${id}/assessment/${a.assessment_id}`} className="btn btn-secondary btn-sm">View</Link></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <Link href={`/families/${id}/assessment/${a.assessment_id}`} className="btn btn-secondary btn-sm">View</Link>
+                        {a.status === 'draft' && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => submitAssessment(a.assessment_id)}
+                            disabled={submittingId === a.assessment_id}
+                          >
+                            {submittingId === a.assessment_id ? 'Submitting...' : 'Submit'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

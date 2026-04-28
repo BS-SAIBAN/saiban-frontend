@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { assessmentsAPI } from '@/lib/api';
 import { ClipboardList, Search, Eye, Filter } from 'lucide-react';
 import Link from 'next/link';
@@ -8,7 +8,10 @@ import Link from 'next/link';
 interface Assessment {
   assessment_id: string; family_id: string; status: string;
   assessment_date: string; submitted_at?: string;
-  family?: { registration_number: string; category: string; area: string; city: string };
+  family_registration_number?: string;
+  family_category?: string;
+  family_area?: string;
+  family_city?: string;
 }
 
 const statusColor: Record<string, string> = {
@@ -18,7 +21,6 @@ const statusColor: Record<string, string> = {
 
 export default function AssessmentsPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [filtered, setFiltered] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -26,17 +28,17 @@ export default function AssessmentsPage() {
   useEffect(() => {
     assessmentsAPI.list().then(r => {
       const data = Array.isArray(r.data) ? r.data : [];
-      setAssessments(data); setFiltered(data);
+      setAssessments(data);
     }).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
+  const filtered = useMemo(() => {
     let result = [...assessments];
     if (search) result = result.filter(a =>
-      a.family?.registration_number?.toLowerCase().includes(search.toLowerCase())
+      a.family_registration_number?.toLowerCase().includes(search.toLowerCase())
     );
     if (statusFilter) result = result.filter(a => a.status === statusFilter);
-    setFiltered(result);
+    return result;
   }, [search, statusFilter, assessments]);
 
   return (
@@ -93,9 +95,9 @@ export default function AssessmentsPage() {
               ) : filtered.map(a => (
                 <tr key={a.assessment_id}>
                   <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{a.assessment_id?.slice(0, 8)}…</td>
-                  <td style={{ fontFamily: 'monospace' }}>{a.family?.registration_number || '—'}</td>
-                  <td>{a.family?.category ? <span className={`badge badge-${a.family.category === 'FA' ? 'blue' : 'purple'}`}>{a.family.category}</span> : '—'}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{a.family?.area}, {a.family?.city}</td>
+                  <td style={{ fontFamily: 'monospace' }}>{a.family_registration_number || '—'}</td>
+                  <td>{a.family_category ? <span className={`badge badge-${a.family_category === 'FA' ? 'blue' : 'purple'}`}>{a.family_category}</span> : '—'}</td>
+                  <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{a.family_area || '—'}{a.family_city ? `, ${a.family_city}` : ''}</td>
                   <td><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
                   <td style={{ color: 'var(--text-muted)' }}>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
