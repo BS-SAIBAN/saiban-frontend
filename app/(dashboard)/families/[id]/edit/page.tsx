@@ -65,7 +65,7 @@ export default function EditFamilyPage() {
     }
   };
 
-  if (fetchLoading) return <FamilySubPageSkeleton />;
+  if (fetchLoading) return <FamilySubPageSkeleton variant="form" />;
 
   return (
     <div>

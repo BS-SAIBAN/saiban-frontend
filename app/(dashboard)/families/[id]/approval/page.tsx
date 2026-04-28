@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { approvalsAPI, assessmentsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { CheckSquare, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react';
 
 interface AssessmentSummary {
@@ -15,6 +16,7 @@ interface AssessmentSummary {
 export default function FamilyApprovalPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [assessments, setAssessments] = useState<AssessmentSummary[]>([]);
   const [decision, setDecision] = useState('');
@@ -23,7 +25,9 @@ export default function FamilyApprovalPage() {
   useEffect(() => {
     assessmentsAPI.list({ family_id: id }).then(r => {
       setAssessments(Array.isArray(r.data) ? r.data : []);
-    });
+    }).catch(() => {
+      setAssessments([]);
+    }).finally(() => setFetchLoading(false));
   }, [id]);
 
   const submitDecision = async () => {
@@ -42,6 +46,8 @@ export default function FamilyApprovalPage() {
       setLoading(false);
     }
   };
+
+  if (fetchLoading) return <FamilySubPageSkeleton variant="detail" />;
 
   return (
     <div>

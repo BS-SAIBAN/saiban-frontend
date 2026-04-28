@@ -25,7 +25,7 @@ export default function FamilyReportsPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="table" />;
 
   const reportTypeColors: Record<string, string> = {
     progress: 'blue',

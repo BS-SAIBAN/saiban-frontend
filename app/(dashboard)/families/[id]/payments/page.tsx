@@ -31,7 +31,7 @@ export default function FamilyPaymentsPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="table" />;
 
   const statusColors: Record<string, string> = {
     pending: 'yellow',

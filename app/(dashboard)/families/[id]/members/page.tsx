@@ -355,7 +355,7 @@ export default function FamilyMembersPage() {
     }
   };
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="members" />;
 
   return (
     <div>

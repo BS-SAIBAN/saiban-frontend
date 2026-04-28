@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { scoringAPI, assessmentsAPI } from '@/lib/api';
+import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Star, Calculator } from 'lucide-react';
 
 interface AssessmentSummary {
@@ -14,6 +15,7 @@ interface AssessmentSummary {
 export default function FamilyScoringPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [assessments, setAssessments] = useState<AssessmentSummary[]>([]);
   const [score, setScore] = useState(0);
@@ -37,10 +39,14 @@ export default function FamilyScoringPage() {
           }
         }).catch(() => {});
       }
-    });
+    }).catch(() => {
+      setAssessments([]);
+    }).finally(() => setFetchLoading(false));
   }, [id]);
 
   const currentAssessment = assessments[0];
+
+  if (fetchLoading) return <FamilySubPageSkeleton variant="detail" />;
 
   const calculateScore = async (recalculate = true) => {
     if (!currentAssessment?.assessment_id) return;

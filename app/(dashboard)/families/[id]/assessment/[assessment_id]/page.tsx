@@ -108,7 +108,7 @@ export default function AssessmentDetailPage() {
     setShowDeleteConfirm(false);
   };
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="detail" />;
 
   if (error || !assessment) {
     return (

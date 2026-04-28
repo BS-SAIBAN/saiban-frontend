@@ -239,7 +239,7 @@ export default function FamilyProfilePage() {
     }
   };
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="overview" />;
   if (!family) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Family not found.</div>;
 
   return (

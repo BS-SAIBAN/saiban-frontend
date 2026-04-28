@@ -41,7 +41,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
     }).finally(() => setLoading(false));
   }, [hasValidId, id, router]);
 
-  if (loading || !hasValidId) return <FamilySubPageSkeleton />;
+  if (loading || !hasValidId) return <FamilySubPageSkeleton variant="layout" />;
 
   return (
     <div>

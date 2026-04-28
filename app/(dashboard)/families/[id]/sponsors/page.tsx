@@ -31,7 +31,7 @@ export default function FamilySponsorsPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="table" />;
 
   return (
     <div>

@@ -147,7 +147,7 @@ export default function EditMemberPage() {
     }
   };
 
-  if (fetchLoading) return <FamilySubPageSkeleton />;
+  if (fetchLoading) return <FamilySubPageSkeleton variant="form" />;
 
   return (
     <div>

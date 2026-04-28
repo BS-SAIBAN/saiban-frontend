@@ -32,7 +32,7 @@ export default function FamilyAssessmentPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading) return <FamilySubPageSkeleton variant="table" />;
 
   return (
     <div>
