@@ -75,7 +75,16 @@ html, body {
   text-decoration: none; margin-bottom: 1px;
 }
 .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
-.nav-item.active { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(59,130,246,0.2); }
+.nav-item.active {
+  background: #3b82f6;
+  color: #ffffff;
+  border: 1px solid #3b82f6;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.22);
+}
+.nav-item.active:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
 .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
 .user-chip { display: flex; align-items: center; gap: 10px; }
