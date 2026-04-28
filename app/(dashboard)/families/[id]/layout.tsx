@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
@@ -17,19 +17,31 @@ const statusColor: Record<string, string> = {
   approved: 'green', rejected: 'red', reassessment: 'purple',
 };
 
+const isValidFamilyRouteId = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
+
 export default function FamilyLayout({ children }: { children: React.ReactNode }) {
   const { id } = useParams<{ id: string }>();
   const pathname = usePathname();
+  const router = useRouter();
+  const hasValidId = isValidFamilyRouteId(id);
   const [family, setFamily] = useState<Family | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!hasValidId) {
+      router.replace('/families');
+      return;
+    }
+
     familiesAPI.get(id).then(r => {
       setFamily(r.data);
+    }).catch(() => {
+      setFamily(null);
     }).finally(() => setLoading(false));
-  }, [id]);
+  }, [hasValidId, id, router]);
 
-  if (loading) return <FamilySubPageSkeleton />;
+  if (loading || !hasValidId) return <FamilySubPageSkeleton />;
 
   return (
     <div>

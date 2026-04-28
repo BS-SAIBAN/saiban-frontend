@@ -3,6 +3,8 @@ import axios from 'axios';
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 type QueryValue = string | number | boolean;
 type QueryParams = Record<string, QueryValue>;
+const isValidEntityId = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -117,15 +119,21 @@ export const authAPI = {
 // ── Families ──────────────────────────────────────────
 export const familiesAPI = {
   list: (params?: QueryParams) => api.get('/families', { params }),
-  get: (id: string) => api.get(`/families/${id}`),
+  get: (id: string) => isValidEntityId(id)
+    ? api.get(`/families/${id}`)
+    : Promise.reject(new Error('Invalid family ID')),
   create: (data: Record<string, unknown>) => api.post('/families', data),
-  update: (id: string, data: Record<string, unknown>) => api.put(`/families/${id}`, data),
-  delete: (id: string) => api.delete(`/families/${id}`),
+  update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
+    ? api.put(`/families/${id}`, data)
+    : Promise.reject(new Error('Invalid family ID')),
+  delete: (id: string) => isValidEntityId(id)
+    ? api.delete(`/families/${id}`)
+    : Promise.reject(new Error('Invalid family ID')),
 };
 
 // ── Individuals ───────────────────────────────────────
 export const individualsAPI = {
-  list: (familyId?: string) => api.get('/individuals', { params: familyId ? { family_id: familyId } : {} }),
+  list: (familyId?: string) => api.get('/individuals', { params: isValidEntityId(familyId) ? { family_id: familyId } : {} }),
   create: (data: Record<string, unknown>) => api.post('/individuals', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/individuals/${id}`, data),
   delete: (id: string) => api.delete(`/individuals/${id}`),
@@ -133,7 +141,7 @@ export const individualsAPI = {
 
 // ── Orphans ───────────────────────────────────────────
 export const orphansAPI = {
-  list: (familyId?: string) => api.get('/orphans', { params: familyId ? { family_id: familyId } : {} }),
+  list: (familyId?: string) => api.get('/orphans', { params: isValidEntityId(familyId) ? { family_id: familyId } : {} }),
   get: (id: string) => api.get(`/orphans/${id}`),
   create: (data: Record<string, unknown>) => api.post('/orphans', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/orphans/${id}`, data),
@@ -222,6 +230,9 @@ export const usersAPI = {
 // ── Storage (R2) ───────────────────────────────────────
 export const storageAPI = {
   uploadMemberPhoto: (familyId: string, file: File) => {
+    if (!isValidEntityId(familyId)) {
+      return Promise.reject(new Error('Invalid family ID'));
+    }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('family_id', familyId);

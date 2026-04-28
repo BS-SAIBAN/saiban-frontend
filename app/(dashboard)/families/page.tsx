@@ -16,6 +16,9 @@ interface Family {
   created_at: string;
 }
 
+const hasValidFamilyId = (familyId?: string): familyId is string =>
+  typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
+
 const statusColor: Record<string, string> = {
   pending_assessment: 'gray', assessed: 'blue', scoring: 'yellow',
   approved: 'green', rejected: 'red', reassessment: 'purple',
@@ -142,9 +145,15 @@ export default function FamiliesPage() {
               ) : filtered.map(f => (
                 <tr key={f.family_id}>
                   <td>
-                    <Link href={`/families/${f.family_id}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>
-                      {f.registration_number}
-                    </Link>
+                    {hasValidFamilyId(f.family_id) ? (
+                      <Link href={`/families/${f.family_id}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>
+                        {f.registration_number}
+                      </Link>
+                    ) : (
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--text-muted)' }} title="This family record has an invalid ID">
+                        {f.registration_number || '—'}
+                      </span>
+                    )}
                   </td>
                   <td><span className={`badge ${f.category === 'FA' ? 'badge-blue' : 'badge-purple'}`}><Tag size={10} /> {f.category}</span></td>
                   <td><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{f.status?.replace(/_/g, ' ')}</span></td>
@@ -153,12 +162,18 @@ export default function FamiliesPage() {
                   <td style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <Link href={`/families/${f.family_id}/edit`} className="btn btn-secondary btn-sm">
-                        <Edit size={12} />
-                      </Link>
-                      <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
-                        <Trash2 size={12} />
-                      </button>
+                      {hasValidFamilyId(f.family_id) ? (
+                        <>
+                          <Link href={`/families/${f.family_id}/edit`} className="btn btn-secondary btn-sm">
+                            <Edit size={12} />
+                          </Link>
+                          <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Invalid ID</span>
+                      )}
                     </div>
                   </td>
                 </tr>

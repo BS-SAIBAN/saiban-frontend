@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { familiesAPI, individualsAPI, storageAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
@@ -24,8 +24,13 @@ const statusColor: Record<string, string> = {
   approved: 'green', rejected: 'red', reassessment: 'purple',
 };
 
+const isValidFamilyRouteId = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
+
 export default function FamilyProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const hasValidId = isValidFamilyRouteId(id);
   const [family, setFamily] = useState<Family | null>(null);
   const [members, setMembers] = useState<Individual[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,14 +63,22 @@ export default function FamilyProfilePage() {
   });
 
   useEffect(() => {
+    if (!hasValidId) {
+      router.replace('/families');
+      return;
+    }
+
     Promise.all([
       familiesAPI.get(id),
       individualsAPI.list(id),
     ]).then(([fam, inds]) => {
       setFamily(fam.data);
       setMembers(Array.isArray(inds.data) ? inds.data : []);
+    }).catch(() => {
+      setFamily(null);
+      setMembers([]);
     }).finally(() => setLoading(false));
-  }, [id]);
+  }, [hasValidId, id, router]);
 
   const resetForm = () => {
     setForm({

@@ -14,6 +14,9 @@ interface Orphan {
   family?: { registration_number: string };
 }
 
+const hasValidFamilyId = (familyId?: string): familyId is string =>
+  typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
+
 export default function OrphansPage() {
   const [orphans, setOrphans] = useState<Orphan[]>([]);
   const [filtered, setFiltered] = useState<Orphan[]>([]);
@@ -140,7 +143,11 @@ export default function OrphansPage() {
                     <td>{o.priority_flag ? <span className="badge badge-yellow">⭐ Priority</span> : <span className="badge badge-gray">Normal</span>}</td>
                     <td>{o.mother_alive ? <span className="badge badge-green">Yes</span> : <span className="badge badge-red">No</span>}</td>
                     <td>
-                      <Link href={`/families/${o.family_id}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
+                      {hasValidFamilyId(o.family_id) ? (
+                        <Link href={`/families/${o.family_id}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>No Family Link</span>
+                      )}
                     </td>
                   </tr>
                 );

@@ -27,6 +27,9 @@ interface Individual {
   };
 }
 
+const hasValidFamilyId = (familyId?: string): familyId is string =>
+  typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
+
 const relationshipMap: Record<string, string> = {
   head: 'Head',
   spouse: 'Spouse',
@@ -183,7 +186,7 @@ export default function IndividualsPage() {
                   <td><span style={{ textTransform: 'capitalize' }}>{i.gender}</span></td>
                   <td>{relationshipMap[i.relationship_to_head] || i.relationship_to_head}</td>
                   <td>
-                    {i.family ? (
+                    {i.family && hasValidFamilyId(i.family.family_id) ? (
                       <Link href={`/families/${i.family.family_id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
                           <MapPin size={12} /> {i.family.registration_number}
@@ -204,9 +207,13 @@ export default function IndividualsPage() {
                       <button onClick={() => openMemberModal(i)} className="btn btn-secondary btn-sm">
                         <Eye size={12} /> View Member
                       </button>
-                      <Link href={`/families/${i.family_id}`} className="btn btn-secondary btn-sm">
-                        View Family
-                      </Link>
+                      {hasValidFamilyId(i.family_id) ? (
+                        <Link href={`/families/${i.family_id}`} className="btn btn-secondary btn-sm">
+                          View Family
+                        </Link>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>No Family Link</span>
+                      )}
                     </div>
                   </td>
                 </tr>
