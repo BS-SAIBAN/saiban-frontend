@@ -5,18 +5,35 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { ArrowLeft, ClipboardList, Calendar, FileText, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Calendar, FileText, Edit, Trash2, AlertCircle, MapPin } from 'lucide-react';
 
 interface Assessment {
   assessment_id: string;
   family_id: string;
   assessment_date: string;
   status: string;
+  gps_lat?: number | string | null;
+  gps_lng?: number | string | null;
+  deceased_spouse_date_of_death?: string | null;
+  assets_gold_silver?: number | null;
+  assets_cash?: number | null;
+  assets_property?: number | null;
+  aid_from_other_org?: boolean | null;
+  other_org_aid_amount?: number | null;
+  monthly_ration?: number | null;
+  monthly_bills?: number | null;
+  monthly_rent?: number | null;
+  other_monthly_expenses?: number | null;
+  total_monthly_expenses?: number | null;
   field_worker_notes?: string;
   field_worker_companion?: string;
+  prev_registered?: boolean | null;
+  prev_aid_amount?: number | null;
   additional_info?: string;
   submitted_at?: string;
   created_at: string;
+  updated_at?: string;
+  assessed_by?: string;
 }
 
 const statusColor: Record<string, string> = {
@@ -36,6 +53,33 @@ export default function AssessmentDetailPage() {
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return parsed.toLocaleDateString('en-PK');
+  };
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return parsed.toLocaleString('en-PK');
+  };
+
+  const parseNumber = (value?: number | string | null) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const formatAmount = (value?: number | string | null) => {
+    const num = parseNumber(value);
+    if (num === null) return '—';
+    return `PKR ${num.toLocaleString('en-PK')}`;
+  };
 
   useEffect(() => {
     assessmentsAPI.get(assessment_id).then(r => {
@@ -100,7 +144,7 @@ export default function AssessmentDetailPage() {
               <ClipboardList size={24} /> Assessment Details
             </h1>
             <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-              Assessment ID: <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{assessment.assessment_id.slice(0, 8)}…</span>
+              Assessment ID: <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{assessment.assessment_id}</span>
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -122,7 +166,7 @@ export default function AssessmentDetailPage() {
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
               <Calendar size={12} /> Assessment Date
             </div>
-            <div style={{ fontWeight: 600 }}>{assessment.assessment_date ? new Date(assessment.assessment_date).toLocaleDateString() : '—'}</div>
+            <div style={{ fontWeight: 600 }}>{formatDate(assessment.assessment_date)}</div>
           </div>
           <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Status</div>
@@ -132,49 +176,122 @@ export default function AssessmentDetailPage() {
           </div>
           <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Submitted At</div>
-            <div style={{ fontWeight: 600 }}>{assessment.submitted_at ? new Date(assessment.submitted_at).toLocaleString() : '—'}</div>
+            <div style={{ fontWeight: 600 }}>{formatDateTime(assessment.submitted_at)}</div>
+          </div>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Total Monthly Expenses</div>
+            <div style={{ fontWeight: 600 }}>{formatAmount(assessment.total_monthly_expenses)}</div>
           </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FileText size={16} /> Assessment Information
+            <MapPin size={16} /> Visit & Location
           </h3>
-          <div style={{ display: 'grid', gap: 16 }}>
-            {assessment.field_worker_notes && (
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Notes</label>
-                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
-                  {assessment.field_worker_notes}
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>GPS Latitude</div>
+              <div style={{ fontWeight: 600 }}>{parseNumber(assessment.gps_lat) ?? '—'}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>GPS Longitude</div>
+              <div style={{ fontWeight: 600 }}>{parseNumber(assessment.gps_lng) ?? '—'}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Deceased Spouse Date of Death</div>
+              <div style={{ fontWeight: 600 }}>{formatDate(assessment.deceased_spouse_date_of_death)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={16} /> Financial Snapshot
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Gold & Silver</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.assets_gold_silver)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Cash</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.assets_cash)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Property Value</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.assets_property)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Monthly Ration</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.monthly_ration)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Monthly Bills</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.monthly_bills)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Monthly Rent</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.monthly_rent)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Other Monthly Expenses</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.other_monthly_expenses)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={16} /> Aid & Registration History
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Aid From Other Organizations</div>
+              <div style={{ fontWeight: 600 }}>{assessment.aid_from_other_org ? 'Yes' : 'No'}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Other Org Aid Amount</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.other_org_aid_amount)}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Previously Registered</div>
+              <div style={{ fontWeight: 600 }}>{assessment.prev_registered ? 'Yes' : 'No'}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Previous Aid Amount</div>
+              <div style={{ fontWeight: 600 }}>{formatAmount(assessment.prev_aid_amount)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={16} /> Assessment Notes
+          </h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Companion</label>
+              <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                {assessment.field_worker_companion || '—'}
               </div>
-            )}
-            {assessment.field_worker_companion && (
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Companion</label>
-                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                  {assessment.field_worker_companion}
-                </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Field Worker Notes</label>
+              <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
+                {assessment.field_worker_notes || '—'}
               </div>
-            )}
-            {assessment.additional_info && (
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Additional Information</label>
-                <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
-                  {assessment.additional_info}
-                </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Additional Information</label>
+              <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>
+                {assessment.additional_info || '—'}
               </div>
-            )}
-            {!assessment.field_worker_notes && !assessment.field_worker_companion && !assessment.additional_info && (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>
-                No additional information recorded
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-          Created: {assessment.created_at ? new Date(assessment.created_at).toLocaleString() : '—'}
+          Created: {formatDateTime(assessment.created_at)} | Updated: {formatDateTime(assessment.updated_at)}
         </div>
       </div>
 
