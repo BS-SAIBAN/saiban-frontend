@@ -134,17 +134,28 @@ export const familiesAPI = {
 // ── Individuals ───────────────────────────────────────
 export const individualsAPI = {
   list: (familyId?: string) => api.get('/individuals', { params: isValidEntityId(familyId) ? { family_id: familyId } : {} }),
+  get: (id: string) => isValidEntityId(id)
+    ? api.get(`/individuals/${id}`)
+    : Promise.reject(new Error('Invalid individual ID')),
   create: (data: Record<string, unknown>) => api.post('/individuals', data),
-  update: (id: string, data: Record<string, unknown>) => api.put(`/individuals/${id}`, data),
-  delete: (id: string) => api.delete(`/individuals/${id}`),
+  update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
+    ? api.put(`/individuals/${id}`, data)
+    : Promise.reject(new Error('Invalid individual ID')),
+  delete: (id: string) => isValidEntityId(id)
+    ? api.delete(`/individuals/${id}`)
+    : Promise.reject(new Error('Invalid individual ID')),
 };
 
 // ── Orphans ───────────────────────────────────────────
 export const orphansAPI = {
   list: (params?: QueryParams) => api.get('/orphans', { params }),
-  get: (id: string) => api.get(`/orphans/${id}`),
+  get: (id: string) => isValidEntityId(id)
+    ? api.get(`/orphans/${id}`)
+    : Promise.reject(new Error('Invalid orphan profile ID')),
   create: (data: Record<string, unknown>) => api.post('/orphans', data),
-  update: (id: string, data: Record<string, unknown>) => api.put(`/orphans/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
+    ? api.put(`/orphans/${id}`, data)
+    : Promise.reject(new Error('Invalid orphan profile ID')),
 };
 
 // ── Assessments ───────────────────────────────────────
@@ -155,6 +166,27 @@ export const assessmentsAPI = {
   update: (id: string, data: Record<string, unknown>) => api.put(`/assessments/${id}`, data),
   delete: (id: string) => api.delete(`/assessments/${id}`),
   submit: (id: string) => api.post(`/assessments/${id}/submit`),
+  uploadDocument: (assessmentId: string, payload: { document_type: string; file: File; individual_id?: string }) => {
+    if (!isValidEntityId(assessmentId)) {
+      return Promise.reject(new Error('Invalid assessment ID'));
+    }
+    const formData = new FormData();
+    formData.append('document_type', payload.document_type);
+    formData.append('file', payload.file);
+    if (isValidEntityId(payload.individual_id)) {
+      formData.append('individual_id', payload.individual_id);
+    }
+    return api.post(`/assessments/${assessmentId}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  listDocuments: (assessmentId: string, individualId?: string) => {
+    if (!isValidEntityId(assessmentId)) {
+      return Promise.reject(new Error('Invalid assessment ID'));
+    }
+    const params = isValidEntityId(individualId) ? { individual_id: individualId } : {};
+    return api.get(`/assessments/${assessmentId}/documents`, { params });
+  },
 };
 
 // ── Scoring ───────────────────────────────────────────

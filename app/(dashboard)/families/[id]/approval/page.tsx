@@ -18,6 +18,7 @@ type ScoreSnapshot = {
   eligibility: string;
   scoreId: string;
 };
+type ScoreSnapshotEntry = readonly [string, ScoreSnapshot];
 
 const SCORING_COMPLETED_STATUSES = ['scored', 'approved', 'rejected', 'reassessment_required'];
 const FINAL_DECISION_STATUSES = ['approved', 'rejected', 'reassessment_required'];
@@ -60,7 +61,10 @@ export default function FamilyApprovalPage() {
         })
       );
 
-      setScoreSnapshots(Object.fromEntries(snapshotEntries.filter(Boolean)));
+      const validSnapshotEntries = snapshotEntries.filter(
+        (entry): entry is ScoreSnapshotEntry => entry !== null
+      );
+      setScoreSnapshots(Object.fromEntries(validSnapshotEntries));
     }).catch(() => {
       setAssessments([]);
       setScoreSnapshots({});
