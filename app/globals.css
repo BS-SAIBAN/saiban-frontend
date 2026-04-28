@@ -40,10 +40,10 @@ html, body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
 /* Layout */
 .layout { display: flex; min-height: 100vh; }
@@ -57,15 +57,16 @@ html, body {
   border-right: 1px solid #334155;
   position: fixed; left: 0; top: 0; bottom: 0;
   display: flex; flex-direction: column;
-  overflow-y: auto; z-index: 50;
+  z-index: 50;
 }
 .sidebar-logo {
   padding: 4px 5px 2px;
   border-bottom: 1px solid #334155;
+  flex-shrink: 0;
 }
 .sidebar-logo h1 { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
 .sidebar-logo p { font-size: 11px; color: #94a3b8; margin-top: 0px; }
-.sidebar-nav { padding: 12px 10px; flex: 1; }
+.sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
 .nav-section { margin-bottom: 6px; }
 .nav-section-label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px 4px; }
 .nav-item {
