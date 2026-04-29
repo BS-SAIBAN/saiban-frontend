@@ -33,6 +33,9 @@ export default function FamiliesPage() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [familyToDelete, setFamilyToDelete] = useState<string | null>(null);
 
   const fetchFamilies = async () => {
     setLoading(true);
@@ -62,14 +65,28 @@ export default function FamiliesPage() {
   }, [page, categoryFilter, statusFilter]);
 
   const handleDelete = async (familyId: string) => {
-    if (!confirm('Are you sure you want to delete this family? This action cannot be undone.')) return;
+    setFamilyToDelete(familyId);
+    setShowDeleteConfirm(true);
+    setDeleteError('');
+  };
+
+  const confirmDelete = async () => {
+    if (!familyToDelete) return;
     try {
-      await familiesAPI.delete(familyId);
+      await familiesAPI.delete(familyToDelete);
+      setShowDeleteConfirm(false);
+      setFamilyToDelete(null);
       fetchFamilies();
     } catch (e) {
       console.error('Failed to delete family:', e);
-      alert('Failed to delete family');
+      setDeleteError('Failed to delete family. Please try again.');
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setFamilyToDelete(null);
+    setDeleteError('');
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -223,6 +240,30 @@ export default function FamiliesPage() {
           </div>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 400, width: '90%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)' }}>Delete Family</h3>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
+              Are you sure you want to delete this family? This action cannot be undone.
+            </p>
+            {deleteError && (
+              <div style={{ padding: 12, background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, fontSize: '13px', color: '#dc2626' }}>
+                {deleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button onClick={cancelDelete} className="btn btn-secondary">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} className="btn btn-primary" style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
