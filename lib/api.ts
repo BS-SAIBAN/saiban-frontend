@@ -194,6 +194,15 @@ export const scoringAPI = {
   calculate: (assessmentId: string, recalculate = false) =>
     api.post('/scoring/calculate', { assessment_id: assessmentId, recalculate }),
   listCriteria: () => api.get('/scoring/criteria'),
+  createCriteria: (data: {
+    name: string;
+    weight: number;
+    category_applicable: string;
+    description?: string;
+    min_score?: number;
+    max_score?: number;
+    scoring_rules?: Record<string, unknown>;
+  }) => api.post('/scoring/criteria', data),
   listResults: (params?: QueryParams) => api.get('/scoring/results', { params }),
   getResult: (resultId: string) => api.get(`/scoring/results/${resultId}`),
   override: (resultId: string, data: Record<string, unknown>) =>
