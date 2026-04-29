@@ -36,6 +36,17 @@ export default function FamiliesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [familyToDelete, setFamilyToDelete] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFamilyId, setEditFamilyId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    category: 'FA',
+    area: '',
+    city: '',
+    full_address: '',
+    housing_type: 'rented',
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const fetchFamilies = async () => {
     setLoading(true);
@@ -77,9 +88,19 @@ export default function FamiliesPage() {
       setShowDeleteConfirm(false);
       setFamilyToDelete(null);
       fetchFamilies();
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Failed to delete family:', e);
-      setDeleteError('Failed to delete family. Please try again.');
+      let errorMsg = 'Failed to delete family. Please try again.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response: { data?: unknown } }).response;
+        if (response?.data && typeof response.data === 'object' && 'detail' in response.data) {
+          const detail = (response.data as { detail: unknown }).detail;
+          if (typeof detail === 'string') {
+            errorMsg = detail;
+          }
+        }
+      }
+      setDeleteError(errorMsg);
     }
   };
 
@@ -87,6 +108,62 @@ export default function FamiliesPage() {
     setShowDeleteConfirm(false);
     setFamilyToDelete(null);
     setDeleteError('');
+  };
+
+  const handleEdit = async (familyId: string) => {
+    setEditFamilyId(familyId);
+    setEditError('');
+    try {
+      const response = await familiesAPI.get(familyId);
+      const data = response.data;
+      setEditForm({
+        category: data.category || 'FA',
+        area: data.area || '',
+        city: data.city || '',
+        full_address: data.full_address || '',
+        housing_type: data.housing_type || 'rented',
+      });
+      setShowEditModal(true);
+    } catch (e) {
+      console.error('Failed to fetch family:', e);
+      setEditError('Failed to load family data');
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!editFamilyId || !editForm.area || !editForm.city) {
+      setEditError('Please fill in all required fields');
+      return;
+    }
+    setEditLoading(true);
+    setEditError('');
+    try {
+      await familiesAPI.update(editFamilyId, editForm);
+      setShowEditModal(false);
+      setEditFamilyId(null);
+      fetchFamilies();
+    } catch (e: unknown) {
+      console.error('Error updating family:', e);
+      let errorMsg = 'Failed to update family';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response: { data?: unknown } }).response;
+        if (response?.data && typeof response.data === 'object' && 'detail' in response.data) {
+          const detail = (response.data as { detail: unknown }).detail;
+          if (typeof detail === 'string') {
+            errorMsg = detail;
+          }
+        }
+      }
+      setEditError(errorMsg);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditFamilyId(null);
+    setEditError('');
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -198,9 +275,9 @@ export default function FamiliesPage() {
                     <div style={{ display: 'flex', gap: 6 }}>
                       {hasValidFamilyId(f.family_id) ? (
                         <>
-                          <Link href={`/families/${f.family_id}/edit`} className="btn btn-secondary btn-sm">
+                          <button onClick={() => handleEdit(f.family_id)} className="btn btn-secondary btn-sm">
                             <Edit size={12} />
-                          </Link>
+                          </button>
                           <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
                             <Trash2 size={12} />
                           </button>
@@ -259,6 +336,55 @@ export default function FamiliesPage() {
               </button>
               <button onClick={confirmDelete} className="btn btn-primary" style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, overflowY: 'auto', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 500, width: '100%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: 20, color: 'var(--text-primary)' }}>Edit Family</h3>
+            {editError && (
+              <div style={{ padding: 12, background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, fontSize: '13px', color: '#dc2626' }}>
+                {editError}
+              </div>
+            )}
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">Program Category *</label>
+              <select className="form-control" value={editForm.category} onChange={e => setEditForm(prev => ({ ...prev, category: e.target.value }))}>
+                <option value="FA">FA – Financial Aid</option>
+                <option value="SB">SB – Saiban (Orphan)</option>
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Area *</label>
+                <input className="form-control" value={editForm.area} onChange={e => setEditForm(prev => ({ ...prev, area: e.target.value }))} placeholder="e.g. Gulshan, Model Town" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">City *</label>
+                <input className="form-control" value={editForm.city} onChange={e => setEditForm(prev => ({ ...prev, city: e.target.value }))} placeholder="e.g. Lahore, Karachi" />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">Full Address</label>
+              <input className="form-control" value={editForm.full_address} onChange={e => setEditForm(prev => ({ ...prev, full_address: e.target.value }))} placeholder="Street address, house number..." />
+            </div>
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label className="form-label">Housing Type</label>
+              <select className="form-control" value={editForm.housing_type} onChange={e => setEditForm(prev => ({ ...prev, housing_type: e.target.value }))}>
+                <option value="rented">Rented</option>
+                <option value="owned">Owned</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button onClick={closeEditModal} className="btn btn-secondary">
+                Cancel
+              </button>
+              <button onClick={saveEdit} disabled={editLoading} className="btn btn-primary">
+                {editLoading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
