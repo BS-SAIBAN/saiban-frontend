@@ -89,16 +89,24 @@ export default function FamiliesPage() {
       setFamilyToDelete(null);
       fetchFamilies();
     } catch (e: unknown) {
-      console.error('Failed to delete family:', e);
       let errorMsg = 'Failed to delete family. Please try again.';
-      if (e && typeof e === 'object' && 'response' in e) {
-        const response = (e as { response: { data?: unknown } }).response;
+      let statusCode: number | null = null;
+      if (e && typeof e === 'object' && 'response' in e && 'message' in e) {
+        const response = (e as { response: { status?: number; data?: unknown }; message?: string }).response;
+        statusCode = typeof response?.status === 'number' ? response.status : null;
         if (response?.data && typeof response.data === 'object' && 'detail' in response.data) {
           const detail = (response.data as { detail: unknown }).detail;
           if (typeof detail === 'string') {
             errorMsg = detail;
           }
         }
+        if (statusCode === null && typeof (e as { message?: unknown }).message === 'string') {
+          errorMsg = (e as { message: string }).message;
+        }
+      }
+      // Avoid noisy console errors for expected validation/business-rule failures.
+      if (statusCode === null || statusCode >= 500) {
+        console.error('Failed to delete family:', e);
       }
       setDeleteError(errorMsg);
     }

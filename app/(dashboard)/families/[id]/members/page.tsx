@@ -48,11 +48,14 @@ export default function FamilyMembersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     full_name: '',
@@ -94,14 +97,38 @@ export default function FamilyMembersPage() {
   };
 
   const handleDelete = async (individualId: string) => {
-    if (!confirm('Are you sure you want to remove this family member?')) return;
+    setMemberToDelete(individualId);
+    setShowDeleteConfirm(true);
+    setDeleteError('');
+  };
+
+  const confirmDelete = async () => {
+    if (!memberToDelete) return;
     try {
-      await individualsAPI.delete(individualId);
-      setMembers(members.filter(m => m.individual_id !== individualId));
-    } catch (e) {
+      await individualsAPI.delete(memberToDelete);
+      setMembers(members.filter(m => m.individual_id !== memberToDelete));
+      setShowDeleteConfirm(false);
+      setMemberToDelete(null);
+    } catch (e: unknown) {
       console.error('Failed to delete member:', e);
-      alert('Failed to delete member');
+      let errorMsg = 'Failed to delete member. Please try again.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response: { data?: unknown } }).response;
+        if (response?.data && typeof response.data === 'object' && 'detail' in response.data) {
+          const detail = (response.data as { detail: unknown }).detail;
+          if (typeof detail === 'string') {
+            errorMsg = detail;
+          }
+        }
+      }
+      setDeleteError(errorMsg);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setMemberToDelete(null);
+    setDeleteError('');
   };
 
   const resetForm = () => {
@@ -649,6 +676,33 @@ export default function FamilyMembersPage() {
               <button className="btn btn-secondary" onClick={closeViewModal}>Close</button>
               <button className="btn btn-primary" onClick={() => { closeViewModal(); openEditModal(selectedMember); }}>
                 <Edit size={14} /> Edit Member
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={cancelDelete}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Member</h2>
+              <button className="modal-close" onClick={cancelDelete}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
+                Are you sure you want to remove this family member? This action cannot be undone.
+              </p>
+              {deleteError && (
+                <div style={{ padding: 12, background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, fontSize: '13px', color: '#dc2626' }}>
+                  {deleteError}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={cancelDelete}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmDelete} style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
+                Delete
               </button>
             </div>
           </div>
