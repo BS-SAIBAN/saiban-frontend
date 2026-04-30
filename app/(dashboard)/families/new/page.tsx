@@ -8,6 +8,16 @@ import Link from 'next/link';
 
 const STEPS = ['Category', 'Basic Info', 'Address', 'Father (Head)', 'Review'];
 
+const extractDigits = (value: string) => value.replace(/\D/g, '').slice(0, 15);
+
+const formatCnicOrBForm = (value: string) => {
+  const digits = extractDigits(value);
+  if (digits.length <= 5) return digits;
+  if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  if (digits.length <= 13) return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
+  return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 15)}`;
+};
+
 export default function NewFamilyPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -16,6 +26,7 @@ export default function NewFamilyPage() {
   const [form, setForm] = useState({
     category: '', area: '', city: '', full_address: '', housing_type: 'rented',
     father_full_name: '', father_dob: '', father_cnic_or_bform: '', father_status: 'alive',
+    father_occupation: '', father_monthly_income: '', father_religion: '', father_caste: '',
   });
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -33,11 +44,18 @@ export default function NewFamilyPage() {
   const canProceedToNextStep = () => {
     if (step === 0) return Boolean(form.category);
     if (step === 3) {
-      return Boolean(
+      const fatherBaseValid = Boolean(
         form.father_full_name.trim() &&
         form.father_dob &&
         form.father_cnic_or_bform.trim() &&
         form.father_status
+      );
+      if (form.father_status !== 'alive') return fatherBaseValid;
+      return fatherBaseValid && Boolean(
+        form.father_occupation.trim() &&
+        form.father_monthly_income.trim() &&
+        form.father_religion.trim() &&
+        form.father_caste.trim()
       );
     }
     return true;
@@ -49,6 +67,12 @@ export default function NewFamilyPage() {
       if (!form.father_full_name.trim() || !form.father_dob || !form.father_cnic_or_bform.trim() || !form.father_status) {
         throw new Error('Father details are required. Please add the family head before registration.');
       }
+      if (
+        form.father_status === 'alive'
+        && (!form.father_occupation.trim() || !form.father_monthly_income.trim() || !form.father_religion.trim() || !form.father_caste.trim())
+      ) {
+        throw new Error('When father status is alive, occupation, monthly income, religion and caste are required.');
+      }
 
       const payload = {
         category: form.category,
@@ -59,9 +83,13 @@ export default function NewFamilyPage() {
         father: {
           full_name: form.father_full_name.trim(),
           dob: form.father_dob,
-          cnic_or_bform: form.father_cnic_or_bform.trim(),
+          cnic_or_bform: extractDigits(form.father_cnic_or_bform),
           gender: 'male',
           is_alive: form.father_status === 'alive',
+          occupation: form.father_status === 'alive' ? form.father_occupation.trim() : null,
+          monthly_income: form.father_status === 'alive' ? Number(form.father_monthly_income) : null,
+          religion: form.father_status === 'alive' ? form.father_religion.trim() : null,
+          caste: form.father_status === 'alive' ? form.father_caste.trim() : null,
         },
       };
 
@@ -221,8 +249,37 @@ export default function NewFamilyPage() {
             </div>
             <div className="form-group">
               <label className="form-label">CNIC / B-Form *</label>
-              <input className="form-control" value={form.father_cnic_or_bform} onChange={e => set('father_cnic_or_bform', e.target.value)} placeholder="13-digit CNIC or 15-digit B-Form" />
+              <input
+                className="form-control"
+                value={form.father_cnic_or_bform}
+                onChange={e => set('father_cnic_or_bform', formatCnicOrBForm(e.target.value))}
+                placeholder="12345-1234567-1 or 12345-1234567-123"
+              />
             </div>
+            {form.father_status === 'alive' && (
+              <>
+                <div className="form-grid form-grid-2">
+                  <div className="form-group">
+                    <label className="form-label">Occupation *</label>
+                    <input className="form-control" value={form.father_occupation} onChange={e => set('father_occupation', e.target.value)} placeholder="e.g. Driver, Laborer" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Monthly Income *</label>
+                    <input type="number" min={0} className="form-control" value={form.father_monthly_income} onChange={e => set('father_monthly_income', e.target.value)} placeholder="e.g. 45000" />
+                  </div>
+                </div>
+                <div className="form-grid form-grid-2">
+                  <div className="form-group">
+                    <label className="form-label">Religion *</label>
+                    <input className="form-control" value={form.father_religion} onChange={e => set('father_religion', e.target.value)} placeholder="e.g. Islam" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Caste *</label>
+                    <input className="form-control" value={form.father_caste} onChange={e => set('father_caste', e.target.value)} placeholder="e.g. Syed" />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -237,6 +294,11 @@ export default function NewFamilyPage() {
               <div className="info-item"><label>Housing</label><p style={{ textTransform: 'capitalize' }}>{form.housing_type}</p></div>
               <div className="info-item"><label>Father (Head)</label><p>{form.father_full_name || '—'}</p></div>
               <div className="info-item"><label>Father Status</label><p style={{ textTransform: 'capitalize' }}>{form.father_status || '—'}</p></div>
+              <div className="info-item"><label>Father CNIC/B-Form</label><p>{form.father_cnic_or_bform || '—'}</p></div>
+              {form.father_status === 'alive' && <div className="info-item"><label>Father Occupation</label><p>{form.father_occupation || '—'}</p></div>}
+              {form.father_status === 'alive' && <div className="info-item"><label>Father Monthly Income</label><p>{form.father_monthly_income || '—'}</p></div>}
+              {form.father_status === 'alive' && <div className="info-item"><label>Father Religion</label><p>{form.father_religion || '—'}</p></div>}
+              {form.father_status === 'alive' && <div className="info-item"><label>Father Caste</label><p>{form.father_caste || '—'}</p></div>}
             </div>
             <div className="info-item"><label>Full Address</label><p>{form.full_address || '—'}</p></div>
           </div>
