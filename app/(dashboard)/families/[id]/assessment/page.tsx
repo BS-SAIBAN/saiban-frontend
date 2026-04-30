@@ -55,7 +55,7 @@ export default function FamilyAssessmentPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Assessment</h1>
           <p>Family assessment records</p>
@@ -77,7 +77,7 @@ export default function FamilyAssessmentPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr>
                   <th>Assessment ID</th>
@@ -89,10 +89,10 @@ export default function FamilyAssessmentPage() {
               <tbody>
                 {assessments.map(a => (
                   <tr key={a.assessment_id}>
-                    <td style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)', fontSize: 12 }}>{a.assessment_id.slice(0, 8)}…</td>
-                    <td>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
-                    <td><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
-                    <td>
+                    <td data-label="Assessment ID" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)', fontSize: 12 }}>{a.assessment_id.slice(0, 8)}…</td>
+                    <td data-label="Date">{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
+                    <td data-label="Status"><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
+                    <td data-label="Actions">
                       <div style={{ display: 'flex', gap: 6 }}>
                         <Link href={`/families/${id}/assessment/${a.assessment_id}`} className="btn btn-secondary btn-sm">View</Link>
                         {a.status === 'draft' && (

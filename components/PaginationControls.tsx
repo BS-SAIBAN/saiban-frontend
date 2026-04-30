@@ -25,16 +25,7 @@ export default function PaginationControls({
 }: PaginationControlsProps) {
   return (
     <div
-      className={className}
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 16,
-        paddingTop: 16,
-        borderTop: '1px solid var(--border)',
-      }}
+      className={`pagination-controls${className ? ` ${className}` : ''}`}
     >
       <button className="btn btn-secondary btn-sm" disabled={disablePrev} onClick={onPrev}>
         Previous

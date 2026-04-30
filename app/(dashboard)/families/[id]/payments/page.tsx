@@ -42,7 +42,7 @@ export default function FamilyPaymentsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Payments</h1>
           <p>View payment history for this family</p>
@@ -64,7 +64,7 @@ export default function FamilyPaymentsPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr>
                   <th>Payment ID</th>
@@ -79,33 +79,33 @@ export default function FamilyPaymentsPage() {
               <tbody>
                 {payments.map(p => (
                   <tr key={p.payment_id}>
-                    <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--accent)' }}>
+                    <td data-label="Payment ID" style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--accent)' }}>
                       {p.payment_id.slice(0, 8)}…
                     </td>
-                    <td>
+                    <td data-label="Date">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Calendar size={12} /> {p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '—'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Amount">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}>
                         <DollarSign size={12} /> {p.amount || 0}
                       </span>
                     </td>
-                    <td><span className="badge badge-gray">{p.payment_method || '—'}</span></td>
-                    <td>
+                    <td data-label="Method"><span className="badge badge-gray">{p.payment_method || '—'}</span></td>
+                    <td data-label="Status">
                       <span className={`badge badge-${statusColors[p.status || 'pending'] || 'gray'}`}>
                         {p.status || '—'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Receipt">
                       {p.receipt_url ? (
                         <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">
                           <Receipt size={12} /> View
                         </a>
                       ) : '—'}
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <Link href={`/families/${id}/payments/${p.payment_id}`} className="btn btn-secondary btn-sm">
                         View
                       </Link>

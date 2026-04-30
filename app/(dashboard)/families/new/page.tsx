@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { familiesAPI } from '@/lib/api';
-import { Users, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 const STEPS = ['Category', 'Basic Info', 'Address', 'Father (Head)', 'Review'];
@@ -145,7 +145,7 @@ export default function NewFamilyPage() {
       </div>
 
       {/* Step indicator */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div className="card wizard-step-card">
         <div className="steps">
           {STEPS.map((s, i) => (
             <div key={s} className="step" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -159,7 +159,7 @@ export default function NewFamilyPage() {
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div className="card wizard-shell">
         {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
         {/* Step 0 — Category */}
@@ -167,7 +167,7 @@ export default function NewFamilyPage() {
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Select Program Category</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 24 }}>Choose the appropriate program for this family. This cannot be changed after approval.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="wizard-category-grid">
               {[
                 { value: 'FA', label: 'FA — Financial Aid', desc: 'For general needy families. Donor supports the entire family unit.', color: 'var(--accent)', bg: 'var(--accent-glow)' },
                 { value: 'SB', label: 'SB — Saiban Orphan', desc: 'For families with orphaned children. Each orphan tracked individually.', color: 'var(--purple)', bg: 'var(--purple-bg)' },
@@ -305,7 +305,7 @@ export default function NewFamilyPage() {
         )}
 
         {/* Navigation */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+        <div className="wizard-actions">
           <button className="btn btn-secondary" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
             <ArrowLeft size={14} /> Previous
           </button>

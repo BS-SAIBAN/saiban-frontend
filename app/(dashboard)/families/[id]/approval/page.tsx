@@ -102,7 +102,7 @@ export default function FamilyApprovalPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Approval</h1>
           <p>Review and approve or reject this family</p>
@@ -173,7 +173,7 @@ export default function FamilyApprovalPage() {
 
             <div style={{ marginBottom: 24 }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Approval Decision</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="form-grid form-grid-3">
                 <button
                   onClick={() => setDecision('approved')}
                   className={`btn ${decision === 'approved' ? 'btn-primary' : 'btn-secondary'}`}
@@ -219,7 +219,7 @@ export default function FamilyApprovalPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="family-summary-actions">
               <button onClick={submitDecision} disabled={loading || !decision || !targetAssessment || alreadyFinalized} className="btn btn-primary" style={{ flex: 1 }}>
                 <CheckSquare size={14} /> {loading ? 'Submitting...' : 'Submit Decision'}
               </button>

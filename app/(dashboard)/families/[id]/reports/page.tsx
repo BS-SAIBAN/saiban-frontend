@@ -7,22 +7,34 @@ import { reportsAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { FileText, Plus, Calendar, Download, Eye } from 'lucide-react';
 
+interface FamilyReport {
+  report_id: string;
+  report_type?: string;
+  submitted_at?: string;
+  submitted_by_name?: string;
+  status?: string;
+  file_url?: string;
+}
+
 export default function FamilyReportsPage() {
   const { id } = useParams<{ id: string }>();
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<FamilyReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    reportsAPI
-      .listByFamily(id)
-      .then((r) => {
-        setReports(Array.isArray(r.data) ? r.data : []);
-      })
-      .catch(() => {
-        setReports([]);
-      })
-      .finally(() => setLoading(false));
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      reportsAPI
+        .listByFamily(id)
+        .then((r) => {
+          setReports(Array.isArray(r.data) ? r.data : []);
+        })
+        .catch(() => {
+          setReports([]);
+        })
+        .finally(() => setLoading(false));
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [id]);
 
   if (loading) return <FamilySubPageSkeleton variant="table" />;
@@ -36,7 +48,7 @@ export default function FamilyReportsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Reports</h1>
           <p>View and manage reports for this family</p>
@@ -58,7 +70,7 @@ export default function FamilyReportsPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr>
                   <th>Report ID</th>
@@ -72,26 +84,26 @@ export default function FamilyReportsPage() {
               <tbody>
                 {reports.map((r) => (
                   <tr key={r.report_id}>
-                    <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--accent)' }}>
+                    <td data-label="Report ID" style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--accent)' }}>
                       {r.report_id.slice(0, 8)}...
                     </td>
-                    <td>
+                    <td data-label="Type">
                       <span className={`badge badge-${reportTypeColors[r.report_type] || 'gray'}`}>
                         {r.report_type || '-'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Date">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Calendar size={12} /> {r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '-'}
                       </span>
                     </td>
-                    <td>{r.submitted_by_name || '-'}</td>
-                    <td>
+                    <td data-label="Submitted By">{r.submitted_by_name || '-'}</td>
+                    <td data-label="Status">
                       <span className={`badge badge-${r.status === 'reviewed' ? 'green' : r.status === 'submitted' ? 'blue' : r.status === 'pending' ? 'yellow' : 'gray'}`}>
                         {r.status || '-'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div style={{ display: 'flex', gap: 6 }}>
                         <Link href={`/families/${id}/reports/${r.report_id}`} className="btn btn-secondary btn-sm">
                           <Eye size={12} /> View

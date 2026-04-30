@@ -243,7 +243,7 @@ export default function FamilyProfilePage() {
   if (!family) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Family not found.</div>;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+    <div className="family-overview-grid">
         {/* Family Info */}
         <div className="card">
           <div className="section-title">Family Details</div>
@@ -320,7 +320,7 @@ export default function FamilyProfilePage() {
                 {fieldErrors.full_name && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.full_name}</div>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Gender *</label>
                   <select className="form-control" value={form.gender} onChange={e => set('gender', e.target.value)}>
@@ -366,7 +366,7 @@ export default function FamilyProfilePage() {
 
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Additional Details</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-grid form-grid-2">
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Debt Amount (PKR)</label>
                     <input type="number" className="form-control" value={form.debt_amount} onChange={e => set('debt_amount', Number(e.target.value))} placeholder="0" />
@@ -377,7 +377,7 @@ export default function FamilyProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                <div className="form-grid form-grid-2" style={{ marginTop: 12 }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">School Name</label>
                     <input className="form-control" value={form.school_name} onChange={e => set('school_name', e.target.value)} placeholder="School or madrasa" />
@@ -388,7 +388,7 @@ export default function FamilyProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                <div className="form-grid form-grid-2" style={{ marginTop: 12 }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Religion</label>
                     <input className="form-control" value={form.religion} onChange={e => set('religion', e.target.value)} placeholder="Religion" />
@@ -432,7 +432,7 @@ export default function FamilyProfilePage() {
 
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Special Flags</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-grid form-grid-2" style={{ gap: 12 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.is_orphan} onChange={e => set('is_orphan', e.target.checked)} />
                     <Shield size={14} /> Orphan

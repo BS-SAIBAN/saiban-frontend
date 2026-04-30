@@ -51,9 +51,9 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
           <ArrowLeft size={14} /> Back to Families
         </Link>
         {family && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          <div style={{ marginTop: 8 }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h1 style={{ fontFamily: 'JetBrains Mono, monospace' }}>{family.registration_number}</h1>
                 <span className={`badge badge-${family.category === 'FA' ? 'blue' : 'purple'}`}>{family.category}</span>
                 <span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span>
@@ -70,7 +70,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* Sub-nav */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div className="family-subnav">
         {[
           { href: `/families/${id}`, label: 'Overview', icon: <Users size={13} /> },
           { href: `/families/${id}/members`, label: 'Members', icon: <User size={13} /> },

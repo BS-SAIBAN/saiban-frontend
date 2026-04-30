@@ -35,7 +35,7 @@ export default function FamilySponsorsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Sponsors</h1>
           <p>Manage sponsorships for this family</p>
@@ -57,7 +57,7 @@ export default function FamilySponsorsPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr>
                   <th>Donor</th>
@@ -72,33 +72,33 @@ export default function FamilySponsorsPage() {
               <tbody>
                 {sponsors.map(s => (
                   <tr key={s.sponsorship_id}>
-                    <td>
+                    <td data-label="Donor">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <User size={14} /> {s.donor_name || '—'}
                       </div>
                     </td>
-                    <td><span className="badge badge-blue">{s.sponsorship_type || '—'}</span></td>
-                    <td>
+                    <td data-label="Type"><span className="badge badge-blue">{s.sponsorship_type || '—'}</span></td>
+                    <td data-label="Start Date">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Calendar size={12} /> {s.start_date ? new Date(s.start_date).toLocaleDateString() : '—'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="End Date">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Calendar size={12} /> {s.end_date ? new Date(s.end_date).toLocaleDateString() : '—'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Amount">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <DollarSign size={12} /> {s.amount || 0}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`badge badge-${s.active ? 'green' : 'red'}`}>
                         {s.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <Link href={`/families/${id}/sponsors/${s.sponsorship_id}`} className="btn btn-secondary btn-sm">
                         View
                       </Link>

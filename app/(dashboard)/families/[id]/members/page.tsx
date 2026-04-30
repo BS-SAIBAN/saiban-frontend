@@ -386,7 +386,7 @@ export default function FamilyMembersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Members</h1>
           <p>Manage all members of this family</p>
@@ -408,7 +408,7 @@ export default function FamilyMembersPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -425,28 +425,28 @@ export default function FamilyMembersPage() {
               <tbody>
                 {members.map(m => (
                   <tr key={m.individual_id}>
-                    <td>
+                    <td data-label="Name">
                       <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{m.full_name}</div>
                     </td>
-                    <td><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{m.cnic_or_bform}</span></td>
-                    <td>
+                    <td data-label="CNIC/B-Form"><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{m.cnic_or_bform}</span></td>
+                    <td data-label="Age">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
                         <Calendar size={12} /> {calculateAge(m.dob)}y
                       </span>
                     </td>
-                    <td><span style={{ textTransform: 'capitalize' }}>{m.gender}</span></td>
-                    <td>{relationshipMap[m.relationship_to_head] || m.relationship_to_head}</td>
-                    <td>
+                    <td data-label="Gender"><span style={{ textTransform: 'capitalize' }}>{m.gender}</span></td>
+                    <td data-label="Relationship">{relationshipMap[m.relationship_to_head] || m.relationship_to_head}</td>
+                    <td data-label="Occupation">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Briefcase size={12} /> {m.occupation || '—'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Income">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                         <DollarSign size={12} /> {m.monthly_income || 0}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Flags">
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         {m.is_orphan && <span className="badge badge-purple" style={{ fontSize: '10px' }}>Orphan</span>}
                         {m.is_child && <span className="badge badge-blue" style={{ fontSize: '10px' }}>Child</span>}
@@ -454,7 +454,7 @@ export default function FamilyMembersPage() {
                         {m.is_patient && <span className="badge badge-red" style={{ fontSize: '10px' }}>Patient</span>}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => openViewModal(m)} className="btn btn-secondary btn-sm" title="View member">
                           <Eye size={12} />
@@ -491,7 +491,7 @@ export default function FamilyMembersPage() {
                 {fieldErrors.full_name && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.full_name}</div>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Gender *</label>
                   <select className="form-control" value={form.gender} onChange={e => set('gender', e.target.value)}>
@@ -537,7 +537,7 @@ export default function FamilyMembersPage() {
 
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Additional Details</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-grid form-grid-2">
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Debt Amount (PKR)</label>
                     <input type="number" className="form-control" value={form.debt_amount} onChange={e => set('debt_amount', Number(e.target.value))} placeholder="0" />
@@ -548,7 +548,7 @@ export default function FamilyMembersPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                <div className="form-grid form-grid-2" style={{ marginTop: 12 }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">School Name</label>
                     <input className="form-control" value={form.school_name} onChange={e => set('school_name', e.target.value)} placeholder="School or madrasa" />
@@ -559,7 +559,7 @@ export default function FamilyMembersPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
+                <div className="form-grid form-grid-2" style={{ marginTop: 12 }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Religion</label>
                     <input className="form-control" value={form.religion} onChange={e => set('religion', e.target.value)} placeholder="Religion" />
@@ -603,7 +603,7 @@ export default function FamilyMembersPage() {
 
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Special Flags</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-grid form-grid-2" style={{ gap: 12 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.is_orphan} onChange={e => set('is_orphan', e.target.checked)} />
                     <Shield size={14} /> Orphan

@@ -113,7 +113,7 @@ export default function FamilyScoringPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Family Scoring</h1>
           <p>Calculate and assign scores to this family</p>
@@ -159,7 +159,7 @@ export default function FamilyScoringPage() {
                 {error}
               </div>
             )}
-            <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="family-summary-cards">
               <div style={{ padding: 20, background: 'var(--accent-glow)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'center' }}>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8 }}>Calculated Score</div>
                 <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--accent)' }}>{score}</div>
@@ -196,7 +196,7 @@ export default function FamilyScoringPage() {
 
             <div style={{ marginBottom: 24 }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Override Score</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Manual Score</label>
                   <input type="number" className="form-control" value={score} onChange={e => setScore(Number(e.target.value))} max={100} min={0} />
@@ -222,7 +222,7 @@ export default function FamilyScoringPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="family-summary-actions">
               <button onClick={() => calculateScore(true)} className="btn btn-secondary" style={{ flex: 1 }} disabled={loading}>
                 <Calculator size={14} /> Recalculate
               </button>
