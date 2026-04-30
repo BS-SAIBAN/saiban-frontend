@@ -6,7 +6,7 @@ import { familiesAPI } from '@/lib/api';
 import { Users, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-const STEPS = ['Category', 'Basic Info', 'Address', 'Review'];
+const STEPS = ['Category', 'Basic Info', 'Address', 'Father (Head)', 'Review'];
 
 export default function NewFamilyPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function NewFamilyPage() {
   const [error, setError] = useState<string>('');
   const [form, setForm] = useState({
     category: '', area: '', city: '', full_address: '', housing_type: 'rented',
+    father_full_name: '', father_dob: '', father_cnic_or_bform: '', father_status: 'alive',
   });
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -29,11 +30,43 @@ export default function NewFamilyPage() {
     }
   };
 
+  const canProceedToNextStep = () => {
+    if (step === 0) return Boolean(form.category);
+    if (step === 3) {
+      return Boolean(
+        form.father_full_name.trim() &&
+        form.father_dob &&
+        form.father_cnic_or_bform.trim() &&
+        form.father_status
+      );
+    }
+    return true;
+  };
+
   const submit = async () => {
     setLoading(true); setError('');
     try {
-      console.log('Submitting form data:', form);
-      const res = await familiesAPI.create(form);
+      if (!form.father_full_name.trim() || !form.father_dob || !form.father_cnic_or_bform.trim() || !form.father_status) {
+        throw new Error('Father details are required. Please add the family head before registration.');
+      }
+
+      const payload = {
+        category: form.category,
+        area: form.area || null,
+        city: form.city || null,
+        full_address: form.full_address || null,
+        housing_type: form.housing_type,
+        father: {
+          full_name: form.father_full_name.trim(),
+          dob: form.father_dob,
+          cnic_or_bform: form.father_cnic_or_bform.trim(),
+          gender: 'male',
+          is_alive: form.father_status === 'alive',
+        },
+      };
+
+      console.log('Submitting form data:', payload);
+      const res = await familiesAPI.create(payload);
       console.log('Registration response:', res.data);
       router.push(`/families/${res.data.family_id}`);
     } catch (e: unknown) {
@@ -162,8 +195,39 @@ export default function NewFamilyPage() {
           </div>
         )}
 
-        {/* Step 3 — Review */}
+        {/* Step 3 — Father (Head) */}
         {step === 3 && (
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Father (Family Head)</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
+              Family registration requires father to be added as head first. Other members can be added later.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Father Full Name *</label>
+              <input className="form-control" value={form.father_full_name} onChange={e => set('father_full_name', e.target.value)} placeholder="Enter father full name" />
+            </div>
+            <div className="form-grid form-grid-2">
+              <div className="form-group">
+                <label className="form-label">Date of Birth *</label>
+                <input type="date" className="form-control" value={form.father_dob} onChange={e => set('father_dob', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Father Status *</label>
+                <select className="form-control" value={form.father_status} onChange={e => set('father_status', e.target.value)}>
+                  <option value="alive">Alive</option>
+                  <option value="dead">Dead</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">CNIC / B-Form *</label>
+              <input className="form-control" value={form.father_cnic_or_bform} onChange={e => set('father_cnic_or_bform', e.target.value)} placeholder="13-digit CNIC or 15-digit B-Form" />
+            </div>
+          </div>
+        )}
+
+        {/* Step 4 — Review */}
+        {step === 4 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Review & Submit</h2>
             <div className="info-grid" style={{ marginBottom: 20 }}>
@@ -171,6 +235,8 @@ export default function NewFamilyPage() {
               <div className="info-item"><label>Area</label><p>{form.area || '—'}</p></div>
               <div className="info-item"><label>City</label><p>{form.city || '—'}</p></div>
               <div className="info-item"><label>Housing</label><p style={{ textTransform: 'capitalize' }}>{form.housing_type}</p></div>
+              <div className="info-item"><label>Father (Head)</label><p>{form.father_full_name || '—'}</p></div>
+              <div className="info-item"><label>Father Status</label><p style={{ textTransform: 'capitalize' }}>{form.father_status || '—'}</p></div>
             </div>
             <div className="info-item"><label>Full Address</label><p>{form.full_address || '—'}</p></div>
           </div>
@@ -182,7 +248,7 @@ export default function NewFamilyPage() {
             <ArrowLeft size={14} /> Previous
           </button>
           {step < STEPS.length - 1 ? (
-            <button className="btn btn-primary" onClick={() => setStep(s => s + 1)} disabled={step === 0 && !form.category}>
+            <button className="btn btn-primary" onClick={() => setStep(s => s + 1)} disabled={!canProceedToNextStep()}>
               Next <ArrowRight size={14} />
             </button>
           ) : (
