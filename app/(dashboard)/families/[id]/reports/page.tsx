@@ -88,7 +88,7 @@ export default function FamilyReportsPage() {
                       {r.report_id.slice(0, 8)}...
                     </td>
                     <td data-label="Type">
-                      <span className={`badge badge-${reportTypeColors[r.report_type] || 'gray'}`}>
+                      <span className={`badge badge-${reportTypeColors[r.report_type || ''] || 'gray'}`}>
                         {r.report_type || '-'}
                       </span>
                     </td>
