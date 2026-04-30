@@ -303,8 +303,7 @@ export const storageAPI = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('family_id', familyId);
-    // Use OTHER for generic member photos with current backend enum.
-    formData.append('document_type', 'OTHER');
+    formData.append('document_type', 'photo');
     return api.post('/storage/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

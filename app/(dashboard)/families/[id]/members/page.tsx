@@ -39,6 +39,16 @@ const relationshipMap: Record<string, string> = {
   other: 'Other',
 };
 
+const extractCnicDigits = (value: string) => value.replace(/\D/g, '').slice(0, 15);
+
+const formatCnicOrBForm = (value: string) => {
+  const digits = extractCnicDigits(value);
+  if (digits.length <= 5) return digits;
+  if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  if (digits.length <= 13) return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
+  return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 15)}`;
+};
+
 export default function FamilyMembersPage() {
   const { id } = useParams<{ id: string }>();
   const [members, setMembers] = useState<Individual[]>([]);
@@ -298,7 +308,14 @@ export default function FamilyMembersPage() {
       set('photo_url', url);
     } catch (e) {
       console.error('Photo upload failed:', e);
-      setError('Failed to upload photo. Please try again.');
+      let message = 'Failed to upload photo. Please try again.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response?: { data?: { detail?: unknown } } }).response;
+        if (typeof response?.data?.detail === 'string') {
+          message = response.data.detail;
+        }
+      }
+      setError(message);
     } finally {
       setPhotoUploading(false);
     }
@@ -426,7 +443,16 @@ export default function FamilyMembersPage() {
                 {members.map(m => (
                   <tr key={m.individual_id}>
                     <td data-label="Name">
-                      <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{m.full_name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="member-avatar-circle">
+                          {m.photo_url ? (
+                            <img src={m.photo_url} alt={`${m.full_name || 'Member'} photo`} />
+                          ) : (
+                            m.full_name?.[0] || 'M'
+                          )}
+                        </div>
+                        <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{m.full_name}</div>
+                      </div>
                     </td>
                     <td data-label="CNIC/B-Form"><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{m.cnic_or_bform}</span></td>
                     <td data-label="Age">
@@ -508,7 +534,7 @@ export default function FamilyMembersPage() {
 
               <div className="form-group">
                 <label className="form-label">CNIC / B-Form Number *</label>
-                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', e.target.value)} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
+                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
                 {fieldErrors.cnic_or_bform && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.cnic_or_bform}</div>}
               </div>
 
@@ -581,9 +607,10 @@ export default function FamilyMembersPage() {
                         style={{ display: 'none' }}
                         disabled={photoUploading}
                         onChange={async (e) => {
+                          const input = e.currentTarget;
                           const file = e.target.files?.[0];
+                          input.value = '';
                           if (file) await uploadPhotoToR2(file);
-                          e.currentTarget.value = '';
                         }}
                       />
                     </label>
@@ -641,6 +668,15 @@ export default function FamilyMembersPage() {
               <button className="modal-close" onClick={closeViewModal}><X size={18} /></button>
             </div>
             <div className="modal-body">
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+                <div className="member-avatar-circle member-avatar-lg">
+                  {selectedMember.photo_url ? (
+                    <img src={selectedMember.photo_url} alt={`${selectedMember.full_name || 'Member'} photo`} />
+                  ) : (
+                    selectedMember.full_name?.[0] || 'M'
+                  )}
+                </div>
+              </div>
               <div className="info-grid" style={{ marginBottom: 16 }}>
                 <div className="info-item"><label>Full Name</label><p>{selectedMember.full_name || '—'}</p></div>
                 <div className="info-item"><label>CNIC / B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
@@ -656,7 +692,6 @@ export default function FamilyMembersPage() {
                 <div className="info-item"><label>Monthly School Fee</label><p>PKR {selectedMember.monthly_school_fee || 0}</p></div>
                 <div className="info-item"><label>Religion</label><p>{selectedMember.religion || '—'}</p></div>
                 <div className="info-item"><label>Caste</label><p>{selectedMember.caste || '—'}</p></div>
-                <div className="info-item" style={{ gridColumn: '1/-1' }}><label>Photo URL</label><p>{selectedMember.photo_url || '—'}</p></div>
               </div>
 
               <div style={{ marginTop: 8 }}>

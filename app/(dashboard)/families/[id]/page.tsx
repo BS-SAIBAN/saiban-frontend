@@ -233,7 +233,14 @@ export default function FamilyProfilePage() {
       set('photo_url', url);
     } catch (e) {
       console.error('Photo upload failed:', e);
-      setError('Failed to upload photo. Please try again.');
+      let message = 'Failed to upload photo. Please try again.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response?: { data?: { detail?: unknown } } }).response;
+        if (typeof response?.data?.detail === 'string') {
+          message = response.data.detail;
+        }
+      }
+      setError(message);
     } finally {
       setPhotoUploading(false);
     }
@@ -286,8 +293,12 @@ export default function FamilyProfilePage() {
                   }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>
-                    {m.full_name?.[0]}
+                  <div className="member-avatar-circle">
+                    {m.photo_url ? (
+                      <img src={m.photo_url} alt={`${m.full_name || 'Member'} photo`} />
+                    ) : (
+                      m.full_name?.[0] || 'M'
+                    )}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{m.full_name}</div>
@@ -410,9 +421,10 @@ export default function FamilyProfilePage() {
                         style={{ display: 'none' }}
                         disabled={photoUploading}
                         onChange={async (e) => {
+                          const input = e.currentTarget;
                           const file = e.target.files?.[0];
+                          input.value = '';
                           if (file) await uploadPhotoToR2(file);
-                          e.currentTarget.value = '';
                         }}
                       />
                     </label>

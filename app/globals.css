@@ -245,18 +245,33 @@ select.form-control option { background: var(--bg-secondary); }
 .modal {
   background: var(--bg-card); border: 1px solid var(--border-light);
   border-radius: 16px; width: 100%; max-width: 560px;
-  max-height: 90vh; overflow-y: auto;
+  max-height: 90vh; overflow: hidden;
   box-shadow: 0 25px 60px rgba(0,0,0,0.5);
   animation: slideUp 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 .modal-lg { max-width: 800px; }
-.modal-header { padding: 24px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-header { padding: 24px 24px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 .modal-header h2 { font-size: 17px; font-weight: 700; }
-.modal-body { padding: 20px 24px 24px; }
-.modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+.modal-body {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  scrollbar-gutter: stable;
+}
+.modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
 .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 6px; }
 .modal-close:hover { color: var(--text-primary); }
 .modal-close svg { width: 18px; height: 18px; }
+.modal-body::-webkit-scrollbar { width: 5px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.65); }
 
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
@@ -383,7 +398,7 @@ select.form-control option { background: var(--bg-secondary); }
 }
 .family-subnav {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
@@ -395,6 +410,32 @@ select.form-control option { background: var(--bg-secondary); }
   gap: 12px;
 }
 .family-summary-actions .btn { flex: 1; }
+.member-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.member-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.member-avatar-lg {
+  width: 84px;
+  height: 84px;
+  font-size: 26px;
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -461,6 +502,7 @@ select.form-control option { background: var(--bg-secondary); }
   .family-subnav {
     flex-wrap: nowrap;
     overflow-x: auto;
+    gap: 8px;
     padding-bottom: 4px;
     margin-bottom: 14px;
     scrollbar-width: none;
