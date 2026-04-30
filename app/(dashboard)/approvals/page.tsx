@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { approvalsAPI } from '@/lib/api';
 import { CheckSquare, X } from 'lucide-react';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Approval {
   assessment_id: string;
@@ -22,14 +23,18 @@ export default function ApprovalsPage() {
   const [decision, setDecision] = useState('');
   const [remarks, setRemarks] = useState('');
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
 
-  const load = () => {
-    approvalsAPI.queue().then(r => {
+  const load = useCallback(() => {
+    approvalsAPI.queue({ limit, skip: (page - 1) * limit }).then(r => {
       const data = Array.isArray(r.data) ? r.data : [];
       setApprovals(data);
+      setHasNext(data.length === limit);
     }).finally(() => setLoading(false));
-  };
-  useEffect(() => { load(); }, []);
+  }, [page, limit]);
+  useEffect(() => { load(); }, [load]);
 
   const decide = async () => {
     if (!selected) return;
@@ -37,6 +42,7 @@ export default function ApprovalsPage() {
     try {
       await approvalsAPI.decide(selected.assessment_id, { decision, remarks });
       setSelected(null); setDecision(''); setRemarks('');
+      setLoading(true);
       load();
     } catch { /* handled */ } finally { setSaving(false); }
   };
@@ -92,6 +98,17 @@ export default function ApprovalsPage() {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
 
       {/* Decision Modal */}

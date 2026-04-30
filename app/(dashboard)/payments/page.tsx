@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { paymentsAPI, sponsorshipsAPI } from '@/lib/api';
 import { DollarSign, Plus, Receipt, CheckCircle, X } from 'lucide-react';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Payment {
   payment_id: string;
@@ -34,24 +35,29 @@ export default function PaymentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [analytics, setAnalytics] = useState<Record<string, number>>({});
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
   const [form, setForm] = useState({
     sponsorship_id: '', amount: '', payment_date: new Date().toISOString().split('T')[0],
     payment_method: 'cash', transaction_reference: '', notes: '',
   });
 
-  const load = () => {
+  const load = useCallback(() => {
     Promise.all([
-      paymentsAPI.list(),
-      sponsorshipsAPI.list(),
+      paymentsAPI.list({ limit, skip: (page - 1) * limit }),
+      sponsorshipsAPI.list({ limit: 200 }),
       paymentsAPI.analytics(),
     ]).then(([p, s, a]) => {
-      setPayments(Array.isArray(p.data) ? p.data : []);
+      const paymentData = Array.isArray(p.data) ? p.data : [];
+      setPayments(paymentData);
+      setHasNext(paymentData.length === limit);
       setSponsorships(Array.isArray(s.data) ? s.data.map((item: Sponsorship) => ({ ...item, donor_id: item.donor_name })) : []);
       setAnalytics(a.data || {});
     }).finally(() => setLoading(false));
-  };
+  }, [page, limit]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
@@ -60,7 +66,8 @@ export default function PaymentsPage() {
     try {
       await paymentsAPI.create({ ...form, amount: parseInt(form.amount) });
       setShowModal(false); setForm({ sponsorship_id: '', amount: '', payment_date: new Date().toISOString().split('T')[0], payment_method: 'cash', transaction_reference: '', notes: '' });
-      load();
+      setLoading(true);
+      setPage(1);
     } catch { /* handled */ } finally { setSaving(false); }
   };
 
@@ -140,6 +147,17 @@ export default function PaymentsPage() {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
 
       {showModal && (

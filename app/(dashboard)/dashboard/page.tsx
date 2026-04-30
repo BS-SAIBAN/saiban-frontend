@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { familiesAPI, alertsAPI, donorsAPI, paymentsAPI, orphansAPI, individualsAPI } from '@/lib/api';
+import { dashboardAPI, alertsAPI } from '@/lib/api';
 import {
   Users, Bell, Heart, DollarSign, CheckCircle,
   Clock, AlertTriangle, TrendingUp, ArrowRight,
@@ -59,31 +59,21 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.allSettled([
-      familiesAPI.list(),
-      alertsAPI.list({ resolved: false }),
-      donorsAPI.analytics(),
-      paymentsAPI.analytics(),
-      orphansAPI.list(),
-      individualsAPI.list(),
-    ]).then(([fams, alts, donors, payments, orphans, individuals]) => {
-      const famData = fams.status === 'fulfilled'
-        ? (Array.isArray(fams.value.data?.data) ? fams.value.data.data : [])
-        : [];
+      dashboardAPI.summary(),
+      alertsAPI.list({ resolved: false, limit: 8 }),
+    ]).then(([summary, alts]) => {
+      const summaryData = summary.status === 'fulfilled' ? summary.value.data : null;
       const altData = alts.status === 'fulfilled' ? alts.value.data : [];
-      const donorsData = donors.status === 'fulfilled' ? donors.value.data : {};
-      const paymentsData = payments.status === 'fulfilled' ? payments.value.data : {};
-      const orphansData = orphans.status === 'fulfilled' ? orphans.value.data : [];
-      const individualsData = individuals.status === 'fulfilled' ? individuals.value.data : [];
 
       setStats({
-        totalFamilies: Array.isArray(famData) ? famData.length : 0,
-        pendingApprovals: Array.isArray(famData) ? famData.filter((f: {status: string}) => f.status === 'scoring').length : 0,
-        totalDonors: donorsData.total_donors || 0,
-        activeAlerts: Array.isArray(altData) ? altData.length : 0,
-        totalPayments: paymentsData.total_payments || 0,
-        monthlyAmount: paymentsData.total_amount || 0,
-        totalOrphans: Array.isArray(orphansData) ? orphansData.length : 0,
-        totalIndividuals: Array.isArray(individualsData) ? individualsData.length : 0,
+        totalFamilies: summaryData?.total_families || 0,
+        pendingApprovals: summaryData?.pending_approvals || 0,
+        totalDonors: summaryData?.total_donors || 0,
+        activeAlerts: summaryData?.active_alerts || 0,
+        totalPayments: summaryData?.total_payments || 0,
+        monthlyAmount: summaryData?.total_amount || 0,
+        totalOrphans: summaryData?.total_orphans || 0,
+        totalIndividuals: summaryData?.total_individuals || 0,
       });
       setAlerts(Array.isArray(altData) ? altData.slice(0, 8) : []);
     }).finally(() => setLoading(false));

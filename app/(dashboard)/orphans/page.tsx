@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { familiesAPI, individualsAPI, orphansAPI } from '@/lib/api';
 import { Baby, Search, User, Eye, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Orphan {
   orphan_profile_id: string; individual_id: string; family_id?: string;
@@ -33,13 +34,30 @@ export default function OrphansPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
   const [individualsById, setIndividualsById] = useState<Record<string, IndividualLite>>({});
   const [familiesById, setFamiliesById] = useState<Record<string, FamilyLite>>({});
 
   useEffect(() => {
-    Promise.all([orphansAPI.list(), individualsAPI.list(), familiesAPI.list()]).then(([orphansRes, individualsRes, familiesRes]) => {
+    const loadOrphans = search.trim().length >= 2
+      ? orphansAPI.search(search.trim())
+      : orphansAPI.list({
+          limit,
+          skip: (page - 1) * limit,
+          ...(priorityFilter === 'priority' ? { priority_flag: true } : {}),
+          ...(priorityFilter === 'non_priority' ? { priority_flag: false } : {}),
+        });
+
+    Promise.all([
+      loadOrphans,
+      individualsAPI.list({ limit: 500 }),
+      familiesAPI.list({ limit: 500 }),
+    ]).then(([orphansRes, individualsRes, familiesRes]) => {
       const orphanData = Array.isArray(orphansRes.data) ? orphansRes.data : [];
       setOrphans(orphanData);
+      setHasNext(search.trim().length < 2 && orphanData.length === limit);
       const individuals = Array.isArray(individualsRes.data) ? individualsRes.data : [];
       const individualsMap = individuals.reduce((acc: Record<string, IndividualLite>, individual: IndividualLite) => {
         if (individual?.individual_id) acc[individual.individual_id] = individual;
@@ -53,11 +71,11 @@ export default function OrphansPage() {
       }, {});
       setFamiliesById(familiesMap);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [page, search, priorityFilter, limit]);
 
   const filtered = useMemo(() => {
     let result = [...orphans];
-    if (search) {
+    if (search.trim().length < 2 && search) {
       const q = search.toLowerCase();
       result = result.filter(o => {
         const linkedIndividual = individualsById[o.individual_id];
@@ -68,8 +86,10 @@ export default function OrphansPage() {
         return name.toLowerCase().includes(q) || registration.toLowerCase().includes(q);
       });
     }
-    if (priorityFilter === 'priority') result = result.filter(o => o.priority_flag);
-    if (priorityFilter === 'non_priority') result = result.filter(o => !o.priority_flag);
+    if (search.trim().length >= 2) {
+      if (priorityFilter === 'priority') result = result.filter(o => o.priority_flag);
+      if (priorityFilter === 'non_priority') result = result.filter(o => !o.priority_flag);
+    }
     return result;
   }, [search, priorityFilter, orphans, individualsById, familiesById]);
 
@@ -105,9 +125,9 @@ export default function OrphansPage() {
         <div className="filter-row">
           <div className="search-bar" style={{ flex: 1, maxWidth: 340 }}>
             <Search size={15} />
-            <input className="form-control" placeholder="Search by name or registration number…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="form-control" placeholder="Search by name or registration number…" value={search} onChange={e => { setLoading(true); setPage(1); setSearch(e.target.value); }} />
           </div>
-          <select className="form-control" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}>
+          <select className="form-control" value={priorityFilter} onChange={e => { setLoading(true); setPage(1); setPriorityFilter(e.target.value); }}>
             <option value="">All Orphans</option>
             <option value="priority">Priority Cases Only</option>
             <option value="non_priority">Non-Priority</option>
@@ -189,6 +209,17 @@ export default function OrphansPage() {
             </tbody>
           </table>
         </div>
+        {!loading && search.trim().length < 2 && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
     </div>
   );

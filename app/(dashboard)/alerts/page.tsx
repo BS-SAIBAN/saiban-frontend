@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { alertsAPI } from '@/lib/api';
 import { Bell, CheckCircle, Filter, RefreshCw, AlertTriangle, Clock, DollarSign, FileText, Baby } from 'lucide-react';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Alert {
   alert_id: string;
@@ -31,16 +32,25 @@ export default function AlertsPage() {
   const [filter, setFilter] = useState('active');
   const [typeFilter, setTypeFilter] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
 
-  const load = () => {
+  const load = useCallback(() => {
     const params: Record<string, string> = {};
+    params.limit = String(limit);
+    params.skip = String((page - 1) * limit);
     if (filter === 'active') params.resolved = 'false';
     if (filter === 'resolved') params.resolved = 'true';
     if (typeFilter) params.alert_type = typeFilter;
-    alertsAPI.list(params).then(r => setAlerts(Array.isArray(r.data) ? r.data : [])).finally(() => setLoading(false));
-  };
+    alertsAPI.list(params).then(r => {
+      const data = Array.isArray(r.data) ? r.data : [];
+      setAlerts(data);
+      setHasNext(data.length === limit);
+    }).finally(() => setLoading(false));
+  }, [filter, typeFilter, page, limit]);
 
-  useEffect(() => { load(); }, [filter, typeFilter]);
+  useEffect(() => { load(); }, [load]);
 
   const resolve = async (id: string) => {
     await alertsAPI.resolve(id);
@@ -84,9 +94,16 @@ export default function AlertsPage() {
       <div className="card">
         <div className="filter-row" style={{ marginBottom: 20 }}>
           {['active', 'resolved', 'all'].map(f => (
-            <button key={f} className={`btn ${filter === f ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setFilter(f)} style={{ textTransform: 'capitalize' }}>{f}</button>
+            <button
+              key={f}
+              className={`btn ${filter === f ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              onClick={() => { setLoading(true); setPage(1); setFilter(f); }}
+              style={{ textTransform: 'capitalize' }}
+            >
+              {f}
+            </button>
           ))}
-          <select className="form-control" style={{ maxWidth: 200 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <select className="form-control" style={{ maxWidth: 200 }} value={typeFilter} onChange={e => { setLoading(true); setPage(1); setTypeFilter(e.target.value); }}>
             <option value="">All Types</option>
             <option value="payment_due">Payment Due</option>
             <option value="progress_report_due">Report Due</option>
@@ -147,6 +164,18 @@ export default function AlertsPage() {
               );
             })}
           </div>
+        )}
+
+        {!loading && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
         )}
       </div>
     </div>

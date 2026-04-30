@@ -143,10 +143,19 @@ export const familiesAPI = {
 
 // ── Individuals ───────────────────────────────────────
 export const individualsAPI = {
-  list: (familyId?: string) => api.get('/individuals', { params: isValidEntityId(familyId) ? { family_id: familyId } : {} }),
+  list: (familyOrParams?: string | QueryParams) => {
+    if (isValidEntityId(familyOrParams)) {
+      return api.get('/individuals', { params: { family_id: familyOrParams } });
+    }
+    if (familyOrParams && typeof familyOrParams === 'object') {
+      return api.get('/individuals', { params: familyOrParams });
+    }
+    return api.get('/individuals');
+  },
   get: (id: string) => isValidEntityId(id)
     ? api.get(`/individuals/${id}`)
     : Promise.reject(new Error('Invalid individual ID')),
+  search: (query: string) => api.get('/individuals/search', { params: { q: query } }),
   create: (data: Record<string, unknown>) => api.post('/individuals', data),
   update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
     ? api.put(`/individuals/${id}`, data)
@@ -159,6 +168,7 @@ export const individualsAPI = {
 // ── Orphans ───────────────────────────────────────────
 export const orphansAPI = {
   list: (params?: QueryParams) => api.get('/orphans', { params }),
+  search: (query: string) => api.get('/orphans/search', { params: { q: query } }),
   get: (id: string) => isValidEntityId(id)
     ? api.get(`/orphans/${id}`)
     : Promise.reject(new Error('Invalid orphan profile ID')),
@@ -270,6 +280,11 @@ export const alertsAPI = {
     api.post(`/alerts/${id}/resolve`, { alert_id: id, resolution_notes: resolutionNotes }),
   autoGenerate: () => api.post('/alerts/auto-generate'),
   analytics: () => api.get('/alerts/analytics'),
+};
+
+// ── Dashboard ─────────────────────────────────────────
+export const dashboardAPI = {
+  summary: () => api.get('/dashboard/summary'),
 };
 
 // ── Users ─────────────────────────────────────────────

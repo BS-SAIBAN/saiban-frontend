@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { assessmentsAPI } from '@/lib/api';
 import { ClipboardList, Search, Eye, Filter } from 'lucide-react';
 import Link from 'next/link';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Assessment {
   assessment_id: string; family_id: string; status: string;
@@ -24,13 +25,23 @@ export default function AssessmentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
 
-  useEffect(() => {
-    assessmentsAPI.list().then(r => {
+  const load = useCallback(() => {
+    assessmentsAPI.list({
+      limit,
+      skip: (page - 1) * limit,
+      ...(statusFilter ? { status: statusFilter } : {}),
+    }).then(r => {
       const data = Array.isArray(r.data) ? r.data : [];
       setAssessments(data);
+      setHasNext(data.length === limit);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [page, statusFilter, limit]);
+
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     let result = [...assessments];
@@ -53,7 +64,7 @@ export default function AssessmentsPage() {
             <Search size={15} />
             <input className="form-control" placeholder="Search by registration number…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <select className="form-control" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <select className="form-control" value={statusFilter} onChange={e => { setLoading(true); setPage(1); setStatusFilter(e.target.value); }}>
             <option value="">All Statuses</option>
             <option value="draft">Draft</option>
             <option value="submitted">Submitted</option>
@@ -109,6 +120,17 @@ export default function AssessmentsPage() {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
     </div>
   );

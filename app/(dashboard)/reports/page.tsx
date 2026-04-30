@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { reportsAPI } from '@/lib/api';
-import { FileText, Plus, Search, X } from 'lucide-react';
+import { FileText, Plus, X } from 'lucide-react';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Report {
   report_id: string; family_id: string; individual_id?: string;
@@ -23,17 +24,24 @@ export default function ReportsPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
 
-  const load = () => {
-    reportsAPI.list().then(r => setReports(Array.isArray(r.data) ? r.data : [])).finally(() => setLoading(false));
-  };
-  useEffect(() => { load(); }, []);
+  const load = useCallback(() => {
+    reportsAPI.list({ limit, skip: (page - 1) * limit }).then(r => {
+      const data = Array.isArray(r.data) ? r.data : [];
+      setReports(data);
+      setHasNext(data.length === limit);
+    }).finally(() => setLoading(false));
+  }, [page, limit]);
+  useEffect(() => { load(); }, [load]);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const save = async () => {
     setSaving(true);
-    try { await reportsAPI.create(form); setShowModal(false); setForm(emptyForm); load(); }
+    try { await reportsAPI.create(form); setShowModal(false); setForm(emptyForm); setLoading(true); setPage(1); }
     catch { /* handled */ } finally { setSaving(false); }
   };
 
@@ -88,6 +96,17 @@ export default function ReportsPage() {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
 
       {showModal && (

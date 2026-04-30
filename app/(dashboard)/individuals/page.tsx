@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { familiesAPI, individualsAPI } from '@/lib/api';
 import { User, Search, Filter, Eye, MapPin, Calendar, X } from 'lucide-react';
+import PaginationControls from '@/components/PaginationControls';
 
 interface Individual {
   individual_id: string;
@@ -53,14 +54,29 @@ export default function IndividualsPage() {
   const [search, setSearch] = useState('');
   const [orphanFilter, setOrphanFilter] = useState('');
   const [childFilter, setChildFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [limit, setLimit] = useState(50);
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Individual | null>(null);
   const [familiesById, setFamiliesById] = useState<Record<string, FamilyLite>>({});
 
   useEffect(() => {
-    Promise.all([individualsAPI.list(), familiesAPI.list()]).then(([individualRes, familyRes]) => {
+    const loadIndividuals = search.trim().length >= 2
+      ? individualsAPI.search(search.trim())
+      : individualsAPI.list({
+          limit,
+          skip: (page - 1) * limit,
+          ...(orphanFilter === 'orphan' ? { is_orphan: true } : {}),
+          ...(orphanFilter === 'non-orphan' ? { is_orphan: false } : {}),
+          ...(childFilter === 'child' ? { is_child: true } : {}),
+          ...(childFilter === 'adult' ? { is_child: false } : {}),
+        });
+
+    Promise.all([loadIndividuals, familiesAPI.list({ limit: 500 })]).then(([individualRes, familyRes]) => {
       const data = Array.isArray(individualRes.data) ? individualRes.data : [];
       setIndividuals(data);
+      setHasNext(search.trim().length < 2 && data.length === limit);
       const families = Array.isArray(familyRes.data?.data) ? familyRes.data.data : [];
       const map = families.reduce((acc: Record<string, FamilyLite>, family: FamilyLite) => {
         if (family?.family_id) acc[family.family_id] = family;
@@ -68,21 +84,11 @@ export default function IndividualsPage() {
       }, {});
       setFamiliesById(map);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [page, search, orphanFilter, childFilter, limit]);
 
   const filtered = useMemo(() => {
-    let result = [...individuals];
-    if (search) result = result.filter(i =>
-      i.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      i.cnic_or_bform?.toLowerCase().includes(search.toLowerCase()) ||
-      i.occupation?.toLowerCase().includes(search.toLowerCase())
-    );
-    if (orphanFilter === 'orphan') result = result.filter(i => i.is_orphan);
-    if (orphanFilter === 'non-orphan') result = result.filter(i => !i.is_orphan);
-    if (childFilter === 'child') result = result.filter(i => i.is_child);
-    if (childFilter === 'adult') result = result.filter(i => !i.is_child);
-    return result;
-  }, [search, orphanFilter, childFilter, individuals]);
+    return individuals;
+  }, [individuals]);
 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
@@ -127,14 +133,14 @@ export default function IndividualsPage() {
         <div className="filter-row">
           <div className="search-bar" style={{ flex: 1, maxWidth: 340 }}>
             <Search size={15} />
-            <input className="form-control" placeholder="Search by name, CNIC, occupation…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="form-control" placeholder="Search by name, CNIC, occupation…" value={search} onChange={e => { setLoading(true); setPage(1); setSearch(e.target.value); }} />
           </div>
-          <select className="form-control" value={orphanFilter} onChange={e => setOrphanFilter(e.target.value)}>
+          <select className="form-control" value={orphanFilter} onChange={e => { setLoading(true); setPage(1); setOrphanFilter(e.target.value); }}>
             <option value="">All Orphan Status</option>
             <option value="orphan">Orphans Only</option>
             <option value="non-orphan">Non-Orphans</option>
           </select>
-          <select className="form-control" value={childFilter} onChange={e => setChildFilter(e.target.value)}>
+          <select className="form-control" value={childFilter} onChange={e => { setLoading(true); setPage(1); setChildFilter(e.target.value); }}>
             <option value="">All Ages</option>
             <option value="child">Children</option>
             <option value="adult">Adults</option>
@@ -233,6 +239,17 @@ export default function IndividualsPage() {
             </tbody>
           </table>
         </div>
+        {!loading && search.trim().length < 2 && (
+          <PaginationControls
+            page={page}
+            disablePrev={page === 1}
+            disableNext={!hasNext}
+            onPrev={() => { setLoading(true); setPage(prev => Math.max(1, prev - 1)); }}
+            onNext={() => { setLoading(true); setPage(prev => prev + 1); }}
+            pageSize={limit}
+            onPageSizeChange={(size) => { setLoading(true); setPage(1); setLimit(size); }}
+          />
+        )}
       </div>
 
       {showMemberModal && selectedMember && (
