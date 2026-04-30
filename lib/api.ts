@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const resolveBaseUrl = () => {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured && configured.trim()) return configured.trim();
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${window.location.hostname}:8000/api/v1`;
+  }
+  return 'http://localhost:8000/api/v1';
+};
+
+const BASE_URL = resolveBaseUrl();
 type QueryValue = string | number | boolean;
 type QueryParams = Record<string, QueryValue>;
 const isValidEntityId = (value: unknown): value is string =>
