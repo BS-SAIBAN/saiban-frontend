@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, Users, User, Baby, ClipboardList,
   Star, CheckSquare, Heart, DollarSign, FileText,
-  Bell, Settings, LogOut, ShieldCheck, BookOpen,
+  Bell, Settings, LogOut, ShieldCheck, BookOpen, X,
 } from 'lucide-react';
 
 const navItems = [
@@ -52,15 +52,30 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout, isAdmin } = useAuth();
+  const closeSidebar = () => onClose?.();
 
   const initials = user?.full_name
     ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
   return (
-    <div className="sidebar">
+    <>
+      <div
+        className={`sidebar-backdrop ${isOpen ? 'open' : ''}`}
+        onClick={closeSidebar}
+        aria-hidden={!isOpen}
+      />
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <button className="sidebar-mobile-close" onClick={closeSidebar} aria-label="Close navigation menu">
+        <X size={16} />
+      </button>
       <div className="sidebar-logo" style={{ textAlign: 'center' }}>
         <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '80px', height: '60px', display: 'block', margin: '0 auto 2px auto' }} />
         <p>Beneficiary Management System</p>
@@ -76,7 +91,7 @@ export default function Sidebar() {
                 const Icon = item.icon;
                 const active = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
-                  <Link key={item.href} href={item.href} className={`nav-item ${active ? 'active' : ''}`}>
+                  <Link key={item.href} href={item.href} className={`nav-item ${active ? 'active' : ''}`} onClick={closeSidebar}>
                     <Icon />
                     {item.label}
                   </Link>
@@ -99,6 +114,7 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

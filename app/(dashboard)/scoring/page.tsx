@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { scoringAPI } from '@/lib/api';
-import { Star, Settings, Plus, X } from 'lucide-react';
+import { Star, Plus, X } from 'lucide-react';
 
 interface Criterion {
   criterion_id: string; name: string; weight: number;
@@ -24,8 +24,8 @@ export default function ScoringPage() {
     max_score: 100,
   });
 
-  const fetchCriteria = async () => {
-    setLoading(true);
+  const fetchCriteria = useCallback(async (showLoading: boolean = true) => {
+    if (showLoading) setLoading(true);
     try {
       const response = await scoringAPI.listCriteria();
       setCriteria(Array.isArray(response.data) ? response.data : []);
@@ -34,11 +34,14 @@ export default function ScoringPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCriteria();
-  }, []);
+    const timer = window.setTimeout(() => {
+      fetchCriteria(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchCriteria]);
 
   const resetCreateForm = () => {
     setForm({
@@ -130,17 +133,17 @@ export default function ScoringPage() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="mobile-stack-table">
               <thead>
                 <tr><th>Criterion</th><th>Weight</th><th>Applicable To</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {criteria.map(c => (
                   <tr key={c.criterion_id}>
-                    <td style={{ fontWeight: 600 }}>{c.name}</td>
-                    <td><span className="badge badge-blue">{c.weight}</span></td>
-                    <td><span className={`badge badge-${c.category_applicable === 'FA' ? 'blue' : c.category_applicable === 'SB' ? 'purple' : 'gray'}`}>{c.category_applicable}</span></td>
-                    <td>{c.active ? <span className="badge badge-green">Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
+                    <td data-label="Criterion" style={{ fontWeight: 600 }}>{c.name}</td>
+                    <td data-label="Weight"><span className="badge badge-blue">{c.weight}</span></td>
+                    <td data-label="Applicable To"><span className={`badge badge-${c.category_applicable === 'FA' ? 'blue' : c.category_applicable === 'SB' ? 'purple' : 'gray'}`}>{c.category_applicable}</span></td>
+                    <td data-label="Status">{c.active ? <span className="badge badge-green">Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
                   </tr>
                 ))}
               </tbody>

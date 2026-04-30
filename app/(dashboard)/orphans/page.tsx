@@ -136,7 +136,7 @@ export default function OrphansPage() {
         </div>
 
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -178,25 +178,25 @@ export default function OrphansPage() {
                 const linkedFamily = linkedFamilyId ? familiesById[linkedFamilyId] : null;
                 return (
                   <tr key={o.orphan_profile_id}>
-                    <td>
+                    <td data-label="Name">
                       <div style={{ fontWeight: 600 }}>{linkedIndividual?.full_name || o.individual?.full_name || '—'}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.deceased_father_name ? `Father: ${o.deceased_father_name}` : ''}</div>
                     </td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{linkedFamily?.registration_number || o.family?.registration_number || '—'}</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Family Reg." style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{linkedFamily?.registration_number || o.family?.registration_number || '—'}</td>
+                    <td data-label="Age at Reg." style={{ textAlign: 'center' }}>
                       <span style={{ color: (o.age_at_registration || 0) > 12 ? 'var(--red)' : 'var(--text-primary)', fontWeight: 600 }}>
                         {o.age_at_registration || '—'}
                         {(o.age_at_registration || 0) > 12 && <AlertCircle size={12} style={{ display: 'inline', marginLeft: 4, color: 'var(--red)' }} />}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="School / Class">
                       <div style={{ fontSize: 13 }}>{o.school_name || '—'}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.current_class || ''}</div>
                     </td>
-                    <td><span className={`badge badge-${zakat.color}`}>{zakat.label}</span></td>
-                    <td>{o.priority_flag ? <span className="badge badge-yellow">⭐ Priority</span> : <span className="badge badge-gray">Normal</span>}</td>
-                    <td>{o.mother_alive ? <span className="badge badge-green">Yes</span> : <span className="badge badge-red">No</span>}</td>
-                    <td>
+                    <td data-label="Zakat"><span className={`badge badge-${zakat.color}`}>{zakat.label}</span></td>
+                    <td data-label="Priority">{o.priority_flag ? <span className="badge badge-yellow">⭐ Priority</span> : <span className="badge badge-gray">Normal</span>}</td>
+                    <td data-label="Mother Alive">{o.mother_alive ? <span className="badge badge-green">Yes</span> : <span className="badge badge-red">No</span>}</td>
+                    <td data-label="Actions">
                       {hasValidFamilyId(linkedFamilyId) ? (
                         <Link href={`/families/${linkedFamilyId}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
                       ) : (

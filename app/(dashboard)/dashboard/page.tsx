@@ -133,7 +133,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div className="dashboard-columns">
         {/* Alerts queue */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
         {/* Quick links */}
         <div className="card">
           <h2 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px' }}>⚡ Quick Actions</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div className="quick-actions-grid">
             {[
               { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
               { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },

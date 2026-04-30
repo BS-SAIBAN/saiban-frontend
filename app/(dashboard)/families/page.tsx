@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
-import { Users, Plus, Search, Filter, Eye, Edit, Trash2, MapPin, Tag } from 'lucide-react';
+import { Users, Plus, Search, Filter, Edit, Trash2, MapPin, Tag } from 'lucide-react';
 
 interface Family {
   family_id: string;
@@ -31,6 +31,7 @@ export default function FamiliesPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -48,14 +49,14 @@ export default function FamiliesPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
 
-  const fetchFamilies = async () => {
-    setLoading(true);
+  const fetchFamilies = useCallback(async (showLoading: boolean = true) => {
+    if (showLoading) setLoading(true);
     try {
       const skip = (page - 1) * limit;
       const params: Record<string, string | number> = { skip, limit };
       if (categoryFilter) params.category = categoryFilter;
       if (statusFilter) params.status = statusFilter;
-      if (search) params.area = search;
+      if (appliedSearch) params.area = appliedSearch;
 
       const response = await familiesAPI.list(params);
       const data = response.data?.data || [];
@@ -69,11 +70,14 @@ export default function FamiliesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, categoryFilter, statusFilter, appliedSearch]);
 
   useEffect(() => {
-    fetchFamilies();
-  }, [page, categoryFilter, statusFilter]);
+    const timer = window.setTimeout(() => {
+      fetchFamilies(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchFamilies]);
 
   const handleDelete = async (familyId: string) => {
     setFamilyToDelete(familyId);
@@ -176,8 +180,8 @@ export default function FamiliesPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setAppliedSearch(search.trim());
     setPage(1);
-    fetchFamilies();
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -224,7 +228,7 @@ export default function FamiliesPage() {
         </form>
 
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Registration #</th>
@@ -263,7 +267,7 @@ export default function FamiliesPage() {
                 </td></tr>
               ) : families.map(f => (
                 <tr key={f.family_id}>
-                  <td>
+                  <td data-label="Registration #">
                     {hasValidFamilyId(f.family_id) ? (
                       <Link href={`/families/${f.family_id}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>
                         {f.registration_number}
@@ -274,12 +278,12 @@ export default function FamiliesPage() {
                       </span>
                     )}
                   </td>
-                  <td><span className={`badge ${f.category === 'FA' ? 'badge-blue' : 'badge-purple'}`}><Tag size={10} /> {f.category}</span></td>
-                  <td><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{f.status?.replace(/_/g, ' ')}</span></td>
-                  <td><span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}><MapPin size={12} />{f.area}, {f.city}</span></td>
-                  <td><span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{f.housing_type}</span></td>
-                  <td style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
-                  <td>
+                  <td data-label="Category"><span className={`badge ${f.category === 'FA' ? 'badge-blue' : 'badge-purple'}`}><Tag size={10} /> {f.category}</span></td>
+                  <td data-label="Status"><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{f.status?.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Location"><span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}><MapPin size={12} />{f.area}, {f.city}</span></td>
+                  <td data-label="Housing"><span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{f.housing_type}</span></td>
+                  <td data-label="Registered" style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
+                  <td data-label="Actions">
                     <div style={{ display: 'flex', gap: 6 }}>
                       {hasValidFamilyId(f.family_id) ? (
                         <>

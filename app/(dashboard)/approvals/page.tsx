@@ -57,7 +57,7 @@ export default function ApprovalsPage() {
 
       <div className="card">
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Assessment ID</th>
@@ -82,13 +82,13 @@ export default function ApprovalsPage() {
                 </td></tr>
               ) : approvals.map(a => (
                   <tr key={a.assessment_id}>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{a.assessment_id.slice(0, 8)}…</td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.family_registration_number || '—'}</td>
-                    <td>{a.family_area || '—'}</td>
-                    <td>{a.score ?? '—'}</td>
-                    <td>{a.eligibility_status ? <span className="badge badge-blue">{a.eligibility_status.replace(/_/g, ' ')}</span> : '—'}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
-                    <td>
+                    <td data-label="Assessment ID" style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{a.assessment_id.slice(0, 8)}…</td>
+                    <td data-label="Family Reg." style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.family_registration_number || '—'}</td>
+                    <td data-label="Area">{a.family_area || '—'}</td>
+                    <td data-label="Score">{a.score ?? '—'}</td>
+                    <td data-label="Eligibility">{a.eligibility_status ? <span className="badge badge-blue">{a.eligibility_status.replace(/_/g, ' ')}</span> : '—'}</td>
+                    <td data-label="Submitted" style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
+                    <td data-label="Actions">
                       <button className="btn btn-primary btn-sm" onClick={() => openReview(a)}>
                         <CheckSquare size={12} /> Review
                       </button>

@@ -79,7 +79,7 @@ export default function AssessmentsPage() {
         </div>
 
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Assessment ID</th>
@@ -105,14 +105,14 @@ export default function AssessmentsPage() {
                 </td></tr>
               ) : filtered.map(a => (
                 <tr key={a.assessment_id}>
-                  <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{a.assessment_id?.slice(0, 8)}…</td>
-                  <td style={{ fontFamily: 'monospace' }}>{a.family_registration_number || '—'}</td>
-                  <td>{a.family_category ? <span className={`badge badge-${a.family_category === 'FA' ? 'blue' : 'purple'}`}>{a.family_category}</span> : '—'}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{a.family_area || '—'}{a.family_city ? `, ${a.family_city}` : ''}</td>
-                  <td><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
-                  <td style={{ color: 'var(--text-muted)' }}>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
-                  <td>
+                  <td data-label="Assessment ID" style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{a.assessment_id?.slice(0, 8)}…</td>
+                  <td data-label="Family Reg." style={{ fontFamily: 'monospace' }}>{a.family_registration_number || '—'}</td>
+                  <td data-label="Category">{a.family_category ? <span className={`badge badge-${a.family_category === 'FA' ? 'blue' : 'purple'}`}>{a.family_category}</span> : '—'}</td>
+                  <td data-label="Location" style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{a.family_area || '—'}{a.family_city ? `, ${a.family_city}` : ''}</td>
+                  <td data-label="Status"><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Assessment Date" style={{ color: 'var(--text-muted)' }}>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
+                  <td data-label="Submitted" style={{ color: 'var(--text-muted)' }}>{a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
+                  <td data-label="Actions">
                     <Link href={`/families/${a.family_id}/assessment`} className="btn btn-secondary btn-sm"><Eye size={12} /> View</Link>
                   </td>
                 </tr>

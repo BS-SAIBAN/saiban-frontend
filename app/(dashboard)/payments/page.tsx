@@ -101,7 +101,7 @@ export default function PaymentsPage() {
 
       <div className="card">
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -134,12 +134,12 @@ export default function PaymentsPage() {
                 </td></tr>
               ) : payments.map(p => (
                 <tr key={p.payment_id}>
-                  <td>{p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-PK') : '—'}</td>
-                  <td><strong style={{ color: 'var(--green)' }}>PKR {p.amount?.toLocaleString()}</strong></td>
-                  <td><span className={`badge badge-${methodColor[p.payment_method] || 'gray'}`}>{p.payment_method?.replace('_', ' ')}</span></td>
-                  <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{p.transaction_reference || '—'}</td>
-                  <td style={{ color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.notes || '—'}</td>
-                  <td>
+                  <td data-label="Date">{p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-PK') : '—'}</td>
+                  <td data-label="Amount"><strong style={{ color: 'var(--green)' }}>PKR {p.amount?.toLocaleString()}</strong></td>
+                  <td data-label="Method"><span className={`badge badge-${methodColor[p.payment_method] || 'gray'}`}>{p.payment_method?.replace('_', ' ')}</span></td>
+                  <td data-label="Reference" style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{p.transaction_reference || '—'}</td>
+                  <td data-label="Notes" style={{ color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.notes || '—'}</td>
+                  <td data-label="Actions">
                     <button className="btn btn-secondary btn-sm" onClick={() => generateReceipt(p.payment_id)}><Receipt size={12} /> Receipt</button>
                   </td>
                 </tr>

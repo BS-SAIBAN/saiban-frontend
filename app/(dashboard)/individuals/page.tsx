@@ -152,7 +152,7 @@ export default function IndividualsPage() {
         </div>
 
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -189,21 +189,21 @@ export default function IndividualsPage() {
                 </td></tr>
               ) : filtered.map(i => (
                 <tr key={i.individual_id}>
-                  <td>
+                  <td data-label="Name">
                     <div>
                       <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{i.full_name}</div>
                       {i.occupation && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{i.occupation}</div>}
                     </div>
                   </td>
-                  <td><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{i.cnic_or_bform}</span></td>
-                  <td>
+                  <td data-label="CNIC/B-Form"><span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)' }}>{i.cnic_or_bform}</span></td>
+                  <td data-label="Age">
                     <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
                       <Calendar size={12} /> {calculateAge(i.dob)}y
                     </span>
                   </td>
-                  <td><span style={{ textTransform: 'capitalize' }}>{i.gender}</span></td>
-                  <td>{relationshipMap[i.relationship_to_head] || i.relationship_to_head}</td>
-                  <td>
+                  <td data-label="Gender"><span style={{ textTransform: 'capitalize' }}>{i.gender}</span></td>
+                  <td data-label="Relationship">{relationshipMap[i.relationship_to_head] || i.relationship_to_head}</td>
+                  <td data-label="Family">
                     {hasValidFamilyId(i.family_id) ? (
                       <Link href={`/families/${i.family_id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
@@ -212,7 +212,7 @@ export default function IndividualsPage() {
                       </Link>
                     ) : '—'}
                   </td>
-                  <td>
+                  <td data-label="Flags">
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {i.is_orphan && <span className="badge badge-purple" style={{ fontSize: '10px' }}>Orphan</span>}
                       {i.is_child && <span className="badge badge-blue" style={{ fontSize: '10px' }}>Child</span>}
@@ -220,7 +220,7 @@ export default function IndividualsPage() {
                       {i.is_patient && <span className="badge badge-red" style={{ fontSize: '10px' }}>Patient</span>}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Actions">
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button onClick={() => openMemberModal(i)} className="btn btn-secondary btn-sm">
                         <Eye size={12} /> View Member

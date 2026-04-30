@@ -58,7 +58,7 @@ export default function ReportsPage() {
 
       <div className="card">
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Report ID</th>
@@ -82,15 +82,15 @@ export default function ReportsPage() {
                 </td></tr>
               ) : reports.map(r => (
                 <tr key={r.report_id}>
-                  <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{r.report_id?.slice(0, 8)}…</td>
-                  <td><span className="badge badge-blue">{r.report_type}</span></td>
-                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  <td data-label="Report ID" style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{r.report_id?.slice(0, 8)}…</td>
+                  <td data-label="Type"><span className="badge badge-blue">{r.report_type}</span></td>
+                  <td data-label="Period" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                     {r.report_period_start ? new Date(r.report_period_start).toLocaleDateString() : '—'} →{' '}
                     {r.report_period_end ? new Date(r.report_period_end).toLocaleDateString() : '—'}
                   </td>
-                  <td><span className={`badge badge-${statusColor[r.status] || 'gray'}`}>{r.status}</span></td>
-                  <td style={{ color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.educational_progress || '—'}</td>
-                  <td style={{ color: 'var(--text-secondary)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.health_status || '—'}</td>
+                  <td data-label="Status"><span className={`badge badge-${statusColor[r.status] || 'gray'}`}>{r.status}</span></td>
+                  <td data-label="Education" style={{ color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.educational_progress || '—'}</td>
+                  <td data-label="Health" style={{ color: 'var(--text-secondary)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.health_status || '—'}</td>
                 </tr>
               ))}
             </tbody>
