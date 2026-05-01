@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { familiesAPI, individualsAPI, storageAPI } from '@/lib/api';
+import { familiesAPI, individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
 
@@ -226,11 +226,13 @@ export default function FamilyProfilePage() {
     setError('');
     try {
       const res = await storageAPI.uploadMemberPhoto(id, file);
+      const fileKey = res.data?.file_key as string | undefined;
       const url = res.data?.file_url as string | undefined;
-      if (!url) {
+      const photoUrl = fileKey ? storageAPI.publicFileUrl(fileKey) : normalizeStorageUrl(url);
+      if (!photoUrl) {
         throw new Error('Upload succeeded but no photo URL returned');
       }
-      set('photo_url', url);
+      set('photo_url', photoUrl);
     } catch (e) {
       console.error('Photo upload failed:', e);
       let message = 'Failed to upload photo. Please try again.';
@@ -295,7 +297,7 @@ export default function FamilyProfilePage() {
                 >
                   <div className="member-avatar-circle">
                     {m.photo_url ? (
-                      <img src={m.photo_url} alt={`${m.full_name || 'Member'} photo`} />
+                      <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
                     ) : (
                       m.full_name?.[0] || 'M'
                     )}
@@ -434,7 +436,7 @@ export default function FamilyProfilePage() {
                   </div>
                   {form.photo_url && (
                     <img
-                      src={form.photo_url}
+                      src={normalizeStorageUrl(form.photo_url)}
                       alt="Member preview"
                       style={{ marginTop: 10, width: 84, height: 84, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }}
                     />

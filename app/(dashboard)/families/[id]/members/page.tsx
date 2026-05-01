@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { individualsAPI, storageAPI } from '@/lib/api';
+import { individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { User, Plus, Edit, Trash2, Calendar, Shield, Briefcase, DollarSign, X, Save, Heart, Eye, Upload } from 'lucide-react';
 
@@ -301,11 +301,13 @@ export default function FamilyMembersPage() {
     setError('');
     try {
       const res = await storageAPI.uploadMemberPhoto(id, file);
+      const fileKey = res.data?.file_key as string | undefined;
       const url = res.data?.file_url as string | undefined;
-      if (!url) {
+      const photoUrl = fileKey ? storageAPI.publicFileUrl(fileKey) : normalizeStorageUrl(url);
+      if (!photoUrl) {
         throw new Error('Upload succeeded but no photo URL returned');
       }
-      set('photo_url', url);
+      set('photo_url', photoUrl);
     } catch (e) {
       console.error('Photo upload failed:', e);
       let message = 'Failed to upload photo. Please try again.';
@@ -446,7 +448,7 @@ export default function FamilyMembersPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="member-avatar-circle">
                           {m.photo_url ? (
-                            <img src={m.photo_url} alt={`${m.full_name || 'Member'} photo`} />
+                            <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
                           ) : (
                             m.full_name?.[0] || 'M'
                           )}
@@ -620,7 +622,7 @@ export default function FamilyMembersPage() {
                   </div>
                   {form.photo_url && (
                     <img
-                      src={form.photo_url}
+                      src={normalizeStorageUrl(form.photo_url)}
                       alt="Member preview"
                       style={{ marginTop: 10, width: 84, height: 84, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }}
                     />
@@ -671,7 +673,7 @@ export default function FamilyMembersPage() {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
                 <div className="member-avatar-circle member-avatar-lg">
                   {selectedMember.photo_url ? (
-                    <img src={selectedMember.photo_url} alt={`${selectedMember.full_name || 'Member'} photo`} />
+                    <img src={normalizeStorageUrl(selectedMember.photo_url)} alt={`${selectedMember.full_name || 'Member'} photo`} />
                   ) : (
                     selectedMember.full_name?.[0] || 'M'
                   )}

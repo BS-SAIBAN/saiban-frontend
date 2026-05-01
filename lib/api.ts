@@ -15,6 +15,41 @@ type QueryValue = string | number | boolean;
 type QueryParams = Record<string, QueryValue>;
 const isValidEntityId = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
+const encodeStorageKey = (fileKey: string) =>
+  fileKey.split('/').map(encodeURIComponent).join('/');
+
+const storagePublicUrl = (fileKey: string) =>
+  `${BASE_URL.replace(/\/+$/, '')}/storage/public/${encodeStorageKey(fileKey)}`;
+
+const extractR2FileKey = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.endsWith('.r2.cloudflarestorage.com')) return null;
+    const parts = parsed.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    return parts.length > 1 ? parts.slice(1).join('/') : null;
+  } catch {
+    return null;
+  }
+};
+
+export const normalizeStorageUrl = (value?: string | null) => {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+
+  const r2Key = extractR2FileKey(trimmed);
+  if (r2Key) return storagePublicUrl(r2Key);
+
+  if (trimmed.startsWith('/api/v1/storage/public/')) {
+    return `${new URL(BASE_URL).origin}${trimmed}`;
+  }
+
+  if (!/^(https?:|blob:|data:)/i.test(trimmed)) {
+    const key = trimmed.replace(/^\/?(api\/v1\/)?storage\/public\//, '');
+    return storagePublicUrl(key);
+  }
+
+  return trimmed;
+};
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -296,6 +331,7 @@ export const usersAPI = {
 
 // ── Storage (R2) ───────────────────────────────────────
 export const storageAPI = {
+  publicFileUrl: storagePublicUrl,
   uploadMemberPhoto: (familyId: string, file: File) => {
     if (!isValidEntityId(familyId)) {
       return Promise.reject(new Error('Invalid family ID'));

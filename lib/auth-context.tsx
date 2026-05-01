@@ -29,17 +29,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    const token = localStorage.getItem('access_token');
-    if (stored && token && stored !== 'undefined') {
-      try {
-        setUser(JSON.parse(stored));
-      } catch (e) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('access_token');
+    const clearStoredAuth = () => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      setUser(null);
+    };
+
+    const bootstrapAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        clearStoredAuth();
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
+
+      try {
+        const userRes = await authAPI.me();
+        const userData = userRes.data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      } catch {
+        clearStoredAuth();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void bootstrapAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
