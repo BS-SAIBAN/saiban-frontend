@@ -24,6 +24,16 @@ const statusColor: Record<string, string> = {
   approved: 'green', rejected: 'red', reassessment: 'purple',
 };
 
+const relationshipMap: Record<string, string> = {
+  head: 'Head',
+  spouse: 'Spouse',
+  son: 'Son',
+  daughter: 'Daughter',
+  mother: 'Mother',
+  sibling: 'Sibling',
+  other: 'Other',
+};
+
 const isValidFamilyRouteId = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value !== 'undefined' && value !== 'null';
 
@@ -484,13 +494,22 @@ export default function FamilyProfilePage() {
               <button className="modal-close" onClick={closeMemberModal}><X size={18} /></button>
             </div>
             <div className="modal-body">
-              <div className="info-grid">
-                <div className="info-item"><label>Name</label><p>{selectedMember.full_name || '—'}</p></div>
-                <div className="info-item"><label>Gender</label><p style={{ textTransform: 'capitalize' }}>{selectedMember.gender || '—'}</p></div>
-                <div className="info-item"><label>Relationship</label><p>{selectedMember.relationship_to_head || '—'}</p></div>
-                <div className="info-item"><label>Date of Birth</label><p>{formatDate(selectedMember.dob)}</p></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+                <div className="member-avatar-circle member-avatar-lg">
+                  {selectedMember.photo_url ? (
+                    <img src={normalizeStorageUrl(selectedMember.photo_url)} alt={`${selectedMember.full_name || 'Member'} photo`} />
+                  ) : (
+                    selectedMember.full_name?.[0] || 'M'
+                  )}
+                </div>
+              </div>
+              <div className="info-grid" style={{ marginBottom: 16 }}>
+                <div className="info-item"><label>Full Name</label><p>{selectedMember.full_name || '—'}</p></div>
+                <div className="info-item"><label>CNIC / B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
                 <div className="info-item"><label>Age</label><p>{calculateAge(selectedMember.dob)}</p></div>
-                <div className="info-item"><label>CNIC/B-Form</label><p>{selectedMember.cnic_or_bform || '—'}</p></div>
+                <div className="info-item"><label>Date of Birth</label><p>{formatDate(selectedMember.dob)}</p></div>
+                <div className="info-item"><label>Gender</label><p style={{ textTransform: 'capitalize' }}>{selectedMember.gender || '—'}</p></div>
+                <div className="info-item"><label>Relationship</label><p>{relationshipMap[selectedMember.relationship_to_head] || selectedMember.relationship_to_head || '—'}</p></div>
                 <div className="info-item"><label>Occupation</label><p>{selectedMember.occupation || '—'}</p></div>
                 <div className="info-item"><label>Monthly Income</label><p>PKR {selectedMember.monthly_income || 0}</p></div>
                 <div className="info-item"><label>Debt Amount</label><p>PKR {selectedMember.debt_amount || 0}</p></div>
@@ -499,16 +518,18 @@ export default function FamilyProfilePage() {
                 <div className="info-item"><label>Monthly School Fee</label><p>PKR {selectedMember.monthly_school_fee || 0}</p></div>
                 <div className="info-item"><label>Religion</label><p>{selectedMember.religion || '—'}</p></div>
                 <div className="info-item"><label>Caste</label><p>{selectedMember.caste || '—'}</p></div>
-                <div className="info-item" style={{ gridColumn: '1/-1' }}><label>Photo URL</label><p>{selectedMember.photo_url || '—'}</p></div>
               </div>
-              <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}
-                {selectedMember.is_child && <span className="badge badge-blue">Child</span>}
-                {selectedMember.is_disabled && <span className="badge badge-yellow">Disabled</span>}
-                {selectedMember.is_patient && <span className="badge badge-red">Patient</span>}
-                {!selectedMember.is_orphan && !selectedMember.is_child && !selectedMember.is_disabled && !selectedMember.is_patient && (
-                  <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>No special flags</span>
-                )}
+              <div style={{ marginTop: 8 }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: 10, fontSize: 13 }}>Special Flags</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {selectedMember.is_orphan && <span className="badge badge-purple">Orphan</span>}
+                  {selectedMember.is_child && <span className="badge badge-blue">Child</span>}
+                  {selectedMember.is_disabled && <span className="badge badge-yellow">Disabled</span>}
+                  {selectedMember.is_patient && <span className="badge badge-red">Patient</span>}
+                  {!selectedMember.is_orphan && !selectedMember.is_child && !selectedMember.is_disabled && !selectedMember.is_patient && (
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No special flags</span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="modal-footer">
