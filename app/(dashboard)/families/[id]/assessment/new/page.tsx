@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
-import { ArrowLeft, Save, ClipboardList, Calendar, FileText, AlertCircle, MapPin, DollarSign, Home, User } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardList, Calendar, FileText, AlertCircle, MapPin, Wallet, Home, User } from 'lucide-react';
 
 export default function NewAssessmentPage() {
   const { id } = useParams<{ id: string }>();
@@ -178,7 +178,7 @@ export default function NewAssessmentPage() {
           {/* Assets */}
           <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', marginBottom: 16, fontWeight: 600 }}>
-              <DollarSign size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+              <Wallet size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               Assets (PKR)
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
@@ -242,7 +242,7 @@ export default function NewAssessmentPage() {
           {/* Monthly Expenses */}
           <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', marginBottom: 16, fontWeight: 600 }}>
-              <DollarSign size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+              <Wallet size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               Monthly Expenses (PKR)
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>

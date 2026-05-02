@@ -284,14 +284,14 @@ export default function FamiliesPage() {
                   <td data-label="Housing"><span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{f.housing_type}</span></td>
                   <td data-label="Registered" style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
                   <td data-label="Actions">
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div className="row-actions" style={{ display: 'flex', gap: 6 }}>
                       {hasValidFamilyId(f.family_id) ? (
                         <>
-                          <button onClick={() => handleEdit(f.family_id)} className="btn btn-secondary btn-sm">
-                            <Edit size={12} />
+                          <button onClick={() => handleEdit(f.family_id)} className="btn btn-secondary btn-sm btn-icon" title="Edit family" aria-label="Edit family">
+                            <Edit size={16} />
                           </button>
-                          <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
-                            <Trash2 size={12} />
+                          <button onClick={() => handleDelete(f.family_id)} className="btn btn-secondary btn-sm btn-icon" style={{ color: 'var(--red)' }} title="Delete family" aria-label="Delete family">
+                            <Trash2 size={16} />
                           </button>
                         </>
                       ) : (

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { User, Plus, Edit, Trash2, Calendar, Shield, Briefcase, DollarSign, X, Save, Heart, Eye, Upload } from 'lucide-react';
+import { User, Plus, Edit, Trash2, Calendar, Shield, Briefcase, Wallet, X, Save, Heart, Eye, Upload } from 'lucide-react';
 
 interface Individual {
   individual_id: string;
@@ -471,7 +471,7 @@ export default function FamilyMembersPage() {
                     </td>
                     <td data-label="Income">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <DollarSign size={12} /> {m.monthly_income || 0}
+                        <Wallet size={12} /> {m.monthly_income || 0} PKR
                       </span>
                     </td>
                     <td data-label="Flags">
@@ -483,15 +483,15 @@ export default function FamilyMembersPage() {
                       </div>
                     </td>
                     <td data-label="Actions">
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => openViewModal(m)} className="btn btn-secondary btn-sm" title="View member">
-                          <Eye size={12} />
+                      <div className="row-actions" style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => openViewModal(m)} className="btn btn-secondary btn-sm btn-icon" title="View member" aria-label="View member">
+                          <Eye size={16} />
                         </button>
-                        <button onClick={() => openEditModal(m)} className="btn btn-secondary btn-sm" title="Edit member">
-                          <Edit size={12} />
+                        <button onClick={() => openEditModal(m)} className="btn btn-secondary btn-sm btn-icon" title="Edit member" aria-label="Edit member">
+                          <Edit size={16} />
                         </button>
-                        <button onClick={() => handleDelete(m.individual_id)} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
-                          <Trash2 size={12} />
+                        <button onClick={() => handleDelete(m.individual_id)} className="btn btn-secondary btn-sm btn-icon" style={{ color: 'var(--red)' }} title="Delete member" aria-label="Delete member">
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>

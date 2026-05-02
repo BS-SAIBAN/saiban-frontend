@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { individualsAPI } from '@/lib/api';
-import { ArrowLeft, Save, User, Calendar, Briefcase, DollarSign, Shield, Heart } from 'lucide-react';
+import { ArrowLeft, Save, User, Calendar, Briefcase, Wallet, Shield, Heart } from 'lucide-react';
 
 export default function NewMemberPage() {
   const { id } = useParams<{ id: string }>();

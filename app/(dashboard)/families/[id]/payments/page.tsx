@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { paymentsAPI, familiesAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { DollarSign, Plus, Calendar, Receipt } from 'lucide-react';
+import { Wallet, Plus, Calendar, Receipt } from 'lucide-react';
 
 interface PaymentSummary {
   payment_id: string;
@@ -55,7 +55,7 @@ export default function FamilyPaymentsPage() {
       <div className="card">
         {payments.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon"><DollarSign size={22} /></div>
+            <div className="empty-state-icon"><Wallet size={22} /></div>
             <h3>No Payments Found</h3>
             <p>No payment records for this family</p>
             <Link href={`/families/${id}/payments/new`} className="btn btn-primary" style={{ marginTop: 16 }}>
@@ -89,7 +89,7 @@ export default function FamilyPaymentsPage() {
                     </td>
                     <td data-label="Amount">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}>
-                        <DollarSign size={12} /> {p.amount || 0}
+                        <Wallet size={12} /> {p.amount || 0} PKR
                       </span>
                     </td>
                     <td data-label="Method"><span className="badge badge-gray">{p.payment_method || '—'}</span></td>

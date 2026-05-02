@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { alertsAPI } from '@/lib/api';
-import { Bell, CheckCircle, Filter, RefreshCw, AlertTriangle, Clock, DollarSign, FileText, Baby } from 'lucide-react';
+import { Bell, CheckCircle, Filter, RefreshCw, AlertTriangle, Clock, Wallet, FileText, Baby } from 'lucide-react';
 import PaginationControls from '@/components/PaginationControls';
 
 interface Alert {
@@ -19,7 +19,7 @@ interface Alert {
 }
 
 const typeConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  payment_due: { icon: <DollarSign size={14} />, color: 'yellow', label: 'Payment Due' },
+  payment_due: { icon: <Wallet size={14} />, color: 'yellow', label: 'Payment Due' },
   progress_report_due: { icon: <FileText size={14} />, color: 'blue', label: 'Report Due' },
   pending_approval: { icon: <Clock size={14} />, color: 'purple', label: 'Pending Approval' },
   reassessment_required: { icon: <AlertTriangle size={14} />, color: 'red', label: 'Reassessment' },
@@ -80,7 +80,7 @@ export default function AlertsPage() {
       <div className="stats-grid" style={{ marginBottom: 20 }}>
         {[
           { label: 'Active Alerts', value: active.length, color: 'var(--red)', bg: 'var(--red-bg)', icon: <Bell size={18} /> },
-          { label: 'Payment Due', value: alerts.filter(a => a.alert_type === 'payment_due' && !a.resolved).length, color: 'var(--yellow)', bg: 'var(--yellow-bg)', icon: <DollarSign size={18} /> },
+          { label: 'Payment Due', value: alerts.filter(a => a.alert_type === 'payment_due' && !a.resolved).length, color: 'var(--yellow)', bg: 'var(--yellow-bg)', icon: <Wallet size={18} /> },
           { label: 'Reports Due', value: alerts.filter(a => a.alert_type === 'progress_report_due' && !a.resolved).length, color: 'var(--accent)', bg: 'var(--accent-glow)', icon: <FileText size={18} /> },
           { label: 'Resolved', value: resolved.length, color: 'var(--green)', bg: 'var(--green-bg)', icon: <CheckCircle size={18} /> },
         ].map(s => (

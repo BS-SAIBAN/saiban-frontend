@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, Users, User, Baby, ClipboardList,
-  Star, CheckSquare, Heart, DollarSign, FileText,
+  Star, CheckSquare, Heart, Wallet, FileText,
   Bell, Settings, LogOut, ShieldCheck, BookOpen, X,
 } from 'lucide-react';
 
@@ -38,7 +38,7 @@ const navItems = [
     items: [
       { label: 'Donors', href: '/donors', icon: Heart },
       { label: 'Sponsorships', href: '/sponsorships', icon: BookOpen },
-      { label: 'Payments', href: '/payments', icon: DollarSign },
+      { label: 'Payments', href: '/payments', icon: Wallet },
       { label: 'Progress Reports', href: '/reports', icon: FileText },
     ],
   },

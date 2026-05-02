@@ -5,7 +5,7 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { Users, User, ClipboardList, Star, CheckSquare, Heart, DollarSign, FileText, ArrowLeft } from 'lucide-react';
+import { Users, User, ClipboardList, Star, CheckSquare, Heart, Wallet, FileText, ArrowLeft } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -78,7 +78,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
             { href: `/families/${id}/approval`, label: 'Approval', icon: <CheckSquare size={13} />, prefix: true },
             { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} />, prefix: true },
             { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} />, disabled: true },
-            { href: `/families/${id}/payments`, label: 'Payments', icon: <DollarSign size={13} />, disabled: true },
+            { href: `/families/${id}/payments`, label: 'Payments', icon: <Wallet size={13} />, disabled: true },
           ].map(link => (
             link.disabled ? (
               <span

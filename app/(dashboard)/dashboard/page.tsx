@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { dashboardAPI, alertsAPI } from '@/lib/api';
 import {
-  Users, Bell, Heart, DollarSign, CheckCircle,
+  Users, Bell, Heart, Wallet, CheckCircle,
   Clock, AlertTriangle, TrendingUp, ArrowRight,
   Baby, FileText,
 } from 'lucide-react';
@@ -41,7 +41,7 @@ const alertTypeColor: Record<string, string> = {
 };
 
 const alertTypeIcon: Record<string, React.ReactNode> = {
-  payment_due: <DollarSign size={14} />,
+  payment_due: <Wallet size={14} />,
   progress_report_due: <FileText size={14} />,
   pending_approval: <Clock size={14} />,
   reassessment_required: <AlertTriangle size={14} />,
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     { label: 'Total Individuals', value: stats.totalIndividuals, icon: <Users size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'All individuals' },
     { label: 'Total Orphans', value: stats.totalOrphans, icon: <Baby size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Registered orphans' },
     { label: 'Active Donors', value: stats.totalDonors, icon: <Heart size={20} />, color: 'var(--red)', bg: 'var(--red-bg)', change: 'Supporting cases' },
-    { label: 'Total Payments', value: stats.totalPayments, icon: <DollarSign size={20} />, color: 'var(--green)', bg: 'var(--green-bg)', change: 'Recorded payments' },
+    { label: 'Total Payments', value: stats.totalPayments, icon: <Wallet size={20} />, color: 'var(--green)', bg: 'var(--green-bg)', change: 'Recorded payments' },
     { label: 'Monthly Amount (PKR)', value: `${(stats.monthlyAmount / 1000).toFixed(0)}k`, icon: <TrendingUp size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Total disbursed' },
     { label: 'Pending Approvals', value: stats.pendingApprovals, icon: <Clock size={20} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)', change: 'Awaiting review' },
     { label: 'Active Alerts', value: stats.activeAlerts, icon: <Bell size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'Require attention' },
@@ -189,7 +189,7 @@ export default function DashboardPage() {
             {[
               { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
               { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },
-              { label: 'Record Payment', href: '/payments', icon: <DollarSign size={18} />, color: 'var(--green)', bg: 'var(--green-bg)' },
+              { label: 'Record Payment', href: '/payments', icon: <Wallet size={18} />, color: 'var(--green)', bg: 'var(--green-bg)' },
               { label: 'Submit Report', href: '/reports', icon: <FileText size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },
               { label: 'View Approvals', href: '/approvals', icon: <CheckCircle size={18} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
               { label: 'Orphan List', href: '/orphans', icon: <Baby size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },

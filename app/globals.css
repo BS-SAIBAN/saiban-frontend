@@ -45,7 +45,10 @@ html, body {
 html { overflow-x: hidden; width: 100%; }
 body { width: 100%; }
 
-img, svg, video { max-width: 100%; height: auto; }
+img, video { max-width: 100%; height: auto; }
+/* Don't apply max-width/height:auto to inline icons — they should respect their own size */
+svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+img { display: block; }
 input, textarea, select, button { font-family: inherit; }
 input, textarea, select { font-size: 16px; }
 @media (min-width: 769px) {
@@ -214,7 +217,25 @@ input, textarea, select { font-size: 16px; }
 .btn-danger:hover { background: rgba(239,68,68,0.2); }
 .btn-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
-.btn svg { width: 14px; height: 14px; }
+.btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Icon-only square button (table row actions, etc.) */
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.btn-icon svg { width: 16px !important; height: 16px !important; }
+.btn-icon.btn-sm { width: 30px; height: 30px; }
+.btn-icon.btn-sm svg { width: 15px !important; height: 15px !important; }
+
+/* Row-actions container keeps icon buttons from being stretched by table cell flex */
+.row-actions { display: inline-flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+.row-actions .btn { flex-shrink: 0; }
 
 /* Table */
 .table-wrap { overflow-x: auto; }
@@ -769,12 +790,20 @@ select.form-control option { background: var(--bg-secondary); }
     word-break: keep-all;
   }
   .btn.btn-sm { width: auto; max-width: 100%; }
+  /* Icon-only square buttons must keep their fixed size on mobile too */
+  .btn.btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0;
+  }
+  .btn.btn-icon.btn-sm { width: 30px !important; height: 30px !important; }
   /* Empty-state primary action: stays full width but never overflows */
   .empty-state .btn {
     width: 100%;
     max-width: 100%;
     min-width: 0;
   }
+  .empty-state .btn.btn-icon { width: 32px !important; height: 32px !important; }
   .page-header-row > div[style*="display: flex"] { width: 100%; }
   .table-wrap { margin: 0 -6px; -webkit-overflow-scrolling: touch; }
   .table-wrap > table:not(.mobile-stack-table) { min-width: 640px; }

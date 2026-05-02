@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { paymentsAPI, sponsorshipsAPI } from '@/lib/api';
-import { DollarSign, Plus, Receipt, CheckCircle, X } from 'lucide-react';
+import { Wallet, Plus, Receipt, CheckCircle, X } from 'lucide-react';
 import PaginationControls from '@/components/PaginationControls';
 
 interface Payment {
@@ -89,7 +89,7 @@ export default function PaymentsPage() {
 
       <div className="stats-grid" style={{ marginBottom: 20 }}>
         {[
-          { label: 'Total Payments', value: analytics.total_payments || 0, color: 'var(--accent)', bg: 'var(--accent-glow)', icon: <DollarSign size={18} /> },
+          { label: 'Total Payments', value: analytics.total_payments || 0, color: 'var(--accent)', bg: 'var(--accent-glow)', icon: <Wallet size={18} /> },
           { label: 'Total Amount (PKR)', value: `${((analytics.total_amount || 0) / 1000).toFixed(0)}k`, color: 'var(--green)', bg: 'var(--green-bg)', icon: <CheckCircle size={18} /> },
         ].map(s => (
           <div key={s.label} className="stat-card">
@@ -127,7 +127,7 @@ export default function PaymentsPage() {
               ) : payments.length === 0 ? (
                 <tr><td colSpan={6}>
                   <div className="empty-state">
-                    <div className="empty-state-icon"><DollarSign size={22} /></div>
+                    <div className="empty-state-icon"><Wallet size={22} /></div>
                     <h3>No payments recorded</h3>
                     <p>Record your first payment to get started</p>
                   </div>

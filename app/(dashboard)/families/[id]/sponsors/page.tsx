@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { sponsorshipsAPI, familiesAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { Heart, Plus, User, Calendar, DollarSign } from 'lucide-react';
+import { Heart, Plus, User, Calendar, Wallet } from 'lucide-react';
 
 interface SponsorshipSummary {
   sponsorship_id: string;
@@ -90,7 +90,7 @@ export default function FamilySponsorsPage() {
                     </td>
                     <td data-label="Amount">
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <DollarSign size={12} /> {s.amount || 0}
+                        <Wallet size={12} /> {s.amount || 0} PKR
                       </span>
                     </td>
                     <td data-label="Status">

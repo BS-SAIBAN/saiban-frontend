@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { donorsAPI } from '@/lib/api';
-import { Heart, Plus, Search, Phone, Mail, Building2, User, X, CheckCircle } from 'lucide-react';
+import { Heart, Plus, Search, Phone, Mail, Building2, User, X, CheckCircle, Wallet } from 'lucide-react';
 
 interface Donor {
   donor_id: string;
@@ -117,7 +117,7 @@ export default function DonorsPage() {
               </div>
               <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Heart size={13} />{d.total_sponsorships} sponsorships</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Mail size={13} />PKR {d.total_donated?.toLocaleString() || 0} donated</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Wallet size={13} />PKR {d.total_donated?.toLocaleString() || 0} donated</div>
                 {d.last_donation_date && <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}><Phone size={13} />Last donation {new Date(d.last_donation_date).toLocaleDateString()}</div>}
               </div>
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
