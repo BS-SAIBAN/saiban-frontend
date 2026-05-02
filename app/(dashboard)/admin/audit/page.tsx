@@ -91,7 +91,7 @@ export default function AuditLogPage() {
         </div>
 
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr>
                 <th>Timestamp</th>
@@ -117,24 +117,24 @@ export default function AuditLogPage() {
                 </td></tr>
               ) : filtered.map(log => (
                 <tr key={log.audit_id}>
-                  <td>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
+                  <td data-label="Timestamp">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}>
                       <Clock size={12} /> {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <td data-label="User">
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                       <User size={14} /> {log.user_name}
                     </div>
                   </td>
-                  <td><span className={`badge badge-${actionColors[log.action] || 'gray'}`}>{log.action}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <td data-label="Action"><span className={`badge badge-${actionColors[log.action] || 'gray'}`}>{log.action}</span></td>
+                  <td data-label="Entity">
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                       <Shield size={12} /> {log.entity_type}
                     </div>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{log.details || '—'}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>{log.ip_address}</td>
+                  <td data-label="Details" style={{ color: 'var(--text-secondary)', fontSize: '13px', wordBreak: 'break-word' }}>{log.details || '—'}</td>
+                  <td data-label="IP" style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>{log.ip_address}</td>
                 </tr>
               ))}
             </tbody>

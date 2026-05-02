@@ -231,11 +231,11 @@ export default function NewReportPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+          <div className="form-actions-end" style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
             <Link href={`/families/${id}/reports`} className="btn btn-secondary">
               Cancel
             </Link>
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <Save size={14} /> {loading ? 'Creating...' : 'Create Report'}
             </button>
           </div>

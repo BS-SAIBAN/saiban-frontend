@@ -77,7 +77,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <X size={16} />
       </button>
       <div className="sidebar-logo" style={{ textAlign: 'center' }}>
-        <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '80px', height: '60px', display: 'block', margin: '0 auto 2px auto' }} />
+        <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '80px', height: 'auto', maxWidth: '100%', display: 'block', margin: '0 auto 2px auto' }} />
         <p>Beneficiary Management System</p>
       </div>
 

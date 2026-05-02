@@ -303,6 +303,7 @@ export default function FamilyProfilePage() {
                       openMemberModal(m);
                     }
                   }}
+                  className="family-member-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
                 >
                   <div className="member-avatar-circle">
@@ -312,11 +313,11 @@ export default function FamilyProfilePage() {
                       m.full_name?.[0] || 'M'
                     )}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{m.full_name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.relationship_to_head} • {m.occupation || 'No occupation'}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.full_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.relationship_to_head} • {m.occupation || 'No occupation'}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
+                  <div className="member-badges" style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap' }}>
                     {m.is_orphan && <span className="badge badge-purple">Orphan</span>}
                     {m.is_child && <span className="badge badge-blue">Child</span>}
                   </div>

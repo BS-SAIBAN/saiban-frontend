@@ -489,11 +489,11 @@ export default function NewAssessmentPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <div className="form-actions-end" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Link
               href={`/families/${id}/assessment`}
               className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               Cancel
             </Link>
@@ -501,7 +501,7 @@ export default function NewAssessmentPage() {
               type="submit"
               className="btn btn-primary"
               disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               <Save size={14} /> {loading ? 'Creating...' : 'Create Assessment'}
             </button>

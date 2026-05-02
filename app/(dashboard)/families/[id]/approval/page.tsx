@@ -141,15 +141,15 @@ export default function FamilyApprovalPage() {
               <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Assessment Summary</h3>
               {assessments.map(a => (
                 <div key={a.assessment_id} style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Assessment ID</span>
-                    <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>{a.assessment_id.slice(0, 8)}…</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>{a.assessment_id.slice(0, 8)}…</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Date</span>
                     <span>{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Status</span>
                     <span className={`badge badge-${a.status === 'approved' ? 'green' : a.status === 'rejected' ? 'red' : 'gray'}`}>
                       {a.status?.replace(/_/g, ' ')}
@@ -157,11 +157,11 @@ export default function FamilyApprovalPage() {
                   </div>
                   {scoreSnapshots[a.assessment_id] && (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                      <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, gap: 8 }}>
                         <span style={{ color: 'var(--text-secondary)' }}>Saved score</span>
                         <span>{scoreSnapshots[a.assessment_id].score} / 100</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                      <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, gap: 8 }}>
                         <span style={{ color: 'var(--text-secondary)' }}>Eligibility</span>
                         <span style={{ textTransform: 'capitalize' }}>{scoreSnapshots[a.assessment_id].eligibility.replace(/_/g, ' ')}</span>
                       </div>

@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
 
       <div className="card">
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr>
             </thead>
@@ -60,18 +60,18 @@ export default function AdminUsersPage() {
                 const role = roleConfig[u.role] || { color: 'gray', label: u.role };
                 return (
                   <tr key={u.user_id}>
-                    <td>
+                    <td data-label="Name">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 }}>
                           {u.full_name?.[0]}
                         </div>
                         <span style={{ fontWeight: 600 }}>{u.full_name}</span>
                       </div>
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
-                    <td><span className={`badge badge-${role.color}`}><ShieldCheck size={10} /> {role.label}</span></td>
-                    <td>{u.active ? <span className="badge badge-green"><CheckCircle size={10} /> Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                    <td data-label="Email" style={{ color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{u.email}</td>
+                    <td data-label="Role"><span className={`badge badge-${role.color}`}><ShieldCheck size={10} /> {role.label}</span></td>
+                    <td data-label="Status">{u.active ? <span className="badge badge-green"><CheckCircle size={10} /> Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
+                    <td data-label="Joined" style={{ color: 'var(--text-muted)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
                   </tr>
                 );
               })}

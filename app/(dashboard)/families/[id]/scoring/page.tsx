@@ -175,19 +175,19 @@ export default function FamilyScoringPage() {
             <div style={{ marginBottom: 24 }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Scoring Criteria</h3>
               <div style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                   <span>Income Assessment</span>
                   <span style={{ fontWeight: 600 }}>30 points</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                   <span>Family Size</span>
                   <span style={{ fontWeight: 600 }}>20 points</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                   <span>Housing Condition</span>
                   <span style={{ fontWeight: 600 }}>20 points</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
                   <span>Special Circumstances</span>
                   <span style={{ fontWeight: 600 }}>30 points</span>
                 </div>

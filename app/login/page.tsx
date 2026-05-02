@@ -27,13 +27,13 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-primary)', padding: '16px',
+      minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg-primary)', padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
     }}>
-      <div style={{ width: '100%', maxWidth: '340px' }}>
+      <div style={{ width: '100%', maxWidth: '360px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: '100px', height: '80px', display: 'block', margin: '0 auto' }} />
+          <img src="/assets/logo.png" alt="Saiban BMS Logo" style={{ width: 'clamp(80px, 25vw, 100px)', height: 'auto', display: 'block', margin: '0 auto' }} />
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px', fontWeight: '500' }}>Beneficiary Management System</p>
         </div>
 

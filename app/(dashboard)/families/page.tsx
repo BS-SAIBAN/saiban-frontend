@@ -342,7 +342,7 @@ export default function FamiliesPage() {
                 {deleteError}
               </div>
             )}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <div className="form-actions-end" style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button onClick={cancelDelete} className="btn btn-secondary">
                 Cancel
               </button>
@@ -391,7 +391,7 @@ export default function FamiliesPage() {
                 <option value="owned">Owned</option>
               </select>
             </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <div className="form-actions-end" style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button onClick={closeEditModal} className="btn btn-secondary">
                 Cancel
               </button>

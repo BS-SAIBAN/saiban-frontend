@@ -118,7 +118,7 @@ export default function EditAssessmentPage() {
         {/* Basic Information */}
         <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '14px', marginBottom: 16, fontWeight: 600 }}>Basic Information</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="family-stat-grid" style={{ gap: 16 }}>
             <div>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>
                 <Calendar size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
@@ -173,7 +173,7 @@ export default function EditAssessmentPage() {
             <DollarSign size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
             Assets (PKR)
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="family-stat-grid" style={{ gap: 16 }}>
             <div>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Gold & Silver</label>
               <input type="number" min="0" value={form.assets_gold_silver} onChange={(e) => setForm(prev => ({ ...prev, assets_gold_silver: parseInt(e.target.value) || 0 }))} className="form-control" />
@@ -195,7 +195,7 @@ export default function EditAssessmentPage() {
             <DollarSign size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
             Monthly Expenses (PKR)
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="family-stat-grid" style={{ gap: 16 }}>
             <div>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Ration</label>
               <input type="number" min="0" value={form.monthly_ration} onChange={(e) => setForm(prev => ({ ...prev, monthly_ration: parseInt(e.target.value) || 0 }))} className="form-control" />
@@ -258,7 +258,7 @@ export default function EditAssessmentPage() {
             <User size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
             Field Worker Information
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="family-stat-grid" style={{ gap: 16 }}>
             <div>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: '13px' }}>Companion Name</label>
               <input type="text" value={form.field_worker_companion} onChange={(e) => setForm(prev => ({ ...prev, field_worker_companion: e.target.value }))} placeholder="Name of field worker companion" className="form-control" />
@@ -286,8 +286,8 @@ export default function EditAssessmentPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-          <button onClick={submit} disabled={loading} className="btn btn-primary">
+        <div className="family-summary-actions" style={{ marginTop: 20 }}>
+          <button type="button" onClick={submit} disabled={loading} className="btn btn-primary">
             <Save size={14} /> {loading ? 'Saving...' : 'Save Changes'}
           </button>
           <Link href={`/families/${id}/assessment/${assessment_id}`} className="btn btn-secondary">Cancel</Link>

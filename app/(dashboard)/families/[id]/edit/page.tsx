@@ -69,7 +69,7 @@ export default function EditFamilyPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="family-header-row">
         <div>
           <h1>Edit Family</h1>
           <p>Update family information</p>
@@ -87,7 +87,7 @@ export default function EditFamilyPage() {
           </select>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="form-grid form-grid-2">
           <div className="form-group">
             <label className="form-label">Area *</label>
             <input className="form-control" value={form.area} onChange={e => setForm(prev => ({ ...prev, area: e.target.value }))} placeholder="e.g. Gulshan, Model Town" />
@@ -111,11 +111,11 @@ export default function EditFamilyPage() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <button onClick={submit} disabled={loading} className="btn btn-primary" style={{ flex: 1 }}>
+        <div className="family-summary-actions" style={{ marginTop: 24 }}>
+          <Link href={`/families/${id}`} className="btn btn-secondary">Cancel</Link>
+          <button onClick={submit} disabled={loading} className="btn btn-primary">
             <Save size={14} /> {loading ? 'Saving...' : 'Save Changes'}
           </button>
-          <Link href={`/families/${id}`} className="btn btn-secondary">Cancel</Link>
         </div>
       </div>
     </div>

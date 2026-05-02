@@ -151,25 +151,28 @@ export default function AssessmentDetailPage() {
       </div>
 
       <div className="card">
-        <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="family-subpage-header">
           <div>
-            <h1 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1>
               <ClipboardList size={24} /> Assessment Details
             </h1>
             <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-              Assessment ID: <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{assessment.assessment_id}</span>
+              Assessment ID:{' '}
+              <span style={{ fontFamily: 'monospace', color: 'var(--accent)', wordBreak: 'break-all', overflowWrap: 'anywhere' }}>
+                {assessment.assessment_id}
+              </span>
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="family-subpage-actions">
             {assessment.status === 'draft' && (
               <>
                 <Link href={`/families/${id}/assessment/${assessment_id}/edit`} className="btn btn-secondary btn-sm">
                   <Edit size={14} /> Edit
                 </Link>
-                <button onClick={submitAssessment} className="btn btn-primary btn-sm" disabled={submitting}>
+                <button type="button" onClick={submitAssessment} className="btn btn-primary btn-sm" disabled={submitting}>
                   {submitting ? 'Submitting...' : 'Submit'}
                 </button>
-                <button onClick={handleDelete} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>
+                <button type="button" onClick={handleDelete} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }} aria-label="Delete assessment">
                   <Trash2 size={14} />
                 </button>
               </>
@@ -177,7 +180,7 @@ export default function AssessmentDetailPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+        <div className="family-stat-grid" style={{ marginBottom: 24, gap: 16 }}>
           <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
               <Calendar size={12} /> Assessment Date
@@ -204,7 +207,7 @@ export default function AssessmentDetailPage() {
           <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <MapPin size={16} /> Visit & Location
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <div className="family-stat-grid family-stat-grid-tight">
             <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>GPS Latitude</div>
               <div style={{ fontWeight: 600 }}>{parseNumber(assessment.gps_lat) ?? '—'}</div>
@@ -224,7 +227,7 @@ export default function AssessmentDetailPage() {
           <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <FileText size={16} /> Financial Snapshot
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <div className="family-stat-grid family-stat-grid-tight">
             <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Gold & Silver</div>
               <div style={{ fontWeight: 600 }}>{formatAmount(assessment.assets_gold_silver)}</div>
@@ -260,7 +263,7 @@ export default function AssessmentDetailPage() {
           <h3 style={{ fontSize: '16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <FileText size={16} /> Aid & Registration History
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <div className="family-stat-grid family-stat-grid-tight">
             <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Aid From Other Organizations</div>
               <div style={{ fontWeight: 600 }}>{assessment.aid_from_other_org ? 'Yes' : 'No'}</div>
@@ -313,44 +316,30 @@ export default function AssessmentDetailPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div className="card" style={{ maxWidth: 400, width: '90%' }}>
-            <div style={{ marginBottom: 16 }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <div className="modal-overlay" onClick={cancelDelete} role="presentation">
+          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-assessment-title">
+            <div className="modal-body">
+              <h3 id="delete-assessment-title" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 16 }}>
                 <AlertCircle size={20} style={{ color: 'var(--red)' }} /> Delete Assessment
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                 Are you sure you want to delete this assessment? This action cannot be undone.
               </p>
+              {deleteError && (
+                <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: 10, borderRadius: 6, marginTop: 16, fontSize: '13px' }}>
+                  {deleteError}
+                </div>
+              )}
             </div>
-            {deleteError && (
-              <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: 10, borderRadius: 6, marginBottom: 16, fontSize: '13px' }}>
-                {deleteError}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button
-                onClick={cancelDelete}
-                className="btn btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
+            <div className="modal-footer">
+              <button type="button" onClick={cancelDelete} className="btn btn-secondary">
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={confirmDelete}
                 className="btn btn-primary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--red)', border: '1px solid var(--red)' }}
+                style={{ background: 'var(--red)', border: '1px solid var(--red)' }}
               >
                 <Trash2 size={14} /> Delete
               </button>

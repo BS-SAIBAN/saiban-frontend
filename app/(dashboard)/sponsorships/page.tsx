@@ -63,7 +63,7 @@ export default function SponsorshipsPage() {
 
       <div className="card">
         <div className="table-wrap">
-          <table>
+          <table className="mobile-stack-table">
             <thead>
               <tr><th>Donor</th><th>Type</th><th>Amount (PKR/mo)</th><th>Frequency</th><th>Start Date</th><th>End Date</th><th>Status</th></tr>
             </thead>
@@ -80,13 +80,13 @@ export default function SponsorshipsPage() {
                 </td></tr>
               ) : sponsorships.map(s => (
                 <tr key={s.sponsorship_id}>
-                  <td style={{ fontWeight: 600 }}>{s.donor_name || donorName(s.donor_id)}</td>
-                  <td><span className={`badge badge-${s.sponsorship_type?.includes('orphan') ? 'purple' : 'blue'}`}>{s.sponsorship_type?.replace(/_/g, ' ')}</span></td>
-                  <td><strong style={{ color: 'var(--green)' }}>PKR {s.amount?.toLocaleString()}</strong></td>
-                  <td style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{s.payment_frequency}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{s.start_date ? new Date(s.start_date).toLocaleDateString() : '—'}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{s.end_date ? new Date(s.end_date).toLocaleDateString() : 'Ongoing'}</td>
-                  <td>{s.active ? <span className="badge badge-green">Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
+                  <td data-label="Donor" style={{ fontWeight: 600 }}>{s.donor_name || donorName(s.donor_id)}</td>
+                  <td data-label="Type"><span className={`badge badge-${s.sponsorship_type?.includes('orphan') ? 'purple' : 'blue'}`}>{s.sponsorship_type?.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Amount"><strong style={{ color: 'var(--green)' }}>PKR {s.amount?.toLocaleString()}</strong></td>
+                  <td data-label="Frequency" style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{s.payment_frequency}</td>
+                  <td data-label="Start" style={{ color: 'var(--text-muted)' }}>{s.start_date ? new Date(s.start_date).toLocaleDateString() : '—'}</td>
+                  <td data-label="End" style={{ color: 'var(--text-muted)' }}>{s.end_date ? new Date(s.end_date).toLocaleDateString() : 'Ongoing'}</td>
+                  <td data-label="Status">{s.active ? <span className="badge badge-green">Active</span> : <span className="badge badge-gray">Inactive</span>}</td>
                 </tr>
               ))}
             </tbody>

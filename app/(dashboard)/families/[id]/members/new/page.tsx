@@ -146,7 +146,7 @@ export default function NewMemberPage() {
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card" style={{ maxWidth: 'min(640px, 100%)' }}>
         {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
         <div className="form-group">
@@ -155,7 +155,7 @@ export default function NewMemberPage() {
           {fieldErrors.full_name && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.full_name}</div>}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="form-grid form-grid-2">
           <div className="form-group">
             <label className="form-label">Gender *</label>
             <select className="form-control" value={form.gender} onChange={e => set('gender', e.target.value)}>
@@ -201,7 +201,7 @@ export default function NewMemberPage() {
 
         <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 13 }}>Special Flags</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="form-grid form-grid-2" style={{ gap: 12 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input type="checkbox" checked={form.is_orphan} onChange={e => set('is_orphan', e.target.checked)} />
               <Shield size={14} /> Orphan
@@ -221,8 +221,8 @@ export default function NewMemberPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <button onClick={submit} disabled={loading} className="btn btn-primary" style={{ flex: 1 }}>
+        <div className="family-summary-actions" style={{ marginTop: 24 }}>
+          <button type="button" onClick={submit} disabled={loading} className="btn btn-primary">
             <Save size={14} /> {loading ? 'Adding...' : 'Add Member'}
           </button>
           <Link href={`/families/${id}/members`} className="btn btn-secondary">Cancel</Link>
