@@ -238,11 +238,11 @@ export default function FamilyProfilePage() {
       const res = await storageAPI.uploadMemberPhoto(id, file);
       const fileKey = res.data?.file_key as string | undefined;
       const url = res.data?.file_url as string | undefined;
-      const photoUrl = fileKey ? storageAPI.publicFileUrl(fileKey) : normalizeStorageUrl(url);
-      if (!photoUrl) {
-        throw new Error('Upload succeeded but no photo URL returned');
+      const portableRef = fileKey || url;
+      if (!portableRef) {
+        throw new Error('Upload succeeded but no file reference returned');
       }
-      set('photo_url', photoUrl);
+      set('photo_url', portableRef);
     } catch (e) {
       console.error('Photo upload failed:', e);
       let message = 'Failed to upload photo. Please try again.';

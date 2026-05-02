@@ -32,19 +32,49 @@ const extractR2FileKey = (url: string) => {
   }
 };
 
+// Pull the underlying file key out of any URL that points at our storage
+// proxy, regardless of which host the URL was originally generated against
+// (localhost during dev, a LAN IP, an old deploy host, etc.). This is what
+// allows the same DB row to render correctly on any device.
+const extractStorageKeyFromUrl = (url: string): string | null => {
+  const m = url.match(/\/(?:api\/v1\/)?storage\/public\/(.+)$/);
+  if (!m || !m[1]) return null;
+  try {
+    return m[1].split('/').map(decodeURIComponent).join('/');
+  } catch {
+    return m[1];
+  }
+};
+
+/**
+ * Resolve any stored file reference to a URL that works on the current device.
+ *
+ * Accepts:
+ *   - bare file keys           "families/abc/photos/xyz.jpg"
+ *   - relative API paths       "/api/v1/storage/public/<key>"
+ *   - absolute proxy URLs      "http://localhost:8000/api/v1/storage/public/<key>"
+ *                              "http://192.168.1.10:8000/api/v1/storage/public/<key>"
+ *                              "https://saiban-backend.example.com/api/v1/storage/public/<key>"
+ *   - direct R2 URLs           "https://<acct>.r2.cloudflarestorage.com/<bucket>/<key>"
+ *   - data: / blob: URLs       passed through unchanged
+ *
+ * Always re-points proxy URLs at the CURRENT BASE_URL so a photo uploaded on
+ * one device is viewable on every device.
+ */
 export const normalizeStorageUrl = (value?: string | null) => {
   const trimmed = value?.trim();
   if (!trimmed) return '';
 
+  if (/^(blob:|data:)/i.test(trimmed)) return trimmed;
+
   const r2Key = extractR2FileKey(trimmed);
   if (r2Key) return storagePublicUrl(r2Key);
 
-  if (trimmed.startsWith('/api/v1/storage/public/')) {
-    return `${new URL(BASE_URL).origin}${trimmed}`;
-  }
+  const proxyKey = extractStorageKeyFromUrl(trimmed);
+  if (proxyKey) return storagePublicUrl(proxyKey);
 
-  if (!/^(https?:|blob:|data:)/i.test(trimmed)) {
-    const key = trimmed.replace(/^\/?(api\/v1\/)?storage\/public\//, '');
+  if (!/^https?:/i.test(trimmed)) {
+    const key = trimmed.replace(/^\/+/, '');
     return storagePublicUrl(key);
   }
 
