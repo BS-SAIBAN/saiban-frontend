@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { scoringAPI, assessmentsAPI } from '@/lib/api';
@@ -13,6 +13,14 @@ interface AssessmentSummary {
   status: string;
 }
 
+type CriteriaRow = { name: string; earned: number; max: number; fallback?: boolean };
+
+function humanizeCriterionKey(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 export default function FamilyScoringPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -22,9 +30,43 @@ export default function FamilyScoringPage() {
   const [score, setScore] = useState(0);
   const [scoreId, setScoreId] = useState('');
   const [eligibilityStatus, setEligibilityStatus] = useState('need_review');
+  const [criteriaRows, setCriteriaRows] = useState<CriteriaRow[]>([]);
   const [overrideRemarks, setOverrideRemarks] = useState('');
   const [error, setError] = useState('');
   const [scoreMessage, setScoreMessage] = useState('');
+
+  const applyCalculationResult = useCallback((result: {
+    success?: boolean;
+    auto_score?: number | null;
+    eligibility_status?: string | null;
+    score_id?: string | null;
+    message?: string;
+    scoring_details?: Record<string, { score?: number; max_possible?: number; fallback?: boolean }> | null;
+  }) => {
+    if (!result?.success) {
+      setError(result?.message || 'Scoring failed. Try Recalculate.');
+      setCriteriaRows([]);
+      return;
+    }
+    setError('');
+    setScore(result.auto_score ?? 0);
+    setEligibilityStatus(result.eligibility_status || 'need_review');
+    setScoreId(result.score_id || '');
+    setScoreMessage(result.message || '');
+    const d = result.scoring_details;
+    if (d && typeof d === 'object' && Object.keys(d).length > 0) {
+      setCriteriaRows(
+        Object.entries(d).map(([name, v]) => ({
+          name: humanizeCriterionKey(name),
+          earned: v?.score ?? 0,
+          max: v?.max_possible ?? 0,
+          fallback: Boolean(v?.fallback),
+        })),
+      );
+    } else {
+      setCriteriaRows([]);
+    }
+  }, []);
 
   useEffect(() => {
     assessmentsAPI.list({ family_id: id }).then(r => {
@@ -33,22 +75,18 @@ export default function FamilyScoringPage() {
 
       const latestAssessment = data[0];
       if (!latestAssessment?.assessment_id) return;
-      if (['scored', 'approved', 'rejected', 'reassessment_required'].includes(latestAssessment.status)) {
-        scoringAPI.calculate(latestAssessment.assessment_id).then(({ data: result }) => {
-          if (result?.success) {
-            setScore(result.auto_score || 0);
-            setEligibilityStatus(result.eligibility_status || 'need_review');
-            setScoreId(result.score_id || '');
-            setScoreMessage(result.message || '');
-          }
+      const loadScoreForStatuses = ['submitted', 'scored', 'approved', 'rejected', 'reassessment_required'];
+      if (loadScoreForStatuses.includes(latestAssessment.status)) {
+        scoringAPI.calculate(latestAssessment.assessment_id, false).then(({ data: result }) => {
+          applyCalculationResult(result);
         }).catch(() => {
-          setError('Unable to load saved scoring result.');
+          setError('Unable to load scoring result.');
         });
       }
     }).catch(() => {
       setAssessments([]);
     }).finally(() => setFetchLoading(false));
-  }, [id]);
+  }, [id, applyCalculationResult]);
 
   const currentAssessment = assessments[0];
 
@@ -60,12 +98,7 @@ export default function FamilyScoringPage() {
     setError('');
     try {
       const { data } = await scoringAPI.calculate(currentAssessment.assessment_id, recalculate);
-      if (data?.success) {
-        setScore(data.auto_score || 0);
-        setEligibilityStatus(data.eligibility_status || 'need_review');
-        setScoreId(data.score_id || '');
-        setScoreMessage(data.message || '');
-      }
+      applyCalculationResult(data);
     } catch (e: unknown) {
       let message = 'Failed to calculate score';
       if (e && typeof e === 'object' && 'response' in e) {
@@ -86,12 +119,9 @@ export default function FamilyScoringPage() {
 
       if (!resultId && currentAssessment?.assessment_id) {
         const { data } = await scoringAPI.calculate(currentAssessment.assessment_id, false);
-        if (data?.success) {
-          resultId = data.score_id || '';
-          setScoreId(resultId);
-          setScore(data.auto_score || score);
-          setEligibilityStatus(data.eligibility_status || eligibilityStatus);
-          setScoreMessage(data.message || '');
+        applyCalculationResult(data);
+        if (data?.success && data.score_id) {
+          resultId = data.score_id;
         }
       }
 
@@ -173,24 +203,41 @@ export default function FamilyScoringPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Scoring Criteria</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Scoring breakdown</h3>
               <div style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
-                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-                  <span>Income Assessment</span>
-                  <span style={{ fontWeight: 600 }}>30 points</span>
-                </div>
-                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-                  <span>Family Size</span>
-                  <span style={{ fontWeight: 600 }}>20 points</span>
-                </div>
-                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-                  <span>Housing Condition</span>
-                  <span style={{ fontWeight: 600 }}>20 points</span>
-                </div>
-                <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-                  <span>Special Circumstances</span>
-                  <span style={{ fontWeight: 600 }}>30 points</span>
-                </div>
+                {criteriaRows.length > 0 ? (
+                  criteriaRows.map(row => (
+                    <div key={row.name} className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
+                      <span>
+                        {row.name}
+                        {row.fallback ? <span style={{ color: 'var(--text-muted)', fontSize: 12 }}> (default rubric)</span> : null}
+                      </span>
+                      <span style={{ fontWeight: 600 }}>{row.earned} / {row.max}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                      Use <strong>Recalculate</strong> to load a fresh breakdown, or configure criteria under Scoring.
+                    </p>
+                    <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+                      <span>Income assessment</span>
+                      <span style={{ fontWeight: 600 }}>up to 30</span>
+                    </div>
+                    <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+                      <span>Family size</span>
+                      <span style={{ fontWeight: 600 }}>up to 20</span>
+                    </div>
+                    <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+                      <span>Housing</span>
+                      <span style={{ fontWeight: 600 }}>up to 20</span>
+                    </div>
+                    <div className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+                      <span>Assets &amp; monthly expense need</span>
+                      <span style={{ fontWeight: 600 }}>up to 30</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
