@@ -37,6 +37,8 @@ export default function FamiliesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [familyToDelete, setFamilyToDelete] = useState<string | null>(null);
+  const [forceDelete, setForceDelete] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFamilyId, setEditFamilyId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
@@ -83,14 +85,17 @@ export default function FamiliesPage() {
     setFamilyToDelete(familyId);
     setShowDeleteConfirm(true);
     setDeleteError('');
+    setForceDelete(false);
   };
 
   const confirmDelete = async () => {
-    if (!familyToDelete) return;
+    if (!familyToDelete || deleteLoading) return;
+    setDeleteLoading(true);
     try {
-      await familiesAPI.delete(familyToDelete);
+      await familiesAPI.delete(familyToDelete, { force: forceDelete });
       setShowDeleteConfirm(false);
       setFamilyToDelete(null);
+      setForceDelete(false);
       fetchFamilies();
     } catch (e: unknown) {
       let errorMsg = 'Failed to delete family. Please try again.';
@@ -113,13 +118,17 @@ export default function FamiliesPage() {
         console.error('Failed to delete family:', e);
       }
       setDeleteError(errorMsg);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   const cancelDelete = () => {
+    if (deleteLoading) return;
     setShowDeleteConfirm(false);
     setFamilyToDelete(null);
     setDeleteError('');
+    setForceDelete(false);
   };
 
   const handleEdit = async (familyId: string) => {
@@ -335,19 +344,32 @@ export default function FamiliesPage() {
           <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 400, width: '90%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)' }}>Delete Family</h3>
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
-              Are you sure you want to delete this family? This action cannot be undone.
+              Are you sure you want to delete this family?
+              This action cannot be undone.
             </p>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14, fontSize: 13, color: 'var(--text-secondary)', cursor: deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteLoading ? 0.7 : 1 }}>
+              <input
+                type="checkbox"
+                checked={forceDelete}
+                onChange={e => setForceDelete(e.target.checked)}
+                disabled={deleteLoading}
+                style={{ marginTop: 2 }}
+              />
+              <span>
+                Force delete all related records (members, assessments, sponsorships, payments, alerts, reports).
+              </span>
+            </label>
             {deleteError && (
               <div style={{ padding: 12, background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, fontSize: '13px', color: '#dc2626' }}>
                 {deleteError}
               </div>
             )}
             <div className="form-actions-end" style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={cancelDelete} className="btn btn-secondary">
+              <button onClick={cancelDelete} className="btn btn-secondary" disabled={deleteLoading}>
                 Cancel
               </button>
-              <button onClick={confirmDelete} className="btn btn-primary" style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
-                Delete
+              <button onClick={confirmDelete} className="btn btn-primary" disabled={deleteLoading} style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
+                {deleteLoading ? 'Deleting...' : (forceDelete ? 'Force Delete' : 'Delete')}
               </button>
             </div>
           </div>

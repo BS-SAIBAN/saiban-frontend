@@ -201,8 +201,8 @@ export const familiesAPI = {
   update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
     ? api.put(`/families/${id}`, data)
     : Promise.reject(new Error('Invalid family ID')),
-  delete: (id: string) => isValidEntityId(id)
-    ? api.delete(`/families/${id}`)
+  delete: (id: string, options?: { force?: boolean }) => isValidEntityId(id)
+    ? api.delete(`/families/${id}`, { params: { force: Boolean(options?.force) } })
     : Promise.reject(new Error('Invalid family ID')),
 };
 

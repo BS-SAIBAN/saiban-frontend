@@ -6,7 +6,10 @@ import { familiesAPI } from '@/lib/api';
 import { CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-const STEPS = ['Category', 'Basic Info', 'Address', 'Father (Head)', 'Review'];
+const STEPS = ['Basic Info', 'Address', 'Father (Head)', 'Review'];
+
+/** New families register without choosing FA/SB; category defaults to FA. SB (Saiban guardianship) is set later when applicable (e.g. Edit Family). */
+const DEFAULT_FAMILY_CATEGORY = 'FA' as const;
 
 const extractDigits = (value: string) => value.replace(/\D/g, '').slice(0, 15);
 
@@ -24,7 +27,7 @@ export default function NewFamilyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [form, setForm] = useState({
-    category: '', area: '', city: '', full_address: '', housing_type: 'rented',
+    area: '', city: '', full_address: '', housing_type: 'rented',
     father_full_name: '', father_dob: '', father_cnic_or_bform: '', father_status: 'alive',
     father_occupation: '', father_monthly_income: '', father_religion: '', father_caste: '',
   });
@@ -42,8 +45,7 @@ export default function NewFamilyPage() {
   };
 
   const canProceedToNextStep = () => {
-    if (step === 0) return Boolean(form.category);
-    if (step === 3) {
+    if (step === 2) {
       const fatherBaseValid = Boolean(
         form.father_full_name.trim() &&
         form.father_dob &&
@@ -75,7 +77,7 @@ export default function NewFamilyPage() {
       }
 
       const payload = {
-        category: form.category,
+        category: DEFAULT_FAMILY_CATEGORY,
         area: form.area || null,
         city: form.city || null,
         full_address: form.full_address || null,
@@ -139,7 +141,7 @@ export default function NewFamilyPage() {
               <ArrowLeft size={14} /> Back to Families
             </Link>
             <h1 style={{ marginTop: 8 }}>Register New Beneficiary</h1>
-            <p>Enter family details to begin the beneficiary process</p>
+            <p>Enter family details to register the household. Program classification (e.g. Saiban guardianship) can be updated later where needed.</p>
           </div>
         </div>
       </div>
@@ -162,33 +164,8 @@ export default function NewFamilyPage() {
       <div className="card wizard-shell">
         {error && <div style={{ padding: '12px 14px', marginBottom: 16, background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
-        {/* Step 0 — Category */}
+        {/* Step 0 — Basic Info */}
         {step === 0 && (
-          <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Select Program Category</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 24 }}>Choose the appropriate program for this family. This cannot be changed after approval.</p>
-            <div className="wizard-category-grid">
-              {[
-                { value: 'FA', label: 'FA — Financial Aid', desc: 'For general needy families. Donor supports the entire family unit.', color: 'var(--accent)', bg: 'var(--accent-glow)' },
-                { value: 'SB', label: 'SB — Saiban Orphan', desc: 'For families with orphaned children. Each orphan tracked individually.', color: 'var(--purple)', bg: 'var(--purple-bg)' },
-              ].map(opt => (
-                <div key={opt.value} onClick={() => set('category', opt.value)} style={{
-                  padding: 20, borderRadius: 12, cursor: 'pointer',
-                  border: `2px solid ${form.category === opt.value ? opt.color : 'var(--border)'}`,
-                  background: form.category === opt.value ? opt.bg : 'var(--bg-secondary)',
-                  transition: 'all 0.15s',
-                }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>{opt.value === 'FA' ? '👨‍👩‍👧‍👦' : '👶'}</div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: form.category === opt.value ? opt.color : 'var(--text-primary)' }}>{opt.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{opt.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 1 — Basic Info */}
-        {step === 1 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Basic Information</h2>
             <div className="form-grid form-grid-2">
@@ -211,8 +188,8 @@ export default function NewFamilyPage() {
           </div>
         )}
 
-        {/* Step 2 — Address */}
-        {step === 2 && (
+        {/* Step 1 — Address */}
+        {step === 1 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Full Address</h2>
             <div className="form-group">
@@ -223,8 +200,8 @@ export default function NewFamilyPage() {
           </div>
         )}
 
-        {/* Step 3 — Father (Head) */}
-        {step === 3 && (
+        {/* Step 2 — Father (Head) */}
+        {step === 2 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Father (Family Head)</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
@@ -283,12 +260,11 @@ export default function NewFamilyPage() {
           </div>
         )}
 
-        {/* Step 4 — Review */}
-        {step === 4 && (
+        {/* Step 3 — Review */}
+        {step === 3 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Review & Submit</h2>
             <div className="info-grid" style={{ marginBottom: 20 }}>
-              <div className="info-item"><label>Program</label><p>{form.category === 'FA' ? 'FA — Financial Aid' : 'SB — Saiban Orphan'}</p></div>
               <div className="info-item"><label>Area</label><p>{form.area || '—'}</p></div>
               <div className="info-item"><label>City</label><p>{form.city || '—'}</p></div>
               <div className="info-item"><label>Housing</label><p style={{ textTransform: 'capitalize' }}>{form.housing_type}</p></div>

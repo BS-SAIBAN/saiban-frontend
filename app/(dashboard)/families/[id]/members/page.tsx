@@ -63,6 +63,7 @@ export default function FamilyMembersPage() {
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [error, setError] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -113,17 +114,28 @@ export default function FamilyMembersPage() {
   };
 
   const confirmDelete = async () => {
-    if (!memberToDelete) return;
+    if (!memberToDelete || deleting) return;
+    setDeleting(true);
     try {
       await individualsAPI.delete(memberToDelete);
-      setMembers(members.filter(m => m.individual_id !== memberToDelete));
+      setMembers(prev => prev.filter(m => m.individual_id !== memberToDelete));
       setShowDeleteConfirm(false);
       setMemberToDelete(null);
+      setDeleteError('');
     } catch (e: unknown) {
       console.error('Failed to delete member:', e);
       let errorMsg = 'Failed to delete member. Please try again.';
       if (e && typeof e === 'object' && 'response' in e) {
-        const response = (e as { response: { data?: unknown } }).response;
+        const response = (e as { response: { status?: number; data?: unknown } }).response;
+        // If backend already deleted the member (double click / duplicate call),
+        // treat 404 as success and sync local state.
+        if (response?.status === 404) {
+          setMembers(prev => prev.filter(m => m.individual_id !== memberToDelete));
+          setShowDeleteConfirm(false);
+          setMemberToDelete(null);
+          setDeleteError('');
+          return;
+        }
         if (response?.data && typeof response.data === 'object' && 'detail' in response.data) {
           const detail = (response.data as { detail: unknown }).detail;
           if (typeof detail === 'string') {
@@ -132,10 +144,13 @@ export default function FamilyMembersPage() {
         }
       }
       setDeleteError(errorMsg);
+    } finally {
+      setDeleting(false);
     }
   };
 
   const cancelDelete = () => {
+    if (deleting) return;
     setShowDeleteConfirm(false);
     setMemberToDelete(null);
     setDeleteError('');
@@ -490,9 +505,22 @@ export default function FamilyMembersPage() {
                         <button onClick={() => openEditModal(m)} className="btn btn-secondary btn-sm btn-icon" title="Edit member" aria-label="Edit member">
                           <Edit size={16} />
                         </button>
-                        <button onClick={() => handleDelete(m.individual_id)} className="btn btn-secondary btn-sm btn-icon" style={{ color: 'var(--red)' }} title="Delete member" aria-label="Delete member">
-                          <Trash2 size={16} />
-                        </button>
+                        {m.relationship_to_head === 'head' ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm btn-icon"
+                            style={{ opacity: 0.45, cursor: 'not-allowed' }}
+                            title="Family head cannot be deleted here. Transfer head first."
+                            aria-label="Family head cannot be deleted"
+                            disabled
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        ) : (
+                          <button onClick={() => handleDelete(m.individual_id)} className="btn btn-secondary btn-sm btn-icon" style={{ color: 'var(--red)' }} title="Delete member" aria-label="Delete member">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -737,9 +765,9 @@ export default function FamilyMembersPage() {
               )}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={cancelDelete}>Cancel</button>
-              <button className="btn btn-primary" onClick={confirmDelete} style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
-                Delete
+              <button className="btn btn-secondary" onClick={cancelDelete} disabled={deleting}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmDelete} disabled={deleting} style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

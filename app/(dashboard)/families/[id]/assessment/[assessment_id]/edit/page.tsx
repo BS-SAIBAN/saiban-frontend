@@ -86,7 +86,7 @@ export default function EditAssessmentPage() {
         prev_aid_amount: form.prev_aid_amount || 0,
         additional_info: form.additional_info || null,
       });
-      router.push(`/families/${id}/assessment/${assessment_id}`);
+      router.push(`/families/${id}/assessment?view=${assessment_id}`);
     } catch (e) {
       console.error('Failed to update assessment:', e);
       setError('Failed to update assessment');
@@ -100,7 +100,7 @@ export default function EditAssessmentPage() {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <Link href={`/families/${id}/assessment/${assessment_id}`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
+        <Link href={`/families/${id}/assessment?view=${assessment_id}`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
           <ArrowLeft size={14} /> Back to Assessment
         </Link>
       </div>
@@ -290,7 +290,7 @@ export default function EditAssessmentPage() {
           <button type="button" onClick={submit} disabled={loading} className="btn btn-primary">
             <Save size={14} /> {loading ? 'Saving...' : 'Save Changes'}
           </button>
-          <Link href={`/families/${id}/assessment/${assessment_id}`} className="btn btn-secondary">Cancel</Link>
+          <Link href={`/families/${id}/assessment?view=${assessment_id}`} className="btn btn-secondary">Cancel</Link>
         </div>
       </div>
     </div>
