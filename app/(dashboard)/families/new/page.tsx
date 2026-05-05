@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { familiesAPI } from '@/lib/api';
+import { extractCnicDigits, formatCnicOrBForm } from '@/lib/cnicFormat';
 import { CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -10,16 +11,6 @@ const STEPS = ['Basic Info', 'Address', 'Father (Head)', 'Review'];
 
 /** New families register without choosing FA/SB; category defaults to FA. SB (Saiban guardianship) is set later when applicable (e.g. Edit Family). */
 const DEFAULT_FAMILY_CATEGORY = 'FA' as const;
-
-const extractDigits = (value: string) => value.replace(/\D/g, '').slice(0, 15);
-
-const formatCnicOrBForm = (value: string) => {
-  const digits = extractDigits(value);
-  if (digits.length <= 5) return digits;
-  if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-  if (digits.length <= 13) return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
-  return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 15)}`;
-};
 
 export default function NewFamilyPage() {
   const router = useRouter();
@@ -85,7 +76,7 @@ export default function NewFamilyPage() {
         father: {
           full_name: form.father_full_name.trim(),
           dob: form.father_dob,
-          cnic_or_bform: extractDigits(form.father_cnic_or_bform),
+          cnic_or_bform: extractCnicDigits(form.father_cnic_or_bform),
           gender: 'male',
           is_alive: form.father_status === 'alive',
           occupation: form.father_status === 'alive' ? form.father_occupation.trim() : null,
@@ -231,6 +222,8 @@ export default function NewFamilyPage() {
                 value={form.father_cnic_or_bform}
                 onChange={e => set('father_cnic_or_bform', formatCnicOrBForm(e.target.value))}
                 placeholder="12345-1234567-1 or 12345-1234567-123"
+                inputMode="numeric"
+                autoComplete="off"
               />
             </div>
             {form.father_status === 'alive' && (

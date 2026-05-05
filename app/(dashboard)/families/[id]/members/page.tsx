@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
+import { formatFastApiDetail } from '@/lib/fastApiError';
+import { formatCnicOrBForm } from '@/lib/cnicFormat';
+import { buildIndividualCreateBody, buildIndividualUpdateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { User, Plus, Edit, Trash2, Calendar, Shield, Briefcase, Wallet, X, Save, Heart, Eye, Upload } from 'lucide-react';
 
@@ -37,16 +40,6 @@ const relationshipMap: Record<string, string> = {
   mother: 'Mother',
   sibling: 'Sibling',
   other: 'Other',
-};
-
-const extractCnicDigits = (value: string) => value.replace(/\D/g, '').slice(0, 15);
-
-const formatCnicOrBForm = (value: string) => {
-  const digits = extractCnicDigits(value);
-  if (digits.length <= 5) return digits;
-  if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-  if (digits.length <= 13) return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
-  return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 15)}`;
 };
 
 export default function FamilyMembersPage() {
@@ -260,38 +253,26 @@ export default function FamilyMembersPage() {
       setError('Please fix the validation errors');
       return;
     }
+    if (!isValidFamilyIdParam(id)) {
+      safeSetError('Invalid family ID. Open this page from the family list and try again.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
-      const res = await individualsAPI.create({ ...form, family_id: id });
-      setMembers([...members, res.data]);
+      const body = buildIndividualCreateBody({ ...form } as Record<string, unknown>, id);
+      const res = await individualsAPI.create(body);
+      setMembers(prev => [...prev, res.data]);
       closeAddModal();
     } catch (e: unknown) {
       console.error('Error creating member:', e);
       let errorMsg = 'Failed to add member';
       if (e && typeof e === 'object' && 'response' in e) {
         const response = (e as { response: { data?: unknown; status?: number } }).response;
-        if (response?.data) {
-          const data = response.data;
-          if (typeof data === 'string') {
-            errorMsg = data;
-          } else if (typeof data === 'object' && data !== null) {
-            if ('detail' in data) {
-              const detail = (data as { detail: unknown }).detail;
-              if (typeof detail === 'string') {
-                errorMsg = detail;
-              } else if (Array.isArray(detail) && detail.length > 0) {
-                const firstError = detail[0];
-                if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
-                  errorMsg = String((firstError as { msg: string }).msg);
-                } else {
-                  errorMsg = JSON.stringify(detail);
-                }
-              } else if (typeof detail === 'object' && detail !== null && 'msg' in detail) {
-                errorMsg = String((detail as { msg: string }).msg);
-              }
-            }
-          }
+        if (response?.data && typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
+          errorMsg = formatFastApiDetail((response.data as { detail: unknown }).detail);
+        } else if (typeof response?.data === 'string') {
+          errorMsg = response.data;
         }
       } else if (e instanceof Error) {
         errorMsg = e.message;
@@ -349,7 +330,7 @@ export default function FamilyMembersPage() {
       full_name: member.full_name || '',
       gender: member.gender || 'male',
       dob: dobForInput || '',
-      cnic_or_bform: member.cnic_or_bform || '',
+      cnic_or_bform: formatCnicOrBForm(member.cnic_or_bform || ''),
       relationship_to_head: member.relationship_to_head || 'head',
       is_orphan: Boolean(member.is_orphan),
       is_child: Boolean(member.is_child),
@@ -381,7 +362,12 @@ export default function FamilyMembersPage() {
     setSubmitting(true);
     setError('');
     try {
-      const res = await individualsAPI.update(editingMemberId, form);
+      const original = members.find(m => m.individual_id === editingMemberId);
+      const body = buildIndividualUpdateBody(
+        { ...form } as Record<string, unknown>,
+        original ? (original as unknown as Record<string, unknown>) : null,
+      );
+      const res = await individualsAPI.update(editingMemberId, body);
       setMembers(prev => prev.map(m => (
         m.individual_id === editingMemberId ? res.data : m
       )));
@@ -391,21 +377,10 @@ export default function FamilyMembersPage() {
       let errorMsg = 'Failed to update member';
       if (e && typeof e === 'object' && 'response' in e) {
         const response = (e as { response: { data?: unknown } }).response;
-        if (response?.data) {
-          const data = response.data;
-          if (typeof data === 'string') {
-            errorMsg = data;
-          } else if (typeof data === 'object' && data !== null && 'detail' in data) {
-            const detail = (data as { detail: unknown }).detail;
-            if (typeof detail === 'string') {
-              errorMsg = detail;
-            } else if (Array.isArray(detail) && detail.length > 0) {
-              const firstError = detail[0];
-              if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
-                errorMsg = String((firstError as { msg: string }).msg);
-              }
-            }
-          }
+        if (response?.data && typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
+          errorMsg = formatFastApiDetail((response.data as { detail: unknown }).detail);
+        } else if (typeof response?.data === 'string') {
+          errorMsg = response.data;
         }
       } else if (e instanceof Error) {
         errorMsg = e.message;
@@ -564,7 +539,7 @@ export default function FamilyMembersPage() {
 
               <div className="form-group">
                 <label className="form-label">CNIC / B-Form Number *</label>
-                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
+                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" inputMode="numeric" autoComplete="off" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
                 {fieldErrors.cnic_or_bform && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.cnic_or_bform}</div>}
               </div>
 

@@ -23,6 +23,22 @@ type ScoreSnapshotEntry = readonly [string, ScoreSnapshot];
 const SCORING_COMPLETED_STATUSES = ['scored', 'approved', 'rejected', 'reassessment_required'];
 const FINAL_DECISION_STATUSES = ['approved', 'rejected', 'reassessment_required'];
 
+function formatWorkflowErrorDetail(detail: unknown): string {
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object' && 'message' in detail) {
+    const o = detail as {
+      message: string;
+      violators?: Array<{ full_name: string; age_completed_years: number }>;
+    };
+    let s = o.message;
+    if (o.violators?.length) {
+      s += ` (${o.violators.map(v => `${v.full_name}, ${v.age_completed_years}y`).join('; ')})`;
+    }
+    return s;
+  }
+  return 'Failed to submit decision';
+}
+
 export default function FamilyApprovalPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -90,9 +106,14 @@ export default function FamilyApprovalPage() {
     try {
       await approvalsAPI.decide(targetAssessment.assessment_id, { decision, remarks: notes || undefined });
       router.push(`/families/${id}`);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Error submitting decision:', e);
-      setError('Failed to submit decision');
+      let msg = 'Failed to submit decision';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const d = (e as { response?: { data?: { detail?: unknown } } }).response?.data?.detail;
+        msg = formatWorkflowErrorDetail(d);
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

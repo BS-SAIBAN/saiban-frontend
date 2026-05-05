@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { individualsAPI } from '@/lib/api';
+import { formatFastApiDetail } from '@/lib/fastApiError';
+import { formatCnicOrBForm } from '@/lib/cnicFormat';
+import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import { ArrowLeft, Save, User, Calendar, Briefcase, Wallet, Shield, Heart } from 'lucide-react';
 
 export default function NewMemberPage() {
@@ -89,12 +92,15 @@ export default function NewMemberPage() {
       setError('Please fix the validation errors');
       return;
     }
+    if (!isValidFamilyIdParam(id)) {
+      safeSetError('Invalid family ID. Open this page from the family list and try again.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      console.log('Submitting member data:', { ...form, family_id: id });
-      const res = await individualsAPI.create({ ...form, family_id: id });
-      console.log('Member created:', res.data);
+      const body = buildIndividualCreateBody({ ...form } as Record<string, unknown>, id);
+      const res = await individualsAPI.create(body);
       router.push(`/families/${id}/members`);
     } catch (e: unknown) {
       console.error('Error creating member:', e);
@@ -102,28 +108,10 @@ export default function NewMemberPage() {
       if (e && typeof e === 'object' && 'response' in e) {
         const response = (e as { response: { data?: unknown; status?: number } }).response;
         console.error('Response data:', response?.data);
-        if (response?.data) {
-          const data = response.data;
-          if (typeof data === 'string') {
-            errorMsg = data;
-          } else if (typeof data === 'object' && data !== null) {
-            if ('detail' in data) {
-              const detail = (data as { detail: unknown }).detail;
-              if (typeof detail === 'string') {
-                errorMsg = detail;
-              } else if (Array.isArray(detail) && detail.length > 0) {
-                // FastAPI validation error array
-                const firstError = detail[0];
-                if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
-                  errorMsg = String((firstError as { msg: string }).msg);
-                } else {
-                  errorMsg = JSON.stringify(detail);
-                }
-              } else if (typeof detail === 'object' && detail !== null && 'msg' in detail) {
-                errorMsg = String((detail as { msg: string }).msg);
-              }
-            }
-          }
+        if (response?.data && typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
+          errorMsg = formatFastApiDetail((response.data as { detail: unknown }).detail);
+        } else if (typeof response?.data === 'string') {
+          errorMsg = response.data;
         }
       } else if (e instanceof Error) {
         errorMsg = e.message;
@@ -172,7 +160,7 @@ export default function NewMemberPage() {
 
         <div className="form-group">
           <label className="form-label">CNIC / B-Form Number *</label>
-          <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', e.target.value)} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
+          <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" inputMode="numeric" autoComplete="off" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
           {fieldErrors.cnic_or_bform && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.cnic_or_bform}</div>}
         </div>
 

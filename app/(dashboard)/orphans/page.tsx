@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { familiesAPI, individualsAPI, orphansAPI } from '@/lib/api';
-import { Baby, Search, User, Eye, AlertCircle } from 'lucide-react';
+import { formatFastApiDetail } from '@/lib/fastApiError';
+import { useAuth } from '@/lib/auth-context';
+import { Baby, Search, User, Eye, AlertCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import PaginationControls from '@/components/PaginationControls';
 
@@ -30,6 +32,7 @@ const hasValidFamilyId = (familyId?: string): familyId is string =>
   typeof familyId === 'string' && familyId.trim().length > 0 && familyId !== 'undefined' && familyId !== 'null';
 
 export default function OrphansPage() {
+  const { isAdmin } = useAuth();
   const [orphans, setOrphans] = useState<Orphan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -37,8 +40,12 @@ export default function OrphansPage() {
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
   const [limit, setLimit] = useState(50);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [individualsById, setIndividualsById] = useState<Record<string, IndividualLite>>({});
   const [familiesById, setFamiliesById] = useState<Record<string, FamilyLite>>({});
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     const loadOrphans = search.trim().length >= 2
@@ -71,7 +78,33 @@ export default function OrphansPage() {
       }, {});
       setFamiliesById(familiesMap);
     }).finally(() => setLoading(false));
-  }, [page, search, priorityFilter, limit]);
+  }, [page, search, priorityFilter, limit, refreshTick]);
+
+  const confirmDeleteOrphan = async () => {
+    if (!deleteTarget || deleteSubmitting) return;
+    setDeleteSubmitting(true);
+    setDeleteError('');
+    try {
+      await orphansAPI.delete(deleteTarget.id);
+      setDeleteTarget(null);
+      setRefreshTick(t => t + 1);
+    } catch (e: unknown) {
+      let message = 'Could not delete orphan profile.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const response = (e as { response?: { data?: unknown; status?: number } }).response;
+        if (response?.data && typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
+          message = formatFastApiDetail((response.data as { detail: unknown }).detail);
+        } else if (typeof response?.data === 'string') {
+          message = response.data;
+        } else if (response?.status === 403) {
+          message = 'Only administrators can delete orphan profiles.';
+        }
+      }
+      setDeleteError(message);
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = [...orphans];
@@ -197,11 +230,30 @@ export default function OrphansPage() {
                     <td data-label="Priority">{o.priority_flag ? <span className="badge badge-yellow">⭐ Priority</span> : <span className="badge badge-gray">Normal</span>}</td>
                     <td data-label="Mother Alive">{o.mother_alive ? <span className="badge badge-green">Yes</span> : <span className="badge badge-red">No</span>}</td>
                     <td data-label="Actions">
-                      {hasValidFamilyId(linkedFamilyId) ? (
-                        <Link href={`/families/${linkedFamilyId}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>No Family Link</span>
-                      )}
+                      <div className="table-actions-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        {hasValidFamilyId(linkedFamilyId) ? (
+                          <Link href={`/families/${linkedFamilyId}`} className="btn btn-secondary btn-sm"><Eye size={12} /> Family</Link>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>No Family Link</span>
+                        )}
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ color: 'var(--red)' }}
+                            title="Remove orphan profile and clear orphan flag on the member (admin)"
+                            onClick={() => {
+                              setDeleteError('');
+                              setDeleteTarget({
+                                id: o.orphan_profile_id,
+                                name: linkedIndividual?.full_name || o.individual?.full_name || 'this member',
+                              });
+                            }}
+                          >
+                            <Trash2 size={12} /> Delete profile
+                          </button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -221,6 +273,33 @@ export default function OrphansPage() {
           />
         )}
       </div>
+
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => !deleteSubmitting && setDeleteTarget(null)} role="presentation">
+          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-orphan-title">
+            <div className="modal-header">
+              <h2 id="delete-orphan-title">Delete orphan profile?</h2>
+              <button type="button" className="modal-close" disabled={deleteSubmitting} onClick={() => setDeleteTarget(null)} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ margin: 0, lineHeight: 1.5, fontSize: 14, color: 'var(--text-secondary)' }}>
+                This removes the SB orphan profile for <strong>{deleteTarget.name}</strong> and clears the <strong>orphan</strong> flag on the member record. Use this when a profile was created by mistake.
+              </p>
+              {deleteError ? (
+                <div style={{ marginTop: 14, padding: '12px 14px', background: 'var(--red-bg)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>
+                  {deleteError}
+                </div>
+              ) : null}
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button type="button" className="btn btn-secondary" disabled={deleteSubmitting} onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={deleteSubmitting} style={{ background: 'var(--red)', borderColor: 'var(--red)' }} onClick={confirmDeleteOrphan}>
+                {deleteSubmitting ? 'Deleting…' : 'Delete profile'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

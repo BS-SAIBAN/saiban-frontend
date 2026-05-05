@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { individualsAPI } from '@/lib/api';
+import { formatFastApiDetail } from '@/lib/fastApiError';
+import { formatCnicOrBForm } from '@/lib/cnicFormat';
+import { buildIndividualUpdateBody } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { ArrowLeft, Save, User, Calendar, Briefcase, Wallet, Shield, Heart } from 'lucide-react';
 
@@ -14,6 +17,7 @@ export default function EditMemberPage() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const originalSnapshotRef = useRef<Record<string, unknown> | null>(null);
   const [form, setForm] = useState({
     full_name: '',
     gender: 'male',
@@ -33,11 +37,19 @@ export default function EditMemberPage() {
       const members = Array.isArray(r.data) ? r.data : [];
       const member = members.find(m => m.individual_id === memberId);
       if (member) {
+        originalSnapshotRef.current = {
+          relationship_to_head: member.relationship_to_head,
+          cnic_or_bform: member.cnic_or_bform,
+          is_orphan: member.is_orphan,
+          is_child: member.is_child,
+          is_disabled: member.is_disabled,
+          is_patient: member.is_patient,
+        };
         setForm({
           full_name: member.full_name || '',
           gender: member.gender || 'male',
           dob: member.dob ? member.dob.split('T')[0] : '',
-          cnic_or_bform: member.cnic_or_bform || '',
+          cnic_or_bform: formatCnicOrBForm(member.cnic_or_bform || ''),
           relationship_to_head: member.relationship_to_head || 'head',
           is_orphan: member.is_orphan || false,
           is_child: member.is_child || false,
@@ -115,7 +127,7 @@ export default function EditMemberPage() {
     setLoading(true);
     setError('');
     try {
-      await individualsAPI.update(memberId, form);
+      await individualsAPI.update(memberId, buildIndividualUpdateBody({ ...form } as Record<string, unknown>, originalSnapshotRef.current));
       router.push(`/families/${id}/members`);
     } catch (e: unknown) {
       console.error('Error updating member:', e);
@@ -128,15 +140,7 @@ export default function EditMemberPage() {
             errorMsg = data;
           } else if (typeof data === 'object' && data !== null) {
             if ('detail' in data) {
-              const detail = (data as { detail: unknown }).detail;
-              if (typeof detail === 'string') {
-                errorMsg = detail;
-              } else if (Array.isArray(detail) && detail.length > 0) {
-                const firstError = detail[0];
-                if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
-                  errorMsg = String((firstError as { msg: string }).msg);
-                }
-              }
+              errorMsg = formatFastApiDetail((data as { detail: unknown }).detail);
             }
           }
         }
@@ -187,7 +191,7 @@ export default function EditMemberPage() {
 
         <div className="form-group">
           <label className="form-label">CNIC / B-Form Number *</label>
-          <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', e.target.value)} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
+          <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" inputMode="numeric" autoComplete="off" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
           {fieldErrors.cnic_or_bform && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.cnic_or_bform}</div>}
         </div>
 

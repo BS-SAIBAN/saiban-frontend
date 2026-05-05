@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { familiesAPI, individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
+import { formatFastApiDetail } from '@/lib/fastApiError';
+import { formatCnicOrBForm } from '@/lib/cnicFormat';
+import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
 
@@ -198,11 +201,16 @@ export default function FamilyProfilePage() {
       setError('Please fix the validation errors');
       return;
     }
+    if (!isValidFamilyIdParam(id)) {
+      setError('Invalid family ID. Open this page from the family list and try again.');
+      return;
+    }
 
     setSubmitting(true);
     setError('');
     try {
-      const res = await individualsAPI.create({ ...form, family_id: id });
+      const body = buildIndividualCreateBody({ ...form } as Record<string, unknown>, id);
+      const res = await individualsAPI.create(body);
       setMembers(prev => [...prev, res.data]);
       closeAddModal();
     } catch (e: unknown) {
@@ -211,7 +219,7 @@ export default function FamilyProfilePage() {
         const response = (e as { response: { data?: unknown } }).response;
         if (response?.data && typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
           const detail = (response.data as { detail: unknown }).detail;
-          errorMsg = typeof detail === 'string' ? detail : errorMsg;
+          errorMsg = formatFastApiDetail(detail);
         }
       } else if (e instanceof Error) {
         errorMsg = e.message;
@@ -361,7 +369,7 @@ export default function FamilyProfilePage() {
 
               <div className="form-group">
                 <label className="form-label">CNIC / B-Form Number *</label>
-                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', e.target.value)} placeholder="e.g. 12345-1234567-1" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
+                <input className="form-control" value={form.cnic_or_bform} onChange={e => set('cnic_or_bform', formatCnicOrBForm(e.target.value))} placeholder="e.g. 12345-1234567-1" inputMode="numeric" autoComplete="off" style={fieldErrors.cnic_or_bform ? { borderColor: 'var(--red)' } : {}} />
                 {fieldErrors.cnic_or_bform && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: 4 }}>{fieldErrors.cnic_or_bform}</div>}
               </div>
 

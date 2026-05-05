@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { scoringAPI, assessmentsAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { Star, Calculator } from 'lucide-react';
+import { Star, Calculator, AlertTriangle } from 'lucide-react';
 
 interface AssessmentSummary {
   assessment_id: string;
@@ -13,13 +13,156 @@ interface AssessmentSummary {
   status: string;
 }
 
-type CriteriaRow = { name: string; earned: number; max: number; fallback?: boolean };
+type CriteriaRow = {
+  rawKey: string;
+  name: string;
+  earned: number;
+  max: number;
+  weight?: number;
+  fallback?: boolean;
+  details?: Record<string, unknown> | null;
+};
 
 function humanizeCriterionKey(key: string): string {
   return key
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
 }
+
+function humanizeDetailKey(key: string): string {
+  return humanizeCriterionKey(key);
+}
+
+function isMoneyDetailKey(key: string): boolean {
+  return /income|asset|gold|silver|cash|property|expense|fee|amount|rent|ration|bills|aid/i.test(key);
+}
+
+function formatDetailScalar(key: string, value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (isMoneyDetailKey(key)) return `PKR ${value.toLocaleString('en-PK')}`;
+    return String(value);
+  }
+  if (typeof value === 'string') return value || '—';
+  return JSON.stringify(value);
+}
+
+function ScoringCriterionMatrices({ details }: { details: Record<string, unknown> }) {
+  const entries = Object.entries(details).filter(([, v]) => v !== undefined && v !== null && v !== '');
+  if (entries.length === 0) {
+    return <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>No underlying data returned for this line item.</p>;
+  }
+
+  const nodes: ReactNode[] = [];
+
+  for (const [key, value] of entries) {
+    if (key === 'members' && Array.isArray(value)) {
+      const rows = value as Array<Record<string, unknown>>;
+      nodes.push(
+        <div key={key} style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
+            {humanizeDetailKey(key)}
+          </div>
+          <div className="table-wrap" style={{ borderRadius: 6, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <table className="mobile-stack-table" style={{ fontSize: 12, width: '100%' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-card)' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 10px' }}>Name</th>
+                  <th style={{ textAlign: 'left', padding: '8px 10px' }}>Relationship</th>
+                  <th style={{ textAlign: 'left', padding: '8px 10px' }}>Orphan</th>
+                  <th style={{ textAlign: 'left', padding: '8px 10px' }}>Child</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((m, i) => (
+                  <tr key={i}>
+                    <td data-label="Name" style={{ padding: '8px 10px' }}>{String(m.name ?? '—')}</td>
+                    <td data-label="Relationship" style={{ padding: '8px 10px' }}>{String(m.relationship ?? '—')}</td>
+                    <td data-label="Orphan" style={{ padding: '8px 10px' }}>{m.is_orphan ? 'Yes' : 'No'}</td>
+                    <td data-label="Child" style={{ padding: '8px 10px' }}>{m.is_child ? 'Yes' : 'No'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>,
+      );
+      continue;
+    }
+
+    if ((key === 'orphans' || key === 'income_sources') && Array.isArray(value)) {
+      const rows = value as Array<Record<string, unknown>>;
+      nodes.push(
+        <div key={key} style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
+            {humanizeDetailKey(key)}
+          </div>
+          <div className="table-wrap" style={{ borderRadius: 6, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <table className="mobile-stack-table" style={{ fontSize: 12, width: '100%' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-card)' }}>
+                  {rows[0] ? Object.keys(rows[0]).map(h => (
+                    <th key={h} style={{ textAlign: 'left', padding: '8px 10px' }}>{humanizeDetailKey(h)}</th>
+                  )) : null}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={i}>
+                    {Object.entries(row).map(([cellKey, cellVal]) => (
+                      <td key={cellKey} data-label={humanizeDetailKey(cellKey)} style={{ padding: '8px 10px' }}>
+                        {typeof cellVal === 'number' && isMoneyDetailKey(cellKey)
+                          ? `PKR ${cellVal.toLocaleString('en-PK')}`
+                          : String(cellVal ?? '—')}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>,
+      );
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      nodes.push(
+        <div key={key} style={{ marginTop: 8, fontSize: 12 }}>
+          <span style={{ color: 'var(--text-muted)' }}>{humanizeDetailKey(key)}:</span>{' '}
+          <span>{value.length === 0 ? '—' : JSON.stringify(value)}</span>
+        </div>,
+      );
+      continue;
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      nodes.push(
+        <div key={key} style={{ marginTop: 8, fontSize: 12 }}>
+          <span style={{ color: 'var(--text-muted)' }}>{humanizeDetailKey(key)}:</span>{' '}
+          <code style={{ fontSize: 11, wordBreak: 'break-all' }}>{JSON.stringify(value)}</code>
+        </div>,
+      );
+      continue;
+    }
+
+    nodes.push(
+      <div key={key} className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 6, fontSize: 12, flexWrap: 'wrap' }}>
+        <span style={{ color: 'var(--text-muted)' }}>{humanizeDetailKey(key)}</span>
+        <span style={{ fontWeight: 500, textAlign: 'right' }}>{formatDetailScalar(key, value)}</span>
+      </div>,
+    );
+  }
+
+  return <div>{nodes}</div>;
+}
+
+type InactiveYouthDq = {
+  code?: string;
+  message?: string;
+  violators?: Array<{ full_name: string; age_completed_years: number; studying: boolean; working: boolean }>;
+};
 
 export default function FamilyScoringPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +174,7 @@ export default function FamilyScoringPage() {
   const [scoreId, setScoreId] = useState('');
   const [eligibilityStatus, setEligibilityStatus] = useState('need_review');
   const [criteriaRows, setCriteriaRows] = useState<CriteriaRow[]>([]);
+  const [disqualifications, setDisqualifications] = useState<Record<string, InactiveYouthDq> | null>(null);
   const [overrideRemarks, setOverrideRemarks] = useState('');
   const [error, setError] = useState('');
   const [scoreMessage, setScoreMessage] = useState('');
@@ -41,11 +185,12 @@ export default function FamilyScoringPage() {
     eligibility_status?: string | null;
     score_id?: string | null;
     message?: string;
-    scoring_details?: Record<string, { score?: number; max_possible?: number; fallback?: boolean }> | null;
+    scoring_details?: Record<string, unknown> | null;
   }) => {
     if (!result?.success) {
       setError(result?.message || 'Scoring failed. Try Recalculate.');
       setCriteriaRows([]);
+      setDisqualifications(null);
       return;
     }
     setError('');
@@ -55,16 +200,33 @@ export default function FamilyScoringPage() {
     setScoreMessage(result.message || '');
     const d = result.scoring_details;
     if (d && typeof d === 'object' && Object.keys(d).length > 0) {
+      const dq = d.disqualifications;
+      setDisqualifications(dq && typeof dq === 'object' ? (dq as Record<string, InactiveYouthDq>) : null);
+      const critEntries = Object.entries(d).filter(([k]) => k !== 'disqualifications');
       setCriteriaRows(
-        Object.entries(d).map(([name, v]) => ({
-          name: humanizeCriterionKey(name),
-          earned: v?.score ?? 0,
-          max: v?.max_possible ?? 0,
-          fallback: Boolean(v?.fallback),
-        })),
+        critEntries.map(([name, v]) => {
+          const row = v as {
+            score?: number;
+            max_possible?: number;
+            fallback?: boolean;
+            weight?: number;
+            details?: Record<string, unknown> | null;
+          };
+          const det = row.details;
+          return {
+            rawKey: name,
+            name: humanizeCriterionKey(name),
+            earned: row?.score ?? 0,
+            max: row?.max_possible ?? 0,
+            weight: typeof row.weight === 'number' ? row.weight : undefined,
+            fallback: Boolean(row?.fallback),
+            details: det && typeof det === 'object' && Object.keys(det).length > 0 ? det : null,
+          };
+        }),
       );
     } else {
       setCriteriaRows([]);
+      setDisqualifications(null);
     }
   }, []);
 
@@ -189,6 +351,40 @@ export default function FamilyScoringPage() {
                 {error}
               </div>
             )}
+            {disqualifications?.inactive_youth && (
+              <div
+                style={{
+                  padding: '14px 16px',
+                  marginBottom: 16,
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  borderRadius: 8,
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <AlertTriangle size={18} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ color: 'var(--red)' }}>Disqualification: inactive youth</strong>
+                    <p style={{ color: 'var(--text-secondary)', margin: '8px 0 0', lineHeight: 1.45 }}>
+                      {disqualifications.inactive_youth.message}
+                    </p>
+                    {disqualifications.inactive_youth.violators && disqualifications.inactive_youth.violators.length > 0 && (
+                      <ul style={{ margin: '10px 0 0', paddingLeft: 18, color: 'var(--text-primary)' }}>
+                        {disqualifications.inactive_youth.violators.map(v => (
+                          <li key={v.full_name + v.age_completed_years}>
+                            {v.full_name} — age {v.age_completed_years}, studying: {v.studying ? 'yes' : 'no'}, working: {v.working ? 'yes' : 'no'}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+                      Update member profiles under Family → Members (school/class or occupation/income). Exemptions: marked disabled or patient.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="family-summary-cards">
               <div style={{ padding: 20, background: 'var(--accent-glow)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'center' }}>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8 }}>Calculated Score</div>
@@ -203,17 +399,60 @@ export default function FamilyScoringPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Scoring breakdown</h3>
-              <div style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Scoring breakdown</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.45 }}>
+                Each line shows points earned vs cap for that factor. Expand a row to see the figures and member lists used in the calculation.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {criteriaRows.length > 0 ? (
                   criteriaRows.map(row => (
-                    <div key={row.name} className="kv-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-                      <span>
-                        {row.name}
-                        {row.fallback ? <span style={{ color: 'var(--text-muted)', fontSize: 12 }}> (default rubric)</span> : null}
-                      </span>
-                      <span style={{ fontWeight: 600 }}>{row.earned} / {row.max}</span>
-                    </div>
+                    <details
+                      key={row.rawKey}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        background: 'var(--bg-secondary)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <summary
+                        style={{
+                          cursor: 'pointer',
+                          listStyle: 'none',
+                          padding: '12px 14px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 12,
+                          fontWeight: 600,
+                          fontSize: 14,
+                        }}
+                      >
+                        <span style={{ minWidth: 0, textAlign: 'left' }}>
+                          {row.name}
+                          {row.fallback ? <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: 12 }}> (default rubric)</span> : null}
+                          {row.weight != null && row.weight > 0 ? (
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: 12 }}> · weight {row.weight}%</span>
+                          ) : null}
+                        </span>
+                        <span style={{ fontWeight: 700, flexShrink: 0 }}>{row.earned} / {row.max}</span>
+                      </summary>
+                      <div
+                        style={{
+                          padding: '12px 14px 14px',
+                          borderTop: '1px solid var(--border)',
+                          background: 'var(--bg-card)',
+                        }}
+                      >
+                        {row.details
+                          ? <ScoringCriterionMatrices details={row.details} />
+                          : (
+                            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+                              Recalculate with a full assessment to refresh underlying metrics, or this criterion did not emit detail fields.
+                            </p>
+                          )}
+                      </div>
+                    </details>
                   ))
                 ) : (
                   <>

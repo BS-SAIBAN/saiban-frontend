@@ -241,6 +241,9 @@ export const orphansAPI = {
   update: (id: string, data: Record<string, unknown>) => isValidEntityId(id)
     ? api.put(`/orphans/${id}`, data)
     : Promise.reject(new Error('Invalid orphan profile ID')),
+  delete: (id: string) => isValidEntityId(id)
+    ? api.delete(`/orphans/${id}`)
+    : Promise.reject(new Error('Invalid orphan profile ID')),
 };
 
 // ── Assessments ───────────────────────────────────────
