@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { dashboardAPI, alertsAPI } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import {
   Users, Bell, Heart, Wallet, CheckCircle,
   Clock, AlertTriangle, TrendingUp, ArrowRight,
@@ -49,6 +50,7 @@ const alertTypeIcon: Record<string, React.ReactNode> = {
 };
 
 export default function DashboardPage() {
+  const { isFieldWorker } = useAuth();
   const [stats, setStats] = useState<Stats>({
     totalFamilies: 0, pendingApprovals: 0, totalDonors: 0,
     activeAlerts: 0, totalPayments: 0, monthlyAmount: 0,
@@ -89,6 +91,24 @@ export default function DashboardPage() {
     { label: 'Pending Approvals', value: stats.pendingApprovals, icon: <Clock size={20} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)', change: 'Awaiting review' },
     { label: 'Active Alerts', value: stats.activeAlerts, icon: <Bell size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'Require attention' },
   ];
+  const visibleStatCards = isFieldWorker
+    ? statCards.filter((card) =>
+      ['Total Families', 'Total Individuals', 'Total Orphans', 'Active Alerts'].includes(card.label))
+    : statCards;
+
+  const quickActions = [
+    { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
+    { label: 'Assessments', href: '/assessments', icon: <CheckCircle size={18} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
+    { label: 'View Alerts', href: '/alerts', icon: <Bell size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },
+    { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },
+    { label: 'Record Payment', href: '/payments', icon: <Wallet size={18} />, color: 'var(--green)', bg: 'var(--green-bg)' },
+    { label: 'Submit Report', href: '/reports', icon: <FileText size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },
+    { label: 'View Approvals', href: '/approvals', icon: <CheckCircle size={18} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
+    { label: 'Orphan List', href: '/orphans', icon: <Baby size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
+  ];
+  const visibleQuickActions = isFieldWorker
+    ? quickActions.filter((a) => ['/families/new', '/assessments', '/orphans', '/alerts'].includes(a.href))
+    : quickActions;
 
   return (
     <div>
@@ -109,7 +129,7 @@ export default function DashboardPage() {
       {/* Stats */}
       {loading ? (
         <div className="stats-grid">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(isFieldWorker ? 4 : 8)].map((_, i) => (
             <div key={i} className="stat-card" style={{ opacity: 0.5 }}>
               <div className="stat-icon" style={{ background: 'var(--border)', width: 44, height: 44, borderRadius: 10 }} />
               <div><div style={{ height: 28, width: 60, background: 'var(--border)', borderRadius: 4, marginBottom: 6 }} /><div style={{ height: 14, width: 100, background: 'var(--border)', borderRadius: 4 }} /></div>
@@ -118,7 +138,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="stats-grid">
-          {statCards.map((card) => (
+          {visibleStatCards.map((card) => (
             <div key={card.label} className="stat-card card-hover">
               <div className="stat-icon" style={{ background: card.bg }}>
                 <span style={{ color: card.color }}>{card.icon}</span>
@@ -186,14 +206,7 @@ export default function DashboardPage() {
         <div className="card">
           <h2 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px' }}>⚡ Quick Actions</h2>
           <div className="quick-actions-grid">
-            {[
-              { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
-              { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },
-              { label: 'Record Payment', href: '/payments', icon: <Wallet size={18} />, color: 'var(--green)', bg: 'var(--green-bg)' },
-              { label: 'Submit Report', href: '/reports', icon: <FileText size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },
-              { label: 'View Approvals', href: '/approvals', icon: <CheckCircle size={18} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
-              { label: 'Orphan List', href: '/orphans', icon: <Baby size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
-            ].map((action) => (
+            {visibleQuickActions.map((action) => (
               <Link key={action.href} href={action.href} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '14px', borderRadius: '10px', textDecoration: 'none',

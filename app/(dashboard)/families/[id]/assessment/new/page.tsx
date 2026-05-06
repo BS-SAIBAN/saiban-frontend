@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Plus, Save, Trash2 } from 'lucide-react';
 
 type Member = {
@@ -103,13 +104,14 @@ const sections = [
 export default function NewAssessmentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
 
   const [form, setForm] = useState({
     assessment_date: new Date().toISOString().split('T')[0],
-    field_worker_name: '',
+    field_worker_name: user?.full_name || '',
     gps_lat: '',
     gps_lng: '',
     field_worker_remarks: '',
@@ -153,6 +155,12 @@ export default function NewAssessmentPage() {
   });
 
   const [members, setMembers] = useState<Member[]>([blankMember()]);
+  useEffect(() => {
+    if (user?.full_name) {
+      setForm((prev) => ({ ...prev, field_worker_name: user.full_name }));
+    }
+  }, [user?.full_name]);
+
   const [loans, setLoans] = useState<Loan[]>([]);
   const [inKindItems, setInKindItems] = useState<InKindItem[]>([]);
 
@@ -344,7 +352,7 @@ export default function NewAssessmentPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Field Worker Name</label>
-                  <input className="form-control" type="text" required value={form.field_worker_name} onChange={(e) => setForm({ ...form, field_worker_name: e.target.value })} />
+                  <input className="form-control" type="text" required value={form.field_worker_name} readOnly />
                 </div>
                 <div className="form-group">
                   <label className="form-label">GPS Latitude</label>

@@ -52,6 +52,15 @@ const navItems = [
   },
 ];
 
+const fieldWorkerAllowed = new Set([
+  '/dashboard',
+  '/alerts',
+  '/families',
+  '/individuals',
+  '/orphans',
+  '/assessments',
+]);
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -59,7 +68,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isFieldWorker } = useAuth();
   const closeSidebar = () => onClose?.();
 
   const initials = user?.full_name
@@ -84,10 +93,14 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <nav className="sidebar-nav">
         {navItems.map((section) => {
           if (section.adminOnly && !isAdmin) return null;
+          const visibleItems = isFieldWorker
+            ? section.items.filter((item) => fieldWorkerAllowed.has(item.href))
+            : section.items;
+          if (visibleItems.length === 0) return null;
           return (
             <div key={section.section} className="nav-section">
               <div className="nav-section-label">{section.section}</div>
-              {section.items.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (

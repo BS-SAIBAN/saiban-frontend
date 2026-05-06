@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Users, User, ClipboardList, Star, CheckSquare, Heart, Wallet, FileText, ArrowLeft } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
   const { id } = useParams<{ id: string }>();
   const pathname = usePathname();
   const router = useRouter();
+  const { isFieldWorker } = useAuth();
   const hasValidId = isValidFamilyRouteId(id);
   const [family, setFamily] = useState<Family | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,14 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
       setFamily(null);
     }).finally(() => setLoading(false));
   }, [hasValidId, id, router]);
+
+  useEffect(() => {
+    if (!hasValidId || !isFieldWorker) return;
+    const restricted = [`/families/${id}/scoring`, `/families/${id}/approval`, `/families/${id}/sponsors`, `/families/${id}/payments`];
+    if (restricted.some((prefix) => pathname.startsWith(prefix))) {
+      router.replace(`/families/${id}/assessment`);
+    }
+  }, [hasValidId, id, isFieldWorker, pathname, router]);
 
   if (loading || !hasValidId) return <FamilySubPageSkeleton variant="layout" />;
 
@@ -79,7 +89,9 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
             { href: `/families/${id}/reports`, label: 'Reports', icon: <FileText size={13} />, prefix: true },
             { href: `/families/${id}/sponsors`, label: 'Sponsors', icon: <Heart size={13} />, disabled: true },
             { href: `/families/${id}/payments`, label: 'Payments', icon: <Wallet size={13} />, disabled: true },
-          ].map(link => (
+          ]
+            .filter((link) => !(isFieldWorker && ['Scoring', 'Approval', 'Sponsors', 'Payments'].includes(link.label)))
+            .map(link => (
             link.disabled ? (
               <span
                 key={link.href}
