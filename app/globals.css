@@ -540,8 +540,7 @@ select.form-control option { background: var(--bg-secondary); }
   padding-left: 2px;
 }
 .family-overview-stack {
-  grid-template-columns: 1fr;
-  gap: 18px;
+  display: block;
 }
 .family-overview-stack .overview-column-details {
   border-right: 0;
