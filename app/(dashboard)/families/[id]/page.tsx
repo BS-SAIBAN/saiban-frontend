@@ -7,7 +7,7 @@ import { formatFastApiDetail } from '@/lib/fastApiError';
 import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
+import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload, ChevronRight } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -276,15 +276,49 @@ export default function FamilyProfilePage() {
         {/* Family Info */}
         <section className="overview-column overview-column-details family-details-compact">
           <div className="section-title">Family Details</div>
-          <div className="info-grid family-details-grid">
-            <div className="info-item"><label>Registration #</label><p style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</p></div>
-            <div className="info-item"><label>Program</label><p>{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</p></div>
-            <div className="info-item"><label>Status</label><p><span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span></p></div>
-            <div className="info-item"><label>Housing</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Home size={13} />{family.housing_type}</p></div>
-            <div className="info-item"><label>Area</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} />{family.area}</p></div>
-            <div className="info-item"><label>City</label><p>{family.city}</p></div>
-            <div className="info-item"><label>Full Address</label><p style={{ color: 'var(--text-secondary)' }}>{family.full_address || '—'}</p></div>
-            <div className="info-item"><label>Registered On</label><p>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</p></div>
+          <div className="family-details-row">
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">Registration #</span>
+              <span className="family-details-value" style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">Program</span>
+              <span className="family-details-value">{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">Status</span>
+              <span className="family-details-value">
+                <span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span>
+              </span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">Housing</span>
+              <span className="family-details-value" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <Home size={13} />{family.housing_type}
+              </span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">Area</span>
+              <span className="family-details-value" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <MapPin size={13} />{family.area}
+              </span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+              <span className="family-details-label">City</span>
+              <span className="family-details-value">{family.city}</span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 18, minWidth: 0 }}>
+              <span className="family-details-label">Full Address</span>
+              <span className="family-details-value" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {family.full_address || '—'}
+              </span>
+            </div>
+            <div className="kv-row" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="family-details-label">Registered On</span>
+              <span className="family-details-value">
+                {family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}
+              </span>
+            </div>
           </div>
         </section>
 
@@ -316,19 +350,24 @@ export default function FamilyProfilePage() {
                   className="family-member-row"
                   style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <div className="member-avatar-circle">
-                      {m.photo_url ? (
-                        <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
-                      ) : (
-                        m.full_name?.[0] || 'M'
-                      )}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div className="member-avatar-circle">
+                        {m.photo_url ? (
+                          <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
+                        ) : (
+                          m.full_name?.[0] || 'M'
+                        )}
                       </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                          {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
+                      <ChevronRight size={18} />
                     </div>
                   </div>
 
