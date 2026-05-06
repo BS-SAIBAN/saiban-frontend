@@ -19,7 +19,7 @@ export default function NewFamilyPage() {
   const [error, setError] = useState<string>('');
   const [form, setForm] = useState({
     area: '', city: '', full_address: '', housing_type: 'rented',
-    applicant_full_name: '', applicant_dob: '', applicant_cnic_or_bform: '', applicant_status: 'alive',
+    applicant_full_name: '', applicant_dob: '', applicant_cnic_or_bform: '', applicant_relationship: 'head',
     applicant_gender: 'male',
     applicant_occupation: '', applicant_monthly_income: '', applicant_religion: '', applicant_caste: '',
   });
@@ -38,14 +38,11 @@ export default function NewFamilyPage() {
 
   const canProceedToNextStep = () => {
     if (step === 2) {
-      const applicantBaseValid = Boolean(
+      return Boolean(
         form.applicant_full_name.trim() &&
         form.applicant_dob &&
         form.applicant_cnic_or_bform.trim() &&
-        form.applicant_status
-      );
-      if (form.applicant_status !== 'alive') return applicantBaseValid;
-      return applicantBaseValid && Boolean(
+        form.applicant_relationship &&
         form.applicant_occupation.trim() &&
         form.applicant_monthly_income.trim() &&
         form.applicant_religion.trim() &&
@@ -58,14 +55,13 @@ export default function NewFamilyPage() {
   const submit = async () => {
     setLoading(true); setError('');
     try {
-      if (!form.applicant_full_name.trim() || !form.applicant_dob || !form.applicant_cnic_or_bform.trim() || !form.applicant_status) {
+      if (!form.applicant_full_name.trim() || !form.applicant_dob || !form.applicant_cnic_or_bform.trim() || !form.applicant_relationship) {
         throw new Error('Applicant details are required. Please add the applicant before registration.');
       }
       if (
-        form.applicant_status === 'alive'
-        && (!form.applicant_occupation.trim() || !form.applicant_monthly_income.trim() || !form.applicant_religion.trim() || !form.applicant_caste.trim())
+        !form.applicant_occupation.trim() || !form.applicant_monthly_income.trim() || !form.applicant_religion.trim() || !form.applicant_caste.trim()
       ) {
-        throw new Error('When applicant status is alive, occupation, monthly income, religion and caste are required.');
+        throw new Error('Occupation, monthly income, religion and caste are required.');
       }
 
       const payload = {
@@ -79,11 +75,12 @@ export default function NewFamilyPage() {
           dob: form.applicant_dob,
           cnic_or_bform: extractCnicDigits(form.applicant_cnic_or_bform),
           gender: form.applicant_gender,
-          is_alive: form.applicant_status === 'alive',
-          occupation: form.applicant_status === 'alive' ? form.applicant_occupation.trim() : null,
-          monthly_income: form.applicant_status === 'alive' ? Number(form.applicant_monthly_income) : null,
-          religion: form.applicant_status === 'alive' ? form.applicant_religion.trim() : null,
-          caste: form.applicant_status === 'alive' ? form.applicant_caste.trim() : null,
+          relationship_to_head: form.applicant_relationship,
+          is_alive: true,
+          occupation: form.applicant_occupation.trim(),
+          monthly_income: Number(form.applicant_monthly_income),
+          religion: form.applicant_religion.trim(),
+          caste: form.applicant_caste.trim(),
         },
       };
 
@@ -196,9 +193,6 @@ export default function NewFamilyPage() {
         {step === 2 && (
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Applicant</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
-              Family registration requires applicant to be added as head first. Other members can be added later.
-            </p>
             <div className="form-group">
               <label className="form-label">Applicant Full Name *</label>
               <input className="form-control" value={form.applicant_full_name} onChange={e => set('applicant_full_name', e.target.value)} placeholder="Enter applicant full name" />
@@ -216,48 +210,51 @@ export default function NewFamilyPage() {
                 </select>
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Applicant Status *</label>
-              <select className="form-control" value={form.applicant_status} onChange={e => set('applicant_status', e.target.value)}>
-                <option value="alive">Alive</option>
-                <option value="dead">Dead</option>
-              </select>
+            <div className="form-grid form-grid-2">
+              <div className="form-group">
+                <label className="form-label">Relationship to Head *</label>
+                <select className="form-control" value={form.applicant_relationship} onChange={e => set('applicant_relationship', e.target.value)}>
+                  <option value="head">Head</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="son">Son</option>
+                  <option value="daughter">Daughter</option>
+                  <option value="mother">Mother</option>
+                  <option value="sibling">Sibling</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">CNIC / B-Form *</label>
+                <input
+                  className="form-control"
+                  value={form.applicant_cnic_or_bform}
+                  onChange={e => set('applicant_cnic_or_bform', formatCnicOrBForm(e.target.value))}
+                  placeholder="12345-1234567-1 or 12345-1234567-123"
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">CNIC / B-Form *</label>
-              <input
-                className="form-control"
-                value={form.applicant_cnic_or_bform}
-                onChange={e => set('applicant_cnic_or_bform', formatCnicOrBForm(e.target.value))}
-                placeholder="12345-1234567-1 or 12345-1234567-123"
-                inputMode="numeric"
-                autoComplete="off"
-              />
-            </div>
-            {form.applicant_status === 'alive' && (
-              <>
-                <div className="form-grid form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Occupation *</label>
-                    <input className="form-control" value={form.applicant_occupation} onChange={e => set('applicant_occupation', e.target.value)} placeholder="e.g. Driver, Laborer" />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Monthly Income *</label>
-                    <input type="number" min={0} className="form-control" value={form.applicant_monthly_income} onChange={e => set('applicant_monthly_income', e.target.value)} placeholder="e.g. 45000" />
-                  </div>
+            <div className="form-grid form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Occupation *</label>
+                  <input className="form-control" value={form.applicant_occupation} onChange={e => set('applicant_occupation', e.target.value)} placeholder="e.g. Driver, Laborer" />
                 </div>
-                <div className="form-grid form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Religion *</label>
-                    <input className="form-control" value={form.applicant_religion} onChange={e => set('applicant_religion', e.target.value)} placeholder="e.g. Islam" />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Caste *</label>
-                    <input className="form-control" value={form.applicant_caste} onChange={e => set('applicant_caste', e.target.value)} placeholder="e.g. Syed" />
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">Monthly Income *</label>
+                  <input type="number" min={0} className="form-control" value={form.applicant_monthly_income} onChange={e => set('applicant_monthly_income', e.target.value)} placeholder="e.g. 45000" />
                 </div>
-              </>
-            )}
+              </div>
+              <div className="form-grid form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Religion *</label>
+                  <input className="form-control" value={form.applicant_religion} onChange={e => set('applicant_religion', e.target.value)} placeholder="e.g. Islam" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Caste *</label>
+                  <input className="form-control" value={form.applicant_caste} onChange={e => set('applicant_caste', e.target.value)} placeholder="e.g. Syed" />
+                </div>
+              </div>
           </div>
         )}
 
@@ -270,12 +267,12 @@ export default function NewFamilyPage() {
               <div className="info-item"><label>City</label><p>{form.city || '—'}</p></div>
               <div className="info-item"><label>Housing</label><p style={{ textTransform: 'capitalize' }}>{form.housing_type}</p></div>
               <div className="info-item"><label>Applicant</label><p>{form.applicant_full_name || '—'}</p></div>
-              <div className="info-item"><label>Applicant Status</label><p style={{ textTransform: 'capitalize' }}>{form.applicant_status || '—'}</p></div>
+              <div className="info-item"><label>Relationship to Head</label><p style={{ textTransform: 'capitalize' }}>{form.applicant_relationship || '—'}</p></div>
               <div className="info-item"><label>Applicant CNIC/B-Form</label><p>{form.applicant_cnic_or_bform || '—'}</p></div>
-              {form.applicant_status === 'alive' && <div className="info-item"><label>Applicant Occupation</label><p>{form.applicant_occupation || '—'}</p></div>}
-              {form.applicant_status === 'alive' && <div className="info-item"><label>Applicant Monthly Income</label><p>{form.applicant_monthly_income || '—'}</p></div>}
-              {form.applicant_status === 'alive' && <div className="info-item"><label>Applicant Religion</label><p>{form.applicant_religion || '—'}</p></div>}
-              {form.applicant_status === 'alive' && <div className="info-item"><label>Applicant Caste</label><p>{form.applicant_caste || '—'}</p></div>}
+              <div className="info-item"><label>Applicant Occupation</label><p>{form.applicant_occupation || '—'}</p></div>
+              <div className="info-item"><label>Applicant Monthly Income</label><p>{form.applicant_monthly_income || '—'}</p></div>
+              <div className="info-item"><label>Applicant Religion</label><p>{form.applicant_religion || '—'}</p></div>
+              <div className="info-item"><label>Applicant Caste</label><p>{form.applicant_caste || '—'}</p></div>
             </div>
             <div className="info-item"><label>Full Address</label><p>{form.full_address || '—'}</p></div>
           </div>
