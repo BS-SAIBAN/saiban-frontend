@@ -7,7 +7,7 @@ import { formatFastApiDetail } from '@/lib/fastApiError';
 import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload } from 'lucide-react';
+import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload, ChevronRight } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -316,39 +316,62 @@ export default function FamilyProfilePage() {
                   className="family-member-row"
                   style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <div className="member-avatar-circle">
-                      {m.photo_url ? (
-                        <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
-                      ) : (
-                        m.full_name?.[0] || 'M'
-                      )}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div className="member-avatar-circle">
+                        {m.photo_url ? (
+                          <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
+                        ) : (
+                          m.full_name?.[0] || 'M'
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                          {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+                        </div>
                       </div>
                     </div>
+
+                    <div style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
+                      <ChevronRight size={18} />
+                    </div>
                   </div>
 
-                  <div className="info-grid" style={{ marginBottom: 10 }}>
-                    <div className="info-item"><label>Age</label><p>{calculateAge(m.dob)}</p></div>
-                    <div className="info-item"><label>CNIC / B-Form</label><p>{formatCnicOrBForm(m.cnic_or_bform || '') || '—'}</p></div>
-                    <div className="info-item"><label>Occupation</label><p>{m.occupation || '—'}</p></div>
-                    <div className="info-item"><label>Monthly Income</label><p>{formatCurrency(m.monthly_income)}</p></div>
-                    <div className="info-item"><label>School</label><p>{m.school_name || '—'}</p></div>
-                    <div className="info-item"><label>Debt</label><p>{formatCurrency(m.debt_amount)}</p></div>
-                  </div>
-
-                  <div className="member-badges" style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
-                    {m.is_orphan && <span className="badge badge-purple">Orphan</span>}
-                    {m.is_child && <span className="badge badge-blue">Child</span>}
-                    {m.is_disabled && <span className="badge badge-yellow">Disabled</span>}
-                    {m.is_patient && <span className="badge badge-red">Patient</span>}
-                    {!m.is_orphan && !m.is_child && !m.is_disabled && !m.is_patient && (
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No special flags</span>
-                    )}
+                  <div className="member-overview-table">
+                    <div className="member-ov-cell">
+                      <div className="member-ov-label">Age</div>
+                      <div className="member-ov-value">{calculateAge(m.dob)}</div>
+                    </div>
+                    <div className="member-ov-cell">
+                      <div className="member-ov-label">CNIC / B-Form</div>
+                      <div className="member-ov-value">{formatCnicOrBForm(m.cnic_or_bform || '') || '—'}</div>
+                    </div>
+                    <div className="member-ov-cell">
+                      <div className="member-ov-label">Occupation</div>
+                      <div className="member-ov-value">{m.occupation || '—'}</div>
+                    </div>
+                    <div className="member-ov-cell">
+                      <div className="member-ov-label">Monthly Income</div>
+                      <div className="member-ov-value">{formatCurrency(m.monthly_income)}</div>
+                    </div>
+                    <div className="member-ov-cell">
+                      <div className="member-ov-label">School</div>
+                      <div className="member-ov-value">{m.school_name || '—'}</div>
+                    </div>
+                    <div className="member-ov-cell member-ov-cell-debt">
+                      <div className="member-ov-label">Debt</div>
+                      <div className="member-ov-value">{formatCurrency(m.debt_amount)}</div>
+                      <div className="member-ov-flags">
+                        {m.is_orphan && <span className="badge badge-purple">Orphan</span>}
+                        {m.is_child && <span className="badge badge-blue">Child</span>}
+                        {m.is_disabled && <span className="badge badge-yellow">Disabled</span>}
+                        {m.is_patient && <span className="badge badge-red">Patient</span>}
+                        {!m.is_orphan && !m.is_child && !m.is_disabled && !m.is_patient && (
+                          <span className="member-ov-no-flags">No special flags</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
