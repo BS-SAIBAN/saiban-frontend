@@ -358,7 +358,7 @@ export const dashboardAPI = {
 // ── Users ─────────────────────────────────────────────
 export const usersAPI = {
   list: () => api.get('/users'),
-  create: (data: Record<string, unknown>) => api.post('/users', data),
+  create: (data: Record<string, unknown>) => api.post('/users/', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/users/${id}`, data),
 };
 
