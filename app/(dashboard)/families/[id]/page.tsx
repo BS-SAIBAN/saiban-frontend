@@ -153,6 +153,8 @@ export default function FamilyProfilePage() {
     return age >= 0 ? `${age} years` : '—';
   };
 
+  const formatCurrency = (value?: number) => `PKR ${(value || 0).toLocaleString('en-PK')}`;
+
   const validateField = (field: string) => {
     const errors: Record<string, string> = {};
 
@@ -270,24 +272,24 @@ export default function FamilyProfilePage() {
   if (!family) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Family not found.</div>;
 
   return (
-    <div className="family-overview-grid">
+    <div className="family-overview-grid family-overview-stack">
         {/* Family Info */}
-        <div className="card">
+        <section className="overview-column overview-column-details family-details-compact">
           <div className="section-title">Family Details</div>
-          <div className="info-grid">
+          <div className="info-grid family-details-grid">
             <div className="info-item"><label>Registration #</label><p style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</p></div>
             <div className="info-item"><label>Program</label><p>{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</p></div>
             <div className="info-item"><label>Status</label><p><span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span></p></div>
             <div className="info-item"><label>Housing</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Home size={13} />{family.housing_type}</p></div>
             <div className="info-item"><label>Area</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} />{family.area}</p></div>
             <div className="info-item"><label>City</label><p>{family.city}</p></div>
-            <div className="info-item" style={{ gridColumn: '1/-1' }}><label>Full Address</label><p style={{ color: 'var(--text-secondary)' }}>{family.full_address || '—'}</p></div>
+            <div className="info-item"><label>Full Address</label><p style={{ color: 'var(--text-secondary)' }}>{family.full_address || '—'}</p></div>
             <div className="info-item"><label>Registered On</label><p>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</p></div>
           </div>
-        </div>
+        </section>
 
-        {/* Members summary */}
-        <div className="card">
+        {/* Members detailed list */}
+        <section className="overview-column overview-column-members">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div className="section-title" style={{ marginBottom: 0 }}>Family Members ({members.length})</div>
             <button onClick={() => setShowAddModal(true)} className="btn btn-secondary btn-sm"><Plus size={12} /> Add</button>
@@ -298,8 +300,8 @@ export default function FamilyProfilePage() {
               <p>No members added yet.</p>
             </div>
           ) : (
-            <div>
-              {members.slice(0, 5).map(m => (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {members.map(m => (
                 <div
                   key={m.individual_id}
                   role="button"
@@ -312,29 +314,47 @@ export default function FamilyProfilePage() {
                     }
                   }}
                   className="family-member-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
+                  style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}
                 >
-                  <div className="member-avatar-circle">
-                    {m.photo_url ? (
-                      <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
-                    ) : (
-                      m.full_name?.[0] || 'M'
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <div className="member-avatar-circle">
+                      {m.photo_url ? (
+                        <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
+                      ) : (
+                        m.full_name?.[0] || 'M'
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.full_name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.relationship_to_head} • {m.occupation || 'No occupation'}</div>
+
+                  <div className="info-grid" style={{ marginBottom: 10 }}>
+                    <div className="info-item"><label>Age</label><p>{calculateAge(m.dob)}</p></div>
+                    <div className="info-item"><label>CNIC / B-Form</label><p>{formatCnicOrBForm(m.cnic_or_bform || '') || '—'}</p></div>
+                    <div className="info-item"><label>Occupation</label><p>{m.occupation || '—'}</p></div>
+                    <div className="info-item"><label>Monthly Income</label><p>{formatCurrency(m.monthly_income)}</p></div>
+                    <div className="info-item"><label>School</label><p>{m.school_name || '—'}</p></div>
+                    <div className="info-item"><label>Debt</label><p>{formatCurrency(m.debt_amount)}</p></div>
                   </div>
-                  <div className="member-badges" style={{ display: 'flex', gap: 4, flexShrink: 0, flexWrap: 'wrap' }}>
+
+                  <div className="member-badges" style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
                     {m.is_orphan && <span className="badge badge-purple">Orphan</span>}
                     {m.is_child && <span className="badge badge-blue">Child</span>}
+                    {m.is_disabled && <span className="badge badge-yellow">Disabled</span>}
+                    {m.is_patient && <span className="badge badge-red">Patient</span>}
+                    {!m.is_orphan && !m.is_child && !m.is_disabled && !m.is_patient && (
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No special flags</span>
+                    )}
                   </div>
                 </div>
               ))}
-              {members.length > 5 && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>+{members.length - 5} more members</p>}
             </div>
           )}
-        </div>
+        </section>
 
       {showAddModal && (
         <div className="modal-overlay" onClick={closeAddModal}>
