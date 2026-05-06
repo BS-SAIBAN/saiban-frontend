@@ -588,26 +588,26 @@ select.form-control option { background: var(--bg-secondary); }
   display: block;
 }
 .member-overview-table {
-  margin-top: 8px;
+  margin-top: 6px;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   column-gap: 14px;
-  row-gap: 10px;
+  row-gap: 8px;
   align-items: start;
 }
 .member-ov-cell {
   min-width: 0;
 }
 .member-ov-label {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 700;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 .member-ov-value {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-primary);
   font-weight: 600;
   white-space: nowrap;
@@ -620,14 +620,24 @@ select.form-control option { background: var(--bg-secondary); }
   text-overflow: clip;
 }
 .member-ov-flags {
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 .member-ov-no-flags {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.member-row-compact .member-avatar-circle {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+.member-row-compact .member-avatar-circle img {
+  width: 28px;
+  height: 28px;
 }
 
 @media (max-width: 1024px) {

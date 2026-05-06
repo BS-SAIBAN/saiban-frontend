@@ -300,7 +300,7 @@ export default function FamilyProfilePage() {
               <p>No members added yet.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gap: 8 }}>
               {members.map(m => (
                 <div
                   key={m.individual_id}
@@ -313,8 +313,8 @@ export default function FamilyProfilePage() {
                       openMemberModal(m);
                     }
                   }}
-                  className="family-member-row"
-                  style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}
+                  className="family-member-row member-row-compact"
+                  style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 10 }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>

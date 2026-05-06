@@ -20,6 +20,15 @@ export interface AssessmentDetailRecord {
   monthly_rent?: number | null;
   other_monthly_expenses?: number | null;
   total_monthly_expenses?: number | null;
+  total_family_members?: number | null;
+  total_children?: number | null;
+  total_patients?: number | null;
+  total_disabled?: number | null;
+  total_loan_amount?: number | null;
+  total_monthly_liability?: number | null;
+  total_monthly_income?: number | null;
+  income_expense_gap?: number | null;
+  auto_metrics?: Record<string, unknown> | null;
   field_worker_notes?: string;
   field_worker_companion?: string;
   prev_registered?: boolean | null;
@@ -113,6 +122,14 @@ export function AssessmentDetailContent({ assessment, heading = 'default' }: Ass
         <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Total monthly expenses</div>
           <div style={{ fontWeight: 600 }}>{formatAmount(assessment.total_monthly_expenses)}</div>
+        </div>
+        <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Family members</div>
+          <div style={{ fontWeight: 600 }}>{parseNumber(assessment.total_family_members) ?? '—'}</div>
+        </div>
+        <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 4 }}>Monthly income</div>
+          <div style={{ fontWeight: 600 }}>{formatAmount(assessment.total_monthly_income)}</div>
         </div>
       </div>
 
