@@ -19,12 +19,18 @@ export default function NewFamilyPage() {
   const [error, setError] = useState<string>('');
   const [form, setForm] = useState({
     area: '', city: '', full_address: '', housing_type: 'rented',
-    applicant_full_name: '', applicant_dob: '', applicant_cnic_or_bform: '', applicant_relationship: 'head',
+    applicant_full_name: '', applicant_dob: '', applicant_cnic_or_bform: '', applicant_contact_number: '', applicant_relationship: 'head',
     applicant_gender: 'male',
     applicant_occupation: '', applicant_monthly_income: '', applicant_religion: '', applicant_caste: '',
   });
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const formatContactNumber = (value: string) => {
+    // Keep digits (Pakistan mobile is usually 11 digits, but allow 10-15).
+    // Store without spaces/hyphens; formatting can be improved later if needed.
+    return value.replace(/\D/g, '').slice(0, 15);
+  };
 
   const safeSetError = (err: unknown) => {
     if (typeof err === 'string') {
@@ -42,6 +48,7 @@ export default function NewFamilyPage() {
         form.applicant_full_name.trim() &&
         form.applicant_dob &&
         form.applicant_cnic_or_bform.trim() &&
+        form.applicant_contact_number.trim() &&
         form.applicant_relationship &&
         form.applicant_occupation.trim() &&
         form.applicant_monthly_income.trim() &&
@@ -74,6 +81,7 @@ export default function NewFamilyPage() {
           full_name: form.applicant_full_name.trim(),
           dob: form.applicant_dob,
           cnic_or_bform: extractCnicDigits(form.applicant_cnic_or_bform),
+          contact_number: formatContactNumber(form.applicant_contact_number),
           gender: form.applicant_gender,
           relationship_to_head: form.applicant_relationship,
           is_alive: true,
@@ -236,6 +244,19 @@ export default function NewFamilyPage() {
               </div>
             </div>
             <div className="form-grid form-grid-2">
+              <div className="form-group">
+                <label className="form-label">Contact Number *</label>
+                <input
+                  className="form-control"
+                  value={form.applicant_contact_number}
+                  onChange={e => set('applicant_contact_number', formatContactNumber(e.target.value))}
+                  placeholder="e.g. 03001234567"
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Occupation *</label>
                   <input className="form-control" value={form.applicant_occupation} onChange={e => set('applicant_occupation', e.target.value)} placeholder="e.g. Driver, Laborer" />
@@ -269,6 +290,7 @@ export default function NewFamilyPage() {
               <div className="info-item"><label>Applicant</label><p>{form.applicant_full_name || '—'}</p></div>
               <div className="info-item"><label>Relationship to Head</label><p style={{ textTransform: 'capitalize' }}>{form.applicant_relationship || '—'}</p></div>
               <div className="info-item"><label>Applicant CNIC/B-Form</label><p>{form.applicant_cnic_or_bform || '—'}</p></div>
+              <div className="info-item"><label>Applicant Contact Number</label><p>{form.applicant_contact_number || '—'}</p></div>
               <div className="info-item"><label>Applicant Occupation</label><p>{form.applicant_occupation || '—'}</p></div>
               <div className="info-item"><label>Applicant Monthly Income</label><p>{form.applicant_monthly_income || '—'}</p></div>
               <div className="info-item"><label>Applicant Religion</label><p>{form.applicant_religion || '—'}</p></div>

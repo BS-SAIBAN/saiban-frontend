@@ -54,6 +54,7 @@ type FamilyIndividual = {
   relationship_to_head?: string;
   dob?: string;
   cnic_or_bform?: string;
+  contact_number?: string;
   gender?: string;
   occupation?: string;
   monthly_income?: number;
@@ -245,6 +246,7 @@ export default function NewAssessmentPage() {
           ...prev,
           head_full_name: head.full_name || prev.head_full_name,
           head_cnic_number: formatCnicOrBForm(head.cnic_or_bform || prev.head_cnic_number || ''),
+          head_contact_number: head.contact_number || prev.head_contact_number,
           head_gender: head.gender || prev.head_gender,
           head_age: headAge > 0 ? headAge : prev.head_age,
           head_occupation: head.occupation || prev.head_occupation,
