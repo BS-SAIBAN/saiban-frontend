@@ -166,7 +166,6 @@ export default function NewAssessmentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
-  const [headPrefilledFromIntake, setHeadPrefilledFromIntake] = useState(false);
 
   const computeAgeFromDob = (dob?: string) => {
     if (!dob) return 0;
@@ -252,7 +251,6 @@ export default function NewAssessmentPage() {
           head_occupation: head.occupation || prev.head_occupation,
           house_type: family.housing_type || prev.house_type,
         }));
-        setHeadPrefilledFromIntake(true);
       }
 
       if (people.length > 0) {
@@ -286,6 +284,53 @@ export default function NewAssessmentPage() {
       // keep default blank state if intake fetch fails
     });
   }, [id]);
+
+  useEffect(() => {
+    setMembers((prev) => {
+      if (!Array.isArray(prev) || prev.length === 0) {
+        const seeded = blankMember();
+        return [{
+          ...seeded,
+          full_name: form.head_full_name || seeded.full_name,
+          relationship: 'head',
+          age: form.head_age || seeded.age,
+          gender: form.head_gender || seeded.gender,
+          cnic_or_bform: form.head_cnic_number || seeded.cnic_or_bform,
+          education_status: form.head_education_level || seeded.education_status,
+          occupation: form.head_occupation || seeded.occupation,
+          disabled: form.head_disabled || seeded.disabled,
+        }];
+      }
+
+      const candidateIndex = prev.findIndex((m) => m.relationship === 'head');
+      const index = candidateIndex >= 0 ? candidateIndex : 0;
+      const current = prev[index];
+      const nextMember: Member = {
+        ...current,
+        full_name: form.head_full_name || current.full_name,
+        relationship: 'head',
+        age: form.head_age || current.age,
+        gender: form.head_gender || current.gender,
+        cnic_or_bform: form.head_cnic_number || current.cnic_or_bform,
+        education_status: form.head_education_level || current.education_status,
+        occupation: form.head_occupation || current.occupation,
+        disabled: form.head_disabled || current.disabled,
+      };
+
+      const unchanged =
+        nextMember.full_name === current.full_name &&
+        nextMember.relationship === current.relationship &&
+        nextMember.age === current.age &&
+        nextMember.gender === current.gender &&
+        nextMember.cnic_or_bform === current.cnic_or_bform &&
+        nextMember.education_status === current.education_status &&
+        nextMember.occupation === current.occupation &&
+        nextMember.disabled === current.disabled;
+
+      if (unchanged) return prev;
+      return prev.map((m, i) => (i === index ? nextMember : m));
+    });
+  }, [form]);
 
   const [loans, setLoans] = useState<Loan[]>([]);
   const [inKindItems, setInKindItems] = useState<InKindItem[]>([]);
@@ -512,11 +557,11 @@ export default function NewAssessmentPage() {
             <div className="wizard-step-card">
               <div className="section-title">Head of Family</div>
               <div className="form-grid">
-                <div className="form-group"><label className="form-label">Full Name</label><input className="form-control" value={form.head_full_name} onChange={(e) => setForm({ ...form, head_full_name: e.target.value })} readOnly={headPrefilledFromIntake} /></div>
-                <div className="form-group"><label className="form-label">CNIC Number</label><input className="form-control" value={form.head_cnic_number} onChange={(e) => setForm({ ...form, head_cnic_number: e.target.value })} readOnly={headPrefilledFromIntake} /></div>
+                <div className="form-group"><label className="form-label">Full Name</label><input className="form-control" value={form.head_full_name} onChange={(e) => setForm({ ...form, head_full_name: e.target.value })} /></div>
+                <div className="form-group"><label className="form-label">CNIC Number</label><input className="form-control" value={form.head_cnic_number} onChange={(e) => setForm({ ...form, head_cnic_number: formatCnicOrBForm(e.target.value) })} inputMode="numeric" autoComplete="off" /></div>
                 <div className="form-group"><label className="form-label">Contact Number</label><input className="form-control" value={form.head_contact_number} onChange={(e) => setForm({ ...form, head_contact_number: e.target.value })} /></div>
-                <div className="form-group"><label className="form-label">Gender</label><select className="form-control" value={form.head_gender} onChange={(e) => setForm({ ...form, head_gender: e.target.value })} disabled={headPrefilledFromIntake}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
-                <div className="form-group"><label className="form-label">Age</label><input className="form-control" type="number" min={0} value={form.head_age} onChange={(e) => setForm({ ...form, head_age: parseInt(e.target.value) || 0 })} readOnly={headPrefilledFromIntake} /></div>
+                <div className="form-group"><label className="form-label">Gender</label><select className="form-control" value={form.head_gender} onChange={(e) => setForm({ ...form, head_gender: e.target.value })}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
+                <div className="form-group"><label className="form-label">Age</label><input className="form-control" type="number" min={0} value={form.head_age} onChange={(e) => setForm({ ...form, head_age: parseInt(e.target.value) || 0 })} /></div>
                 <div className="form-group">
                   <label className="form-label">Marital Status</label>
                   <select className="form-control" value={form.head_marital_status} onChange={(e) => setForm({ ...form, head_marital_status: e.target.value })}>
@@ -602,7 +647,7 @@ export default function NewAssessmentPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Education Status</label>
+                  <label className="form-label">Education Level</label>
                         <select className="form-control" value={m.education_status} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, education_status: e.target.value } : x)))} >
                           <option value="">Select</option>
                           {educationLevelOptions.map((opt) => (
