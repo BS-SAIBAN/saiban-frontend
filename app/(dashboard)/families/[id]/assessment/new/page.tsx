@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { assessmentsAPI, familiesAPI, storageAPI } from '@/lib/api';
+import { assessmentsAPI, familiesAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Plus, Save, Trash2, Upload } from 'lucide-react';
@@ -170,6 +170,10 @@ export default function NewAssessmentPage() {
   const [initializingEdit, setInitializingEdit] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [previewFailed, setPreviewFailed] = useState(false);
 
   const computeAgeFromDob = (dob?: string) => {
     if (!dob) return 0;
@@ -473,6 +477,23 @@ export default function NewAssessmentPage() {
       setError('Failed to upload file. Please try again.');
     }
   };
+
+  const openPreview = (url: string, title: string) => {
+    if (!url) return;
+    setPreviewFailed(false);
+    setPreviewUrl(normalizeStorageUrl(url));
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  };
+
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewUrl('');
+    setPreviewTitle('');
+    setPreviewFailed(false);
+  };
+
+  const isLikelyImageUrl = (url: string) => /\.(png|jpe?g|gif|webp)(\?|#|$)/i.test(url);
 
   const buildSmartTags = () => {
     const tags: string[] = [];
@@ -983,7 +1004,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'documents_head_cnic');
                       }} />
-                      {form.documents_head_cnic && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.documents_head_cnic && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.documents_head_cnic, 'CNIC (Head)')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">B-Forms</label>
@@ -991,7 +1019,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'documents_b_forms');
                       }} />
-                      {form.documents_b_forms && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.documents_b_forms && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.documents_b_forms, 'B-Forms')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Income Proof</label>
@@ -999,7 +1034,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'documents_income_proof');
                       }} />
-                      {form.documents_income_proof && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.documents_income_proof && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.documents_income_proof, 'Income Proof')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Medical Documents</label>
@@ -1007,7 +1049,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'documents_medical');
                       }} />
-                      {form.documents_medical && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.documents_medical && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.documents_medical, 'Medical Documents')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1020,7 +1069,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'photos_house_exterior');
                       }} />
-                      {form.photos_house_exterior && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.photos_house_exterior && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.photos_house_exterior, 'House Exterior')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Living Conditions</label>
@@ -1028,7 +1084,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'photos_living_conditions');
                       }} />
-                      {form.photos_living_conditions && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.photos_living_conditions && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.photos_living_conditions, 'Living Conditions')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Family Photo</label>
@@ -1036,7 +1099,14 @@ export default function NewAssessmentPage() {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, 'photos_family');
                       }} />
-                      {form.photos_family && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                      {form.photos_family && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Uploaded</div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openPreview(form.photos_family, 'Family Photo')}>
+                            View
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1071,6 +1141,61 @@ export default function NewAssessmentPage() {
           </div>
         </form>
       </div>
+
+      {previewOpen && (
+        <div className="modal-overlay" onClick={closePreview} role="presentation">
+          <div
+            className="modal modal-lg"
+            style={{ maxWidth: 900, maxHeight: 'min(92dvh, 900px)', display: 'flex', flexDirection: 'column' }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upload-preview-title"
+          >
+            <div className="modal-header">
+              <h2 id="upload-preview-title" style={{ flex: 1, minWidth: 0 }}>
+                {previewTitle || 'Upload preview'}
+              </h2>
+              <button type="button" className="modal-close" onClick={closePreview} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className="modal-body" style={{ overflowY: 'auto', minHeight: 0 }}>
+              {isLikelyImageUrl(previewUrl) ? (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {!previewFailed ? (
+                    <img
+                      src={previewUrl}
+                      alt={previewTitle || 'Uploaded image'}
+                      onError={() => setPreviewFailed(true)}
+                      style={{ width: '100%', maxHeight: '70dvh', objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)' }}
+                    />
+                  ) : (
+                    <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13 }}>
+                      Preview failed to load. This can happen if the file is private or the URL is not directly accessible. Use “Open in new tab” below.
+                    </div>
+                  )}
+                  <a className="btn btn-secondary" href={previewUrl} target="_blank" rel="noreferrer">
+                    Open in new tab
+                  </a>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                    Preview not available for this file type. You can open/download it below.
+                  </div>
+                  <a className="btn btn-primary" href={previewUrl} target="_blank" rel="noreferrer">
+                    Open / Download
+                  </a>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={closePreview}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
