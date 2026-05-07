@@ -8,7 +8,7 @@ import { formatFastApiDetail } from '@/lib/fastApiError';
 import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
-import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload, ChevronRight } from 'lucide-react';
+import { User, Plus, MapPin, Home, X, Save, Heart, Shield, Upload, ChevronRight, Users } from 'lucide-react';
 
 interface Family {
   family_id: string; registration_number: string; category: 'FA' | 'SB';
@@ -273,112 +273,199 @@ export default function FamilyProfilePage() {
   if (!family) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Family not found.</div>;
 
   return (
-    <div className="family-overview-grid family-overview-stack">
-        {/* Family Info */}
-        <section className="overview-column overview-column-details family-details-compact">
-          <div className="section-title">Family Details</div>
-          <div className="info-grid family-details-grid">
-            <div className="info-item"><label>Case ID</label><p style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</p></div>
-            <div className="info-item"><label>Program</label><p>{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</p></div>
-            <div className="info-item"><label>Status</label><p><span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{getFamilyStatusLabel(family.status)}</span></p></div>
-            <div className="info-item"><label>Housing</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Home size={13} />{family.housing_type}</p></div>
-            <div className="info-item"><label>Area</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} />{family.area}</p></div>
-            <div className="info-item"><label>City</label><p>{family.city}</p></div>
-            <div className="info-item"><label>Full Address</label><p style={{ color: 'var(--text-secondary)' }}>{family.full_address || '—'}</p></div>
-            <div className="info-item"><label>Intake On</label><p>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</p></div>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 8 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Home size={24} /> Family Overview
+            </h1>
+            <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+              Case ID: <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</span>
+            </p>
           </div>
-        </section>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <span className={`badge badge-${statusColor[family.status] || 'gray'}`} style={{ fontSize: 13, padding: '6px 12px' }}>
+              {getFamilyStatusLabel(family.status)}
+            </span>
+          </div>
+        </div>
+      </div>
 
-        {/* Members detailed list */}
-        <section className="overview-column overview-column-members">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="section-title" style={{ marginBottom: 0 }}>Family Members ({members.length})</div>
-            <button onClick={() => setShowAddModal(true)} className="btn btn-secondary btn-sm"><Plus size={12} /> Add</button>
+      {/* Quick Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+        <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <User size={18} style={{ color: 'var(--accent)' }} />
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Family Members</span>
           </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{members.length}</div>
+        </div>
+        <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <Shield size={18} style={{ color: 'var(--purple)' }} />
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Orphans</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{members.filter(m => m.is_orphan).length}</div>
+        </div>
+        <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <Heart size={18} style={{ color: 'var(--red)' }} />
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Patients</span>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{members.filter(m => m.is_patient).length}</div>
+        </div>
+        <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <Home size={18} style={{ color: 'var(--green)' }} />
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Program</span>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 600 }}>{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24, alignItems: 'start' }}>
+        {/* Family Members Card */}
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users size={18} /> Family Members ({members.length})
+            </h2>
+            <button onClick={() => setShowAddModal(true)} className="btn btn-primary btn-sm">
+              <Plus size={14} /> Add Member
+            </button>
+          </div>
+          
           {members.length === 0 ? (
-            <div className="empty-state" style={{ padding: '30px 20px' }}>
-              <div className="empty-state-icon"><User size={20} /></div>
-              <p>No members added yet.</p>
+            <div style={{ textAlign: 'center', padding: 40 }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16' }}>
+                <User size={24} style={{ color: 'var(--text-muted)' }} />
+              </div>
+              <p style={{ color: 'var(--text-muted)', margin: 0 }}>No family members added yet</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {members.map(m => (
-                <div
-                  key={m.individual_id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openMemberModal(m)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      openMemberModal(m);
-                    }
-                  }}
-                  className="family-member-row member-row-compact"
-                  style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 10, padding: 10 }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                      <div className="member-avatar-circle">
-                        {m.photo_url ? (
-                          <img src={normalizeStorageUrl(m.photo_url)} alt={`${m.full_name || 'Member'} photo`} />
-                        ) : (
-                          m.full_name?.[0] || 'M'
-                        )}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{m.full_name || '—'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                          {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'} • {m.gender || '—'}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Member</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Relationship</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gender</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Age</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Occupation</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Monthly Income</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Flags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map(m => (
+                    <tr
+                      key={m.individual_id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openMemberModal(m)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openMemberModal(m);
+                        }
+                      }}
+                      style={{ 
+                        cursor: 'pointer', 
+                        borderBottom: '1px solid var(--border)',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '12px 8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ 
+                            width: 36, 
+                            height: 36, 
+                            borderRadius: '50%', 
+                            background: 'var(--bg-secondary)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            overflow: 'hidden',
+                            border: '1px solid var(--border)'
+                          }}>
+                            {m.photo_url ? (
+                              <img src={normalizeStorageUrl(m.photo_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>{m.full_name?.[0] || 'M'}</span>
+                            )}
+                          </div>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.full_name || '—'}</span>
                         </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
-                      <ChevronRight size={18} />
-                    </div>
-                  </div>
-
-                  <div className="member-overview-table">
-                    <div className="member-ov-cell">
-                      <div className="member-ov-label">Age</div>
-                      <div className="member-ov-value">{calculateAge(m.dob)}</div>
-                    </div>
-                    <div className="member-ov-cell">
-                      <div className="member-ov-label">CNIC / B-Form</div>
-                      <div className="member-ov-value">{formatCnicOrBForm(m.cnic_or_bform || '') || '—'}</div>
-                    </div>
-                    <div className="member-ov-cell">
-                      <div className="member-ov-label">Occupation</div>
-                      <div className="member-ov-value">{m.occupation || '—'}</div>
-                    </div>
-                    <div className="member-ov-cell">
-                      <div className="member-ov-label">Monthly Income</div>
-                      <div className="member-ov-value">{formatCurrency(m.monthly_income)}</div>
-                    </div>
-                    <div className="member-ov-cell">
-                      <div className="member-ov-label">School</div>
-                      <div className="member-ov-value">{m.school_name || '—'}</div>
-                    </div>
-                    <div className="member-ov-cell member-ov-cell-debt">
-                      <div className="member-ov-label">Debt</div>
-                      <div className="member-ov-value">{formatCurrency(m.debt_amount)}</div>
-                      <div className="member-ov-flags">
-                        {m.is_orphan && <span className="badge badge-purple">Orphan</span>}
-                        {m.is_child && <span className="badge badge-blue">Child</span>}
-                        {m.is_disabled && <span className="badge badge-yellow">Disabled</span>}
-                        {m.is_patient && <span className="badge badge-red">Patient</span>}
-                        {!m.is_orphan && !m.is_child && !m.is_disabled && !m.is_patient && (
-                          <span className="member-ov-no-flags">No special flags</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                        {relationshipMap[m.relationship_to_head] || m.relationship_to_head || '—'}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                        <span style={{ textTransform: 'capitalize' }}>{m.gender || '—'}</span>
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                        {calculateAge(m.dob)}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                        {m.occupation || '—'}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                        {formatCurrency(m.monthly_income)}
+                      </td>
+                      <td style={{ padding: '12px 8px' }}>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {m.is_orphan && <span className="badge badge-purple" style={{ fontSize: 10 }}>Orphan</span>}
+                          {m.is_child && <span className="badge badge-blue" style={{ fontSize: 10 }}>Child</span>}
+                          {m.is_disabled && <span className="badge badge-yellow" style={{ fontSize: 10 }}>Disabled</span>}
+                          {m.is_patient && <span className="badge badge-red" style={{ fontSize: 10 }}>Patient</span>}
+                          {!m.is_orphan && !m.is_child && !m.is_disabled && !m.is_patient && (
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </section>
+        </div>
+
+        {/* Family Details Card */}
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', padding: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 20 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MapPin size={18} /> Family Details
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 4 }}>Housing Type</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{family.housing_type || '—'}</span>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 4 }}>Area</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{family.area || '—'}</span>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 4 }}>City</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{family.city || '—'}</span>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 4 }}>Full Address</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{family.full_address || '—'}</span>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 4 }}>Intake Date</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {showAddModal && (
         <div className="modal-overlay" onClick={closeAddModal}>
