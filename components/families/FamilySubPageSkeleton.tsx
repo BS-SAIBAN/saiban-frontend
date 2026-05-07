@@ -160,34 +160,57 @@ export default function FamilySubPageSkeleton({ variant = 'overview' }: FamilySu
     );
   }
 
+  // Overview skeleton aligned with current Family Overview UI
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        <div className="card">
-          <div className="skeleton skeleton-text" style={{ width: 170, marginBottom: 16 }} />
-          <div className="info-grid">
-            {Array.from({ length: 8 }).map((_, i) => (
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 8 }}>
+          <div>
+            <div className="skeleton skeleton-text" style={{ width: 220, height: 26, marginBottom: 8 }} />
+            <div className="skeleton skeleton-text-sm" style={{ width: 260, height: 14 }} />
+          </div>
+          <div className="skeleton skeleton-text-sm" style={{ width: 120, height: 30, borderRadius: 20 }} />
+        </div>
+      </div>
+
+      {/* Quick stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <div className="skeleton skeleton-text-sm" style={{ width: 140, height: 12, marginBottom: 10 }} />
+            <div className="skeleton skeleton-text" style={{ width: 90, height: 30 }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Main content */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24, alignItems: 'start' }}>
+        {/* Members card */}
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div className="skeleton skeleton-text" style={{ width: 210, height: 18 }} />
+            <div className="skeleton skeleton-text-sm" style={{ width: 120, height: 32, borderRadius: 8 }} />
+          </div>
+          <div style={{ overflowX: 'hidden' }}>
+            <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 36, marginBottom: 10 }} />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton skeleton-text-sm" style={{ width: '100%', height: 46, marginBottom: 10 }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Details card */}
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', padding: 24 }}>
+          <div className="skeleton skeleton-text" style={{ width: 170, height: 18, marginBottom: 18 }} />
+          <div style={{ display: 'grid', gap: 14 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i}>
-                <div className="skeleton skeleton-text-sm" style={{ width: 90, marginBottom: 8 }} />
+                <div className="skeleton skeleton-text-sm" style={{ width: 110, height: 12, marginBottom: 8 }} />
                 <div className="skeleton skeleton-text-sm" style={{ width: '100%', height: 16 }} />
               </div>
             ))}
           </div>
-        </div>
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="skeleton skeleton-text" style={{ width: 190 }} />
-            <div className="skeleton skeleton-text-sm" style={{ width: 70, height: 30 }} />
-          </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="skeleton-row" style={{ marginBottom: 10 }}>
-              <div className="skeleton skeleton-avatar" />
-              <div className="skeleton-col">
-                <div className="skeleton skeleton-text" style={{ width: '55%' }} />
-                <div className="skeleton skeleton-text-sm" style={{ width: '40%' }} />
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
