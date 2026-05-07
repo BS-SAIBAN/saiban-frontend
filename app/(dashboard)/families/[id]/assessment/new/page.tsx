@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI, familiesAPI, storageAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Plus, Save, Trash2, Upload } from 'lucide-react';
 
 type Member = {
@@ -75,6 +76,35 @@ const relationshipOptions: Array<{ value: string; label: string }> = [
   { value: 'other', label: 'Other' },
 ];
 
+const maritalStatusOptions: Array<{ value: string; label: string }> = [
+  { value: 'single', label: 'Single' },
+  { value: 'married', label: 'Married' },
+  { value: 'widowed', label: 'Widowed' },
+  { value: 'divorced', label: 'Divorced' },
+  { value: 'separated', label: 'Separated' },
+  { value: 'other', label: 'Other' },
+];
+
+const educationLevelOptions: Array<{ value: string; label: string }> = [
+  { value: 'illiterate', label: 'Illiterate' },
+  { value: 'primary', label: 'Primary' },
+  { value: 'middle', label: 'Middle' },
+  { value: 'matric', label: 'Matric' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'bachelor', label: 'Bachelor' },
+  { value: 'master', label: 'Master' },
+  { value: 'other', label: 'Other' },
+];
+
+const supportRequirementOptions: Array<{ value: string; label: string }> = [
+  { value: 'financial_aid', label: 'Financial Aid' },
+  { value: 'ration_support', label: 'Ration Support' },
+  { value: 'medical_assistance', label: 'Medical Assistance' },
+  { value: 'education_support', label: 'Education Support' },
+  { value: 'in_kind_support', label: 'In-Kind Support' },
+  { value: 'other', label: 'Other' },
+];
+
 const blankMember = (): Member => ({
   full_name: '',
   relationship: '',
@@ -137,6 +167,18 @@ export default function NewAssessmentPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [headPrefilledFromIntake, setHeadPrefilledFromIntake] = useState(false);
 
+  const computeAgeFromDob = (dob?: string) => {
+    if (!dob) return 0;
+    const d = new Date(dob);
+    if (Number.isNaN(d.getTime())) return 0;
+    const now = new Date();
+    return now.getFullYear() - d.getFullYear() - (
+      (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate()))
+        ? 1
+        : 0
+    );
+  };
+
   const [form, setForm] = useState({
     assessment_date: new Date().toISOString().split('T')[0],
     field_worker_name: user?.full_name || '',
@@ -197,18 +239,14 @@ export default function NewAssessmentPage() {
       const head = people.find((p) => p.relationship_to_head === 'head') || people[0];
 
       if (head) {
-        const dob = head.dob ? new Date(head.dob) : null;
-        const now = new Date();
-        const age = dob && !Number.isNaN(dob.getTime())
-          ? now.getFullYear() - dob.getFullYear() - ((now.getMonth() < dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate())) ? 1 : 0)
-          : 0;
+        const headAge = computeAgeFromDob(head.dob);
 
         setForm((prev) => ({
           ...prev,
           head_full_name: head.full_name || prev.head_full_name,
-          head_cnic_number: head.cnic_or_bform || prev.head_cnic_number,
+          head_cnic_number: formatCnicOrBForm(head.cnic_or_bform || prev.head_cnic_number || ''),
           head_gender: head.gender || prev.head_gender,
-          head_age: age > 0 ? age : prev.head_age,
+          head_age: headAge > 0 ? headAge : prev.head_age,
           head_occupation: head.occupation || prev.head_occupation,
           house_type: family.housing_type || prev.house_type,
         }));
@@ -216,12 +254,26 @@ export default function NewAssessmentPage() {
       }
 
       if (people.length > 0) {
-        setMembers(people.map((p) => ({
+        // Fallback: sometimes the API payload doesn't include `dob` on each individual.
+        // In that case, ensure Member #1 (applicant/head) still gets an age.
+        const headAge = computeAgeFromDob(head?.dob);
+        setMembers(people.map((p, idx) => ({
           ...blankMember(),
           full_name: p.full_name || '',
           relationship: p.relationship_to_head || '',
+          // Prefill age from intake DOB so Member #1 (applicant/head) doesn't show "0".
+          age: (() => {
+            const computed = computeAgeFromDob(p.dob);
+            const rel = p.relationship_to_head || '';
+            if (computed > 0) return computed;
+            // Member #1 is the applicant row in our UI/UX, so always fill from headAge.
+            if (idx === 0) return headAge;
+            // Also backfill for any row explicitly marked as head.
+            if (rel === 'head') return headAge;
+            return 0;
+          })(),
           gender: p.gender || '',
-          cnic_or_bform: p.cnic_or_bform || '',
+          cnic_or_bform: formatCnicOrBForm(p.cnic_or_bform || ''),
           occupation: p.occupation || '',
           monthly_income: p.monthly_income || 0,
           patient: Boolean(p.is_patient),
@@ -463,9 +515,25 @@ export default function NewAssessmentPage() {
                 <div className="form-group"><label className="form-label">Contact Number</label><input className="form-control" value={form.head_contact_number} onChange={(e) => setForm({ ...form, head_contact_number: e.target.value })} /></div>
                 <div className="form-group"><label className="form-label">Gender</label><select className="form-control" value={form.head_gender} onChange={(e) => setForm({ ...form, head_gender: e.target.value })} disabled={headPrefilledFromIntake}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
                 <div className="form-group"><label className="form-label">Age</label><input className="form-control" type="number" min={0} value={form.head_age} onChange={(e) => setForm({ ...form, head_age: parseInt(e.target.value) || 0 })} readOnly={headPrefilledFromIntake} /></div>
-                <div className="form-group"><label className="form-label">Marital Status</label><input className="form-control" value={form.head_marital_status} onChange={(e) => setForm({ ...form, head_marital_status: e.target.value })} /></div>
+                <div className="form-group">
+                  <label className="form-label">Marital Status</label>
+                  <select className="form-control" value={form.head_marital_status} onChange={(e) => setForm({ ...form, head_marital_status: e.target.value })}>
+                    <option value="">Select</option>
+                    {maritalStatusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="form-group"><label className="form-label">Occupation</label><input className="form-control" value={form.head_occupation} onChange={(e) => setForm({ ...form, head_occupation: e.target.value })} /></div>
-                <div className="form-group"><label className="form-label">Education Level</label><input className="form-control" value={form.head_education_level} onChange={(e) => setForm({ ...form, head_education_level: e.target.value })} /></div>
+                <div className="form-group">
+                  <label className="form-label">Education Level</label>
+                  <select className="form-control" value={form.head_education_level} onChange={(e) => setForm({ ...form, head_education_level: e.target.value })}>
+                    <option value="">Select</option>
+                    {educationLevelOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={form.head_disabled} onChange={(e) => setForm({ ...form, head_disabled: e.target.checked })} />
@@ -492,26 +560,54 @@ export default function NewAssessmentPage() {
                       )}
                     </div>
                     <div className="form-grid">
-                      <input className="form-control" placeholder="Full Name" value={m.full_name} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, full_name: e.target.value } : x)))} />
-                      <select className="form-control" value={m.relationship} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, relationship: e.target.value } : x)))}>
-                        <option value="">Select relationship</option>
-                        {relationshipOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      <input
-                        className="form-control"
-                        type="number"
-                        min={0}
-                        step={1}
-                        placeholder="Age (years)"
-                        value={m.age ? m.age : ''}
-                        onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, age: parseInt(e.target.value) || 0 } : x)))} />
-                      <select className="form-control" value={m.gender} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, gender: e.target.value } : x)))}>
-                        <option value="">Gender</option><option value="male">Male</option><option value="female">Female</option>
-                      </select>
-                      <input className="form-control" placeholder="CNIC / B-Form" value={m.cnic_or_bform} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, cnic_or_bform: e.target.value } : x)))} />
-                      <input className="form-control" placeholder="Education Status" value={m.education_status} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, education_status: e.target.value } : x)))} />
+                      <div className="form-group">
+                        <label className="form-label">Full Name</label>
+                        <input className="form-control" value={m.full_name} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, full_name: e.target.value } : x)))} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Relationship</label>
+                        <select className="form-control" value={m.relationship} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, relationship: e.target.value } : x)))}>
+                          <option value="">Select relationship</option>
+                          {relationshipOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Age</label>
+                        <input
+                          className="form-control"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={m.age ? m.age : ''}
+                          onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, age: parseInt(e.target.value) || 0 } : x)))} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Gender</label>
+                        <select className="form-control" value={m.gender} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, gender: e.target.value } : x)))}>
+                          <option value="">Select</option><option value="male">Male</option><option value="female">Female</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">CNIC / B-Form</label>
+                        <input
+                          className="form-control"
+                          value={m.cnic_or_bform}
+                          onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, cnic_or_bform: formatCnicOrBForm(e.target.value) } : x)))}
+                          inputMode="numeric"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Education Status</label>
+                        <select className="form-control" value={m.education_status} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, education_status: e.target.value } : x)))} >
+                          <option value="">Select</option>
+                          {educationLevelOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                     <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
                       <label><input type="checkbox" checked={m.patient} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, patient: e.target.checked } : x)))} /> Patient</label>
@@ -520,10 +616,22 @@ export default function NewAssessmentPage() {
                     {m.patient && (
                       <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--border)' }}>
                         <div className="form-grid">
-                          <input className="form-control" placeholder="Disease / Condition" value={m.medical.disease_condition} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, disease_condition: e.target.value } } : x)))} />
-                          <input className="form-control" placeholder="Type (chronic/temporary/other)" value={m.medical.medical_type} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, medical_type: e.target.value } } : x)))} />
-                          <input className="form-control" placeholder="Treatment Status" value={m.medical.treatment_status} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, treatment_status: e.target.value } } : x)))} />
-                          <input className="form-control" type="number" placeholder="Monthly Medical Expense" value={m.medical.monthly_medical_expense} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, monthly_medical_expense: parseInt(e.target.value) || 0 } } : x)))} />
+                          <div className="form-group">
+                            <label className="form-label">Disease / Condition</label>
+                            <input className="form-control" value={m.medical.disease_condition} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, disease_condition: e.target.value } } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Medical Type</label>
+                            <input className="form-control" value={m.medical.medical_type} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, medical_type: e.target.value } } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Treatment Status</label>
+                            <input className="form-control" value={m.medical.treatment_status} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, treatment_status: e.target.value } } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Monthly Medical Expense</label>
+                            <input className="form-control" type="number" value={m.medical.monthly_medical_expense} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, medical: { ...x.medical, monthly_medical_expense: parseInt(e.target.value) || 0 } } : x)))} />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -578,11 +686,26 @@ export default function NewAssessmentPage() {
                           </button>
                         </div>
                         <div className="form-grid">
-                          <input className="form-control" type="number" placeholder="Loan Amount" value={loan.loan_amount} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, loan_amount: parseInt(e.target.value) || 0 } : x)))} />
-                          <input className="form-control" placeholder="Source" value={loan.source} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, source: e.target.value } : x)))} />
-                          <input className="form-control" placeholder="Purpose" value={loan.purpose} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, purpose: e.target.value } : x)))} />
-                          <input className="form-control" type="number" placeholder="Outstanding Amount" value={loan.outstanding_amount} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, outstanding_amount: parseInt(e.target.value) || 0 } : x)))} />
-                          <input className="form-control" type="number" placeholder="Monthly Installment" value={loan.monthly_installment} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, monthly_installment: parseInt(e.target.value) || 0 } : x)))} />
+                          <div className="form-group">
+                            <label className="form-label">Loan Amount</label>
+                            <input className="form-control" type="number" value={loan.loan_amount} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, loan_amount: parseInt(e.target.value) || 0 } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Source</label>
+                            <input className="form-control" value={loan.source} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, source: e.target.value } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Purpose</label>
+                            <input className="form-control" value={loan.purpose} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, purpose: e.target.value } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Outstanding Amount</label>
+                            <input className="form-control" type="number" value={loan.outstanding_amount} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, outstanding_amount: parseInt(e.target.value) || 0 } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Monthly Installment</label>
+                            <input className="form-control" type="number" value={loan.monthly_installment} onChange={(e) => setLoans((prev) => prev.map((x, i) => (i === idx ? { ...x, monthly_installment: parseInt(e.target.value) || 0 } : x)))} />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -599,10 +722,22 @@ export default function NewAssessmentPage() {
             <div className="wizard-step-card">
               <div className="section-title">Living Conditions</div>
               <div className="form-grid">
-                <input className="form-control" placeholder="House Type" value={form.house_type} onChange={(e) => setForm({ ...form, house_type: e.target.value })} />
-                <input className="form-control" placeholder="Condition" value={form.house_condition} onChange={(e) => setForm({ ...form, house_condition: e.target.value })} />
-                <input className="form-control" type="number" placeholder="Number of Rooms" value={form.number_of_rooms} onChange={(e) => setForm({ ...form, number_of_rooms: parseInt(e.target.value) || 0 })} />
-                <input className="form-control" placeholder="Area Type" value={form.area_type} onChange={(e) => setForm({ ...form, area_type: e.target.value })} />
+                <div className="form-group">
+                  <label className="form-label">House Type</label>
+                  <input className="form-control" value={form.house_type} onChange={(e) => setForm({ ...form, house_type: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Condition</label>
+                  <input className="form-control" value={form.house_condition} onChange={(e) => setForm({ ...form, house_condition: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Number of Rooms</label>
+                  <input className="form-control" type="number" value={form.number_of_rooms} onChange={(e) => setForm({ ...form, number_of_rooms: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Area Type</label>
+                  <input className="form-control" value={form.area_type} onChange={(e) => setForm({ ...form, area_type: e.target.value })} />
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <label><input type="checkbox" checked={form.electricity} onChange={(e) => setForm({ ...form, electricity: e.target.checked })} /> Electricity</label>
@@ -616,8 +751,8 @@ export default function NewAssessmentPage() {
             <div className="wizard-step-card">
               <div className="section-title">Support Requirements</div>
               <div style={{ display: 'grid', gap: 8 }}>
-                {['financial_aid', 'ration_support', 'medical_assistance', 'education_support', 'in_kind_support', 'other'].map((support) => (
-                  <label key={support}><input type="checkbox" checked={form.support_types.includes(support)} onChange={() => toggleMulti('support_types', support)} /> {support}</label>
+                {supportRequirementOptions.map((support) => (
+                  <label key={support.value}><input type="checkbox" checked={form.support_types.includes(support.value)} onChange={() => toggleMulti('support_types', support.value)} /> {support.label}</label>
                 ))}
               </div>
               {form.support_types.includes('other') && (
@@ -649,14 +784,29 @@ export default function NewAssessmentPage() {
                           </button>
                         </div>
                         <div className="form-grid">
-                          <input className="form-control" placeholder="Item Category" value={item.item_category} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, item_category: e.target.value } : x)))} />
-                          <input className="form-control" placeholder="Item Name" value={item.item_name} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, item_name: e.target.value } : x)))} />
-                          <input className="form-control" type="number" min={1} placeholder="Quantity" value={item.quantity_required} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, quantity_required: parseInt(e.target.value) || 1 } : x)))} />
-                          <select className="form-control" value={item.intended_for} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, intended_for: e.target.value as InKindItem['intended_for'] } : x)))}>
-                            <option value="family">Family</option>
-                            <option value="specific_individual">Specific Individual</option>
-                          </select>
-                          <input className="form-control" placeholder="Linked Individual (if any)" value={item.linked_individual} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, linked_individual: e.target.value } : x)))} />
+                          <div className="form-group">
+                            <label className="form-label">Item Category</label>
+                            <input className="form-control" value={item.item_category} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, item_category: e.target.value } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Item Name</label>
+                            <input className="form-control" value={item.item_name} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, item_name: e.target.value } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Quantity</label>
+                            <input className="form-control" type="number" min={1} value={item.quantity_required} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, quantity_required: parseInt(e.target.value) || 1 } : x)))} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Intended For</label>
+                            <select className="form-control" value={item.intended_for} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, intended_for: e.target.value as InKindItem['intended_for'] } : x)))}>
+                              <option value="family">Family</option>
+                              <option value="specific_individual">Specific Individual</option>
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Linked Individual (if any)</label>
+                            <input className="form-control" value={item.linked_individual} onChange={(e) => setInKindItems((prev) => prev.map((x, i) => (i === idx ? { ...x, linked_individual: e.target.value } : x)))} />
+                          </div>
                         </div>
                       </div>
                     ))}
