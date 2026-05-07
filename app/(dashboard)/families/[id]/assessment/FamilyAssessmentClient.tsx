@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { assessmentsAPI } from '@/lib/api';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { AssessmentDetailContent, AssessmentDetailRecord, assessmentStatusColor } from '@/components/families/AssessmentDetailContent';
-import { Plus, ClipboardList, Edit, Trash2, AlertCircle, X } from 'lucide-react';
+import { Plus, ClipboardList, Edit, Trash2, AlertCircle, X, Calendar, FileText } from 'lucide-react';
 
 interface AssessmentRow {
   assessment_id: string;
@@ -140,6 +140,23 @@ export default function FamilyAssessmentClient() {
       </div>
 
       <div className="card">
+        {assessments.length > 0 && (
+          <div className="family-stat-grid family-stat-grid-tight" style={{ marginBottom: 16 }}>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Assessments</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.length}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Draft</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.filter((a) => a.status === 'draft').length}</div>
+            </div>
+            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Submitted</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.filter((a) => a.status === 'submitted').length}</div>
+            </div>
+          </div>
+        )}
+
         {assessments.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">
@@ -152,46 +169,38 @@ export default function FamilyAssessmentClient() {
             </Link>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table className="mobile-stack-table">
-              <thead>
-                <tr>
-                  <th>Assessment ID</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assessments.map(a => (
-                  <tr key={a.assessment_id}>
-                    <td data-label="Assessment ID" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)', fontSize: 12 }}>
-                      {a.assessment_id.slice(0, 8)}…
-                    </td>
-                    <td data-label="Date">{a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}</td>
-                    <td data-label="Status">
-                      <span className={`badge badge-${assessmentStatusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span>
-                    </td>
-                    <td data-label="Actions">
-                      <div className="row-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => openViewModal(a.assessment_id)}>
-                          View
-                        </button>
-                        {a.status === 'draft' && (
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => submitAssessment(a.assessment_id)}
-                            disabled={submittingId === a.assessment_id}
-                          >
-                            {submittingId === a.assessment_id ? 'Submitting...' : 'Submit'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {assessments.map((a) => (
+              <div key={a.assessment_id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: 'var(--bg-secondary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
+                      <FileText size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      {a.assessment_id}
+                    </div>
+                    <div style={{ fontSize: 13 }}>
+                      <Calendar size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      {a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}
+                    </div>
+                  </div>
+                  <span className={`badge badge-${assessmentStatusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => openViewModal(a.assessment_id)}>
+                    View Details
+                  </button>
+                  {a.status === 'draft' && (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => submitAssessment(a.assessment_id)}
+                      disabled={submittingId === a.assessment_id}
+                    >
+                      {submittingId === a.assessment_id ? 'Submitting...' : 'Submit Assessment'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -199,18 +208,25 @@ export default function FamilyAssessmentClient() {
       {viewParam && (
         <div className="modal-overlay" onClick={closeViewModal} role="presentation">
           <div
-            className="modal modal-lg"
-            style={{ maxWidth: 760, maxHeight: 'min(92dvh, 900px)', display: 'flex', flexDirection: 'column' }}
+            className="modal"
+            style={{ maxWidth: 900, maxHeight: '90dvh', display: 'flex', flexDirection: 'column', width: '95vw' }}
             onClick={e => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="assessment-view-title"
           >
-            <div className="modal-header" style={{ alignItems: 'flex-start', gap: 12 }}>
-              <h2 id="assessment-view-title" style={{ flex: 1, minWidth: 0 }}>
-                Assessment details
-              </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <div className="modal-header" style={{ alignItems: 'flex-start', gap: 12, paddingBottom: 16 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 id="assessment-view-title" style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
+                  Assessment Details
+                </h2>
+                {viewAssessment && (
+                  <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 13 }}>
+                    {viewAssessment.assessment_id}
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {viewAssessment?.status === 'draft' && viewParam && (
                   <>
                     <Link href={`/families/${id}/assessment/${viewParam}/edit`} className="btn btn-secondary btn-sm" onClick={closeViewModal}>
@@ -236,20 +252,20 @@ export default function FamilyAssessmentClient() {
                 </button>
               </div>
             </div>
-            <div className="modal-body" style={{ overflowY: 'auto', minHeight: 0 }}>
+            <div className="modal-body" style={{ overflowY: 'auto', minHeight: 0, padding: '0 24px 24px 24px' }}>
               {viewLoading && (
-                <div style={{ textAlign: 'center', padding: 40 }}>
+                <div style={{ textAlign: 'center', padding: 60 }}>
                   <div className="spinner" style={{ margin: '0 auto' }} />
                 </div>
               )}
               {viewError && (
-                <div style={{ textAlign: 'center', padding: 24 }}>
-                  <AlertCircle size={28} style={{ color: 'var(--red)', marginBottom: 12 }} />
-                  <p style={{ color: 'var(--text-secondary)' }}>{viewError}</p>
+                <div style={{ textAlign: 'center', padding: 40 }}>
+                  <AlertCircle size={32} style={{ color: 'var(--red)', marginBottom: 16 }} />
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{viewError}</p>
                 </div>
               )}
               {deleteError && !showDeleteConfirm && (
-                <div style={{ background: 'var(--red-bg)', color: 'var(--red)', padding: 12, borderRadius: 8, marginBottom: 12, fontSize: 13 }}>{deleteError}</div>
+                <div style={{ background: 'var(--red-bg)', color: 'var(--red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{deleteError}</div>
               )}
               {!viewLoading && !viewError && viewAssessment && <AssessmentDetailContent assessment={viewAssessment} heading="compact" />}
             </div>

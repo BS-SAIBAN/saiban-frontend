@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentsAPI, familiesAPI, storageAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -162,8 +162,12 @@ const sections = [
 export default function NewAssessmentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const editAssessmentId = searchParams.get('edit');
+  const isEditMode = Boolean(editAssessmentId);
   const [loading, setLoading] = useState(false);
+  const [initializingEdit, setInitializingEdit] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
 
@@ -226,13 +230,14 @@ export default function NewAssessmentPage() {
 
   const [members, setMembers] = useState<Member[]>([blankMember()]);
   useEffect(() => {
+    if (isEditMode) return;
     if (user?.full_name) {
       setForm((prev) => ({ ...prev, field_worker_name: user.full_name }));
     }
-  }, [user?.full_name]);
+  }, [isEditMode, user?.full_name]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || isEditMode) return;
     familiesAPI.get(id).then((res) => {
       const family = (res.data || {}) as FamilyWithIndividuals;
       const people = Array.isArray(family.individuals) ? family.individuals : [];
@@ -283,7 +288,97 @@ export default function NewAssessmentPage() {
     }).catch(() => {
       // keep default blank state if intake fetch fails
     });
-  }, [id]);
+  }, [id, isEditMode]);
+
+  useEffect(() => {
+    if (!editAssessmentId) return;
+    setInitializingEdit(true);
+    setError('');
+
+    assessmentsAPI.get(editAssessmentId).then((r) => {
+      const data = r.data || {};
+      const caseField = data.case_field_information || {};
+      const head = data.head_of_family || {};
+      const incomeExpense = data.income_expense || {};
+      const expenses = incomeExpense.expenses || {};
+      const living = data.living_conditions || {};
+      const support = data.support_requirements || {};
+      const docs = data.document_checklist || {};
+      const photos = data.photo_checklist || {};
+      const loadedMembers = Array.isArray(data.family_members) ? data.family_members : [];
+      const loadedLoans = Array.isArray(data.loan_debt?.loans) ? data.loan_debt.loans : [];
+      const loadedInKind = Array.isArray(data.in_kind_support_items) ? data.in_kind_support_items : [];
+
+      setForm((prev) => ({
+        ...prev,
+        assessment_date: data.assessment_date ? String(data.assessment_date).split('T')[0] : prev.assessment_date,
+        field_worker_name: caseField.field_worker_name || prev.field_worker_name,
+        gps_lat: data.gps_lat !== null && data.gps_lat !== undefined ? String(data.gps_lat) : prev.gps_lat,
+        gps_lng: data.gps_lng !== null && data.gps_lng !== undefined ? String(data.gps_lng) : prev.gps_lng,
+        field_worker_remarks: caseField.field_worker_remarks || data.field_worker_notes || prev.field_worker_remarks,
+        head_full_name: head.full_name || prev.head_full_name,
+        head_cnic_number: formatCnicOrBForm(head.cnic_number || prev.head_cnic_number || ''),
+        head_contact_number: head.contact_number || prev.head_contact_number,
+        head_gender: head.gender || prev.head_gender,
+        head_age: Number(head.age || prev.head_age || 0),
+        head_marital_status: head.marital_status || prev.head_marital_status,
+        head_occupation: head.occupation || prev.head_occupation,
+        head_education_level: head.education_level || prev.head_education_level,
+        head_health_condition: head.health_condition || prev.head_health_condition,
+        head_disabled: Boolean(head.disabled),
+        income_total: Number(incomeExpense.total_monthly_income || prev.income_total || 0),
+        income_sources: Array.isArray(incomeExpense.income_sources) ? incomeExpense.income_sources : prev.income_sources,
+        income_source_other: incomeExpense.income_source_other || prev.income_source_other,
+        expense_rent: Number(expenses.rent || data.monthly_rent || prev.expense_rent || 0),
+        expense_utilities: Number(expenses.utilities || data.monthly_bills || prev.expense_utilities || 0),
+        expense_food: Number(expenses.food || data.monthly_ration || prev.expense_food || 0),
+        expense_education: Number(expenses.education || prev.expense_education || 0),
+        expense_medical: Number(expenses.medical || prev.expense_medical || 0),
+        expense_other: Number(expenses.other || data.other_monthly_expenses || prev.expense_other || 0),
+        has_debt: Boolean(data.loan_debt?.has_debt),
+        house_type: living.house_type || prev.house_type,
+        house_condition: living.condition || prev.house_condition,
+        number_of_rooms: Number(living.number_of_rooms || prev.number_of_rooms || 0),
+        electricity: living.electricity !== undefined ? Boolean(living.electricity) : prev.electricity,
+        water: living.water !== undefined ? Boolean(living.water) : prev.water,
+        gas: living.gas !== undefined ? Boolean(living.gas) : prev.gas,
+        area_type: living.area_type || prev.area_type,
+        support_types: Array.isArray(support.support_types) ? support.support_types : prev.support_types,
+        support_other: support.support_other || prev.support_other,
+        documents_head_cnic: docs.cnic_head || prev.documents_head_cnic,
+        documents_b_forms: docs.b_forms || prev.documents_b_forms,
+        documents_income_proof: docs.income_proof || prev.documents_income_proof,
+        documents_medical: docs.medical_documents || prev.documents_medical,
+        photos_house_exterior: photos.house_exterior || prev.photos_house_exterior,
+        photos_living_conditions: photos.living_conditions || prev.photos_living_conditions,
+        photos_family: photos.family_photo || prev.photos_family,
+        additional_info: data.additional_info || prev.additional_info,
+      }));
+
+      if (loadedMembers.length > 0) {
+        setMembers(loadedMembers.map((m: Partial<Member>) => ({
+          ...blankMember(),
+          ...m,
+          cnic_or_bform: formatCnicOrBForm(String(m.cnic_or_bform || '')),
+          monthly_income: Number(m.monthly_income || 0),
+          age: Number(m.age || 0),
+          patient: Boolean(m.patient),
+          disabled: Boolean(m.disabled),
+          medical: {
+            ...blankMember().medical,
+            ...(m.medical || {}),
+            monthly_medical_expense: Number(m.medical?.monthly_medical_expense || 0),
+            medication_required: Boolean(m.medical?.medication_required),
+          },
+        })));
+      }
+
+      setLoans(loadedLoans.map((l: Partial<Loan>) => ({ ...blankLoan(), ...l })));
+      setInKindItems(loadedInKind.map((i: Partial<InKindItem>) => ({ ...blankInKindItem(), ...i })));
+    }).catch(() => {
+      setError('Failed to load assessment for editing.');
+    }).finally(() => setInitializingEdit(false));
+  }, [editAssessmentId]);
 
   useEffect(() => {
     setMembers((prev) => {
@@ -398,7 +493,7 @@ export default function NewAssessmentPage() {
 
     setLoading(true);
     try {
-      await assessmentsAPI.create({
+      const payload = {
         family_id: id,
         assessment_date: form.assessment_date,
         gps_lat: form.gps_lat ? parseFloat(form.gps_lat) : null,
@@ -472,14 +567,21 @@ export default function NewAssessmentPage() {
           family_photo: form.photos_family || null,
         },
         smart_tags: buildSmartTags(),
-      });
-      router.push(`/families/${id}/assessment`);
+      };
+
+      if (editAssessmentId) {
+        await assessmentsAPI.update(editAssessmentId, payload);
+        router.push(`/families/${id}/assessment?view=${editAssessmentId}`);
+      } else {
+        await assessmentsAPI.create(payload);
+        router.push(`/families/${id}/assessment`);
+      }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const response = err.response as { data?: { detail?: string } };
-        setError(response.data?.detail || 'Failed to create assessment');
+        setError(response.data?.detail || (isEditMode ? 'Failed to update assessment' : 'Failed to create assessment'));
       } else {
-        setError('Failed to create assessment');
+        setError(isEditMode ? 'Failed to update assessment' : 'Failed to create assessment');
       }
     } finally {
       setLoading(false);
@@ -494,11 +596,16 @@ export default function NewAssessmentPage() {
         <Link href={`/families/${id}/assessment`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
           <ArrowLeft size={14} /> Back to Assessment
         </Link>
-        <h1>New Assessment</h1>
-        <p>Complete all sections with accurate field assessment data</p>
+        <h1>{isEditMode ? 'Edit Assessment' : 'New Assessment'}</h1>
+        <p>{isEditMode ? 'Update all sections with accurate field assessment data' : 'Complete all sections with accurate field assessment data'}</p>
       </div>
 
       <div className="card">
+        {initializingEdit && (
+          <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
+            Loading assessment data...
+          </div>
+        )}
         <div style={{ marginBottom: 18 }}>
           <div className="progress" style={{ marginBottom: 10 }}>
             <div className="progress-fill" style={{ width: `${stepProgress}%` }} />
@@ -953,7 +1060,7 @@ export default function NewAssessmentPage() {
               <div className="family-summary-actions" style={{ width: '100%' }}>
                 <Link href={`/families/${id}/assessment`} className="btn btn-secondary">Cancel</Link>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  <Save size={14} /> {loading ? 'Creating...' : 'Create Assessment'}
+                  <Save size={14} /> {loading ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Assessment')}
                 </button>
               </div>
             )}
