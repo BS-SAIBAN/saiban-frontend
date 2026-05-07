@@ -23,6 +23,7 @@ interface Individual {
   religion?: string; caste?: string; photo_url?: string;
 }
 
+
 const statusColor: Record<string, string> = {
   pending_assessment: 'gray', assessed: 'blue', scoring: 'yellow',
   approved: 'green', rejected: 'red', reassessment: 'purple',
@@ -435,6 +436,7 @@ export default function FamilyProfilePage() {
               </table>
             </div>
           )}
+
         </div>
 
         {/* Family Details Card */}

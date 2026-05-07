@@ -32,6 +32,7 @@ interface Individual {
   family_id: string;
 }
 
+
 const relationshipMap: Record<string, string> = {
   head: 'Head',
   spouse: 'Spouse',
@@ -83,7 +84,7 @@ export default function FamilyMembersPage() {
   });
 
   useEffect(() => {
-    individualsAPI.list(id).then(r => {
+    individualsAPI.list(id).then((r) => {
       const data = Array.isArray(r.data) ? r.data : [];
       setMembers(data);
     }).finally(() => setLoading(false));
