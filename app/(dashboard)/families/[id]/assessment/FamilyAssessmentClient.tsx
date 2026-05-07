@@ -128,79 +128,129 @@ export default function FamilyAssessmentClient() {
   if (listLoading) return <FamilySubPageSkeleton variant="table" />;
 
   return (
-    <div>
-      <div className="family-header-row">
-        <div>
-          <h1>Assessment</h1>
-          <p>Family assessment records</p>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <ClipboardList size={24} /> Family Assessments
+            </h1>
+            <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+              Track and manage family assessment records
+            </p>
+          </div>
+          <Link href={`/families/${id}/assessment/new`} className="btn btn-primary">
+            <Plus size={14} /> New Assessment
+          </Link>
         </div>
-        <Link href={`/families/${id}/assessment/new`} className="btn btn-primary">
-          <Plus size={14} /> New Assessment
-        </Link>
       </div>
 
-      <div className="card">
-        {assessments.length > 0 && (
-          <div className="family-stat-grid family-stat-grid-tight" style={{ marginBottom: 16 }}>
-            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Assessments</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.length}</div>
+      {/* Quick Stats */}
+      {assessments.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+          <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <ClipboardList size={18} style={{ color: 'var(--accent)' }} />
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Assessments</span>
             </div>
-            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Draft</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.filter((a) => a.status === 'draft').length}</div>
-            </div>
-            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Submitted</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{assessments.filter((a) => a.status === 'submitted').length}</div>
-            </div>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{assessments.length}</div>
           </div>
-        )}
-
-        {assessments.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <ClipboardList size={22} />
+          <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <FileText size={18} style={{ color: 'var(--text-muted)' }} />
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Draft</span>
             </div>
-            <h3>No assessments conducted yet</h3>
-            <p>Conduct an assessment to evaluate the family&apos;s needs</p>
-            <Link href={`/families/${id}/assessment/new`} className="btn btn-primary" style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{assessments.filter((a) => a.status === 'draft').length}</div>
+          </div>
+          <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Calendar size={18} style={{ color: 'var(--blue)' }} />
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Submitted</span>
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{assessments.filter((a) => a.status === 'submitted').length}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessments Table */}
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', padding: 24 }}>
+        {assessments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16' }}>
+              <ClipboardList size={24} style={{ color: 'var(--text-muted)' }} />
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8', color: 'var(--text-primary)' }}>No assessments conducted yet</h3>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 16', fontSize: 14 }}>Conduct an assessment to evaluate the family's needs</p>
+            <Link href={`/families/${id}/assessment/new`} className="btn btn-primary">
               <Plus size={14} /> Conduct First Assessment
             </Link>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 10 }}>
-            {assessments.map((a) => (
-              <div key={a.assessment_id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: 'var(--bg-secondary)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                      <FileText size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                      {a.assessment_id}
-                    </div>
-                    <div style={{ fontSize: 13 }}>
-                      <Calendar size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                      {a.assessment_date ? new Date(a.assessment_date).toLocaleDateString() : '—'}
-                    </div>
-                  </div>
-                  <span className={`badge badge-${assessmentStatusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => openViewModal(a.assessment_id)}>
-                    View Details
-                  </button>
-                  {a.status === 'draft' && (
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => submitAssessment(a.assessment_id)}
-                      disabled={submittingId === a.assessment_id}
-                    >
-                      {submittingId === a.assessment_id ? 'Submitting...' : 'Submit Assessment'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Assessment ID</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assessments.map((a) => (
+                  <tr
+                    key={a.assessment_id}
+                    style={{ 
+                      borderBottom: '1px solid var(--border)',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <FileText size={14} style={{ color: 'var(--text-muted)' }} />
+                        <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 500 }}>{a.assessment_id}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
+                        {a.assessment_date ? new Date(a.assessment_date).toLocaleDateString('en-PK') : '—'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <span className={`badge badge-${assessmentStatusColor[a.status] || 'gray'}`} style={{ fontSize: 11 }}>
+                        {a.status?.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => openViewModal(a.assessment_id)}
+                        >
+                          View
+                        </button>
+                        {a.status === 'draft' && (
+                          <>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => submitAssessment(a.assessment_id)}
+                              disabled={submittingId === a.assessment_id}
+                            >
+                              {submittingId === a.assessment_id ? 'Submitting...' : 'Submit'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
