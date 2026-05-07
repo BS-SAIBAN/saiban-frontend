@@ -124,7 +124,7 @@ export default function IndividualsPage() {
         <div className="page-header-row">
           <div>
             <h1>Individuals</h1>
-            <p>Manage all registered individuals across beneficiary families</p>
+            <p>Manage all individuals across intake and registered families</p>
           </div>
         </div>
       </div>

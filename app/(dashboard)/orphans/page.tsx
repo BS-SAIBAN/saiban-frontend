@@ -158,7 +158,7 @@ export default function OrphansPage() {
         <div className="filter-row">
           <div className="search-bar" style={{ flex: 1, maxWidth: 340 }}>
             <Search size={15} />
-            <input className="form-control" placeholder="Search by name or registration number…" value={search} onChange={e => { setLoading(true); setPage(1); setSearch(e.target.value); }} />
+            <input className="form-control" placeholder="Search by name or case ID…" value={search} onChange={e => { setLoading(true); setPage(1); setSearch(e.target.value); }} />
           </div>
           <select className="form-control" value={priorityFilter} onChange={e => { setLoading(true); setPage(1); setPriorityFilter(e.target.value); }}>
             <option value="">All Orphans</option>
@@ -173,8 +173,8 @@ export default function OrphansPage() {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Family Reg.</th>
-                <th>Age at Reg.</th>
+                <th>Case ID</th>
+                <th>Age at Intake</th>
                 <th>School / Class</th>
                 <th>Zakat Eligibility</th>
                 <th>Priority</th>
@@ -215,8 +215,8 @@ export default function OrphansPage() {
                       <div style={{ fontWeight: 600 }}>{linkedIndividual?.full_name || o.individual?.full_name || '—'}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.deceased_father_name ? `Father: ${o.deceased_father_name}` : ''}</div>
                     </td>
-                    <td data-label="Family Reg." style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{linkedFamily?.registration_number || o.family?.registration_number || '—'}</td>
-                    <td data-label="Age at Reg." style={{ textAlign: 'center' }}>
+                    <td data-label="Case ID" style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{linkedFamily?.registration_number || o.family?.registration_number || '—'}</td>
+                    <td data-label="Age at Intake" style={{ textAlign: 'center' }}>
                       <span style={{ color: (o.age_at_registration || 0) > 12 ? 'var(--red)' : 'var(--text-primary)', fontWeight: 600 }}>
                         {o.age_at_registration || '—'}
                         {(o.age_at_registration || 0) > 12 && <AlertCircle size={12} style={{ display: 'inline', marginLeft: 4, color: 'var(--red)' }} />}

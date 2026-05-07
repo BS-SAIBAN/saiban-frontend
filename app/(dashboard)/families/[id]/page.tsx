@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { familiesAPI, individualsAPI, normalizeStorageUrl, storageAPI } from '@/lib/api';
+import { getFamilyStatusLabel } from '@/lib/familyLifecycle';
 import { formatFastApiDetail } from '@/lib/fastApiError';
 import { formatCnicOrBForm } from '@/lib/cnicFormat';
 import { buildIndividualCreateBody, isValidFamilyIdParam } from '@/lib/individualPayload';
@@ -277,14 +278,14 @@ export default function FamilyProfilePage() {
         <section className="overview-column overview-column-details family-details-compact">
           <div className="section-title">Family Details</div>
           <div className="info-grid family-details-grid">
-            <div className="info-item"><label>Registration #</label><p style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</p></div>
+            <div className="info-item"><label>Case ID</label><p style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{family.registration_number}</p></div>
             <div className="info-item"><label>Program</label><p>{family.category === 'FA' ? 'Financial Aid' : 'Saiban Orphan'}</p></div>
-            <div className="info-item"><label>Status</label><p><span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span></p></div>
+            <div className="info-item"><label>Status</label><p><span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{getFamilyStatusLabel(family.status)}</span></p></div>
             <div className="info-item"><label>Housing</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Home size={13} />{family.housing_type}</p></div>
             <div className="info-item"><label>Area</label><p style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} />{family.area}</p></div>
             <div className="info-item"><label>City</label><p>{family.city}</p></div>
             <div className="info-item"><label>Full Address</label><p style={{ color: 'var(--text-secondary)' }}>{family.full_address || '—'}</p></div>
-            <div className="info-item"><label>Registered On</label><p>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</p></div>
+            <div className="info-item"><label>Intake On</label><p>{family.created_at ? new Date(family.created_at).toLocaleDateString('en-PK') : '—'}</p></div>
           </div>
         </section>
 

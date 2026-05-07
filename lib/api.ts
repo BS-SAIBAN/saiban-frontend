@@ -365,6 +365,14 @@ export const usersAPI = {
 // ── Storage (R2) ───────────────────────────────────────
 export const storageAPI = {
   publicFileUrl: storagePublicUrl,
+  uploadFile: (file: File, folder: string = 'uploads') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    return api.post('/upload/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   uploadMemberPhoto: (familyId: string, file: File) => {
     if (!isValidEntityId(familyId)) {
       return Promise.reject(new Error('Invalid family ID'));

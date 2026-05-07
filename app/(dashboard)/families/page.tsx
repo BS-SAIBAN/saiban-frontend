@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
+import { getFamilyStatusLabel } from '@/lib/familyLifecycle';
 import { Users, Plus, Search, Filter, Edit, Trash2, MapPin, Tag } from 'lucide-react';
 
 interface Family {
@@ -201,10 +202,10 @@ export default function FamiliesPage() {
         <div className="page-header-row">
           <div>
             <h1>Families</h1>
-            <p>Manage all registered FA and SB beneficiary families</p>
+            <p>Manage intake cases and registered beneficiaries</p>
           </div>
           <Link href="/families/new" className="btn btn-primary">
-            <Plus size={14} /> Register Beneficiary
+            <Plus size={14} /> New Intake
           </Link>
         </div>
       </div>
@@ -213,7 +214,7 @@ export default function FamiliesPage() {
         <form className="filter-row" onSubmit={handleSearch}>
           <div className="search-bar" style={{ flex: 1, maxWidth: 340 }}>
             <Search size={15} />
-            <input className="form-control" placeholder="Search by reg. number, area, city…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="form-control" placeholder="Search by case ID, area, city…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="form-control" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}>
             <option value="">All Categories</option>
@@ -222,12 +223,12 @@ export default function FamiliesPage() {
           </select>
           <select className="form-control" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
             <option value="">All Statuses</option>
-            <option value="pending_assessment">Pending Assessment</option>
-            <option value="assessed">Assessed</option>
-            <option value="scoring">Scoring</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="reassessment">Reassessment</option>
+            <option value="pending_assessment">Intake</option>
+            <option value="assessed">Under Review</option>
+            <option value="scoring">Under Review (Scoring)</option>
+            <option value="approved">Registered</option>
+            <option value="rejected">Not Registered</option>
+            <option value="reassessment">Re-intake Required</option>
           </select>
           <button type="submit" className="btn btn-secondary">Search</button>
           <div style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '13px' }}>
@@ -240,12 +241,12 @@ export default function FamiliesPage() {
           <table className="mobile-stack-table">
             <thead>
               <tr>
-                <th>Registration #</th>
+                <th>Case ID</th>
                 <th>Category</th>
                 <th>Status</th>
                 <th>Location</th>
                 <th>Housing</th>
-                <th>Registered</th>
+                <th>Intake Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -276,7 +277,7 @@ export default function FamiliesPage() {
                 </td></tr>
               ) : families.map(f => (
                 <tr key={f.family_id}>
-                  <td data-label="Registration #">
+                    <td data-label="Case ID">
                     {hasValidFamilyId(f.family_id) ? (
                       <Link href={`/families/${f.family_id}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>
                         {f.registration_number}
@@ -288,10 +289,10 @@ export default function FamiliesPage() {
                     )}
                   </td>
                   <td data-label="Category"><span className={`badge ${f.category === 'FA' ? 'badge-blue' : 'badge-purple'}`}><Tag size={10} /> {f.category}</span></td>
-                  <td data-label="Status"><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{f.status?.replace(/_/g, ' ')}</span></td>
+                  <td data-label="Status"><span className={`badge badge-${statusColor[f.status] || 'gray'}`}>{getFamilyStatusLabel(f.status)}</span></td>
                   <td data-label="Location"><span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)' }}><MapPin size={12} />{f.area}, {f.city}</span></td>
                   <td data-label="Housing"><span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{f.housing_type}</span></td>
-                  <td data-label="Registered" style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
+                  <td data-label="Intake Date" style={{ color: 'var(--text-muted)' }}>{f.created_at ? new Date(f.created_at).toLocaleDateString() : '—'}</td>
                   <td data-label="Actions">
                     <div className="row-actions" style={{ display: 'flex', gap: 6 }}>
                       {hasValidFamilyId(f.family_id) ? (

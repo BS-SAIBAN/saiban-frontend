@@ -52,7 +52,7 @@ export default function ApprovalsPage() {
   return (
     <div>
       <div className="page-header">
-        <div><h1>Approvals</h1><p>Review scored assessments and make approval decisions</p></div>
+        <div><h1>Approvals</h1><p>Review assessed intake cases and decide registration</p></div>
       </div>
 
       <div className="card">
@@ -61,7 +61,7 @@ export default function ApprovalsPage() {
             <thead>
               <tr>
                 <th>Assessment ID</th>
-                <th>Family Reg. #</th>
+                <th>Case ID</th>
                 <th>Area</th>
                 <th>Score</th>
                 <th>Eligibility</th>
@@ -83,7 +83,7 @@ export default function ApprovalsPage() {
               ) : approvals.map(a => (
                   <tr key={a.assessment_id}>
                     <td data-label="Assessment ID" style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--accent)' }}>{a.assessment_id.slice(0, 8)}…</td>
-                    <td data-label="Family Reg." style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.family_registration_number || '—'}</td>
+                    <td data-label="Case ID" style={{ fontFamily: 'monospace', fontSize: 12 }}>{a.family_registration_number || '—'}</td>
                     <td data-label="Area">{a.family_area || '—'}</td>
                     <td data-label="Score">{a.score ?? '—'}</td>
                     <td data-label="Eligibility">{a.eligibility_status ? <span className="badge badge-blue">{a.eligibility_status.replace(/_/g, ' ')}</span> : '—'}</td>

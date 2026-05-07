@@ -55,14 +55,14 @@ export default function AssessmentsPage() {
   return (
     <div>
       <div className="page-header">
-        <div><h1>Assessments</h1><p>All family assessments across FA and SB programs</p></div>
+        <div><h1>Assessments</h1><p>Comprehensive assessments for intake and registered families</p></div>
       </div>
 
       <div className="card">
         <div className="filter-row">
           <div className="search-bar" style={{ flex: 1, maxWidth: 340 }}>
             <Search size={15} />
-            <input className="form-control" placeholder="Search by registration number…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="form-control" placeholder="Search by case ID…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="form-control" value={statusFilter} onChange={e => { setLoading(true); setPage(1); setStatusFilter(e.target.value); }}>
             <option value="">All Statuses</option>
@@ -83,7 +83,7 @@ export default function AssessmentsPage() {
             <thead>
               <tr>
                 <th>Assessment ID</th>
-                <th>Family Reg. #</th>
+                <th>Case ID</th>
                 <th>Category</th>
                 <th>Location</th>
                 <th>Status</th>
@@ -100,13 +100,13 @@ export default function AssessmentsPage() {
                   <div className="empty-state">
                     <div className="empty-state-icon"><ClipboardList size={22} /></div>
                     <h3>No assessments found</h3>
-                    <p>Start by registering a family and conducting an assessment.</p>
+                    <p>Start by creating an intake and conducting an assessment.</p>
                   </div>
                 </td></tr>
               ) : filtered.map(a => (
                 <tr key={a.assessment_id}>
                   <td data-label="Assessment ID" style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--accent)' }}>{a.assessment_id?.slice(0, 8)}…</td>
-                  <td data-label="Family Reg." style={{ fontFamily: 'monospace' }}>{a.family_registration_number || '—'}</td>
+                  <td data-label="Case ID" style={{ fontFamily: 'monospace' }}>{a.family_registration_number || '—'}</td>
                   <td data-label="Category">{a.family_category ? <span className={`badge badge-${a.family_category === 'FA' ? 'blue' : 'purple'}`}>{a.family_category}</span> : '—'}</td>
                   <td data-label="Location" style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{a.family_area || '—'}{a.family_city ? `, ${a.family_city}` : ''}</td>
                   <td data-label="Status"><span className={`badge badge-${statusColor[a.status] || 'gray'}`}>{a.status?.replace(/_/g, ' ')}</span></td>

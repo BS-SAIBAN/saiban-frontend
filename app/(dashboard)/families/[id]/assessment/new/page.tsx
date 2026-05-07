@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { assessmentsAPI } from '@/lib/api';
+import { assessmentsAPI, familiesAPI, storageAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Plus, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Plus, Save, Trash2, Upload } from 'lucide-react';
 
 type Member = {
   full_name: string;
@@ -47,6 +47,33 @@ type InKindItem = {
   priority_level: string;
   remarks: string;
 };
+
+type FamilyIndividual = {
+  full_name?: string;
+  relationship_to_head?: string;
+  dob?: string;
+  cnic_or_bform?: string;
+  gender?: string;
+  occupation?: string;
+  monthly_income?: number;
+  is_patient?: boolean;
+  is_disabled?: boolean;
+};
+
+type FamilyWithIndividuals = {
+  housing_type?: string;
+  individuals?: FamilyIndividual[];
+};
+
+const relationshipOptions: Array<{ value: string; label: string }> = [
+  { value: 'head', label: 'Head' },
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'son', label: 'Son' },
+  { value: 'daughter', label: 'Daughter' },
+  { value: 'mother', label: 'Mother' },
+  { value: 'sibling', label: 'Sibling' },
+  { value: 'other', label: 'Other' },
+];
 
 const blankMember = (): Member => ({
   full_name: '',
@@ -108,6 +135,7 @@ export default function NewAssessmentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
+  const [headPrefilledFromIntake, setHeadPrefilledFromIntake] = useState(false);
 
   const [form, setForm] = useState({
     assessment_date: new Date().toISOString().split('T')[0],
@@ -144,13 +172,13 @@ export default function NewAssessmentPage() {
     area_type: '',
     support_types: [] as string[],
     support_other: '',
-    documents_head_cnic: false,
-    documents_b_forms: false,
-    documents_income_proof: false,
-    documents_medical: false,
-    photos_house_exterior: false,
-    photos_living_conditions: false,
-    photos_family: false,
+    documents_head_cnic: '',
+    documents_b_forms: '',
+    documents_income_proof: '',
+    documents_medical: '',
+    photos_house_exterior: '',
+    photos_living_conditions: '',
+    photos_family: '',
     additional_info: '',
   });
 
@@ -160,6 +188,50 @@ export default function NewAssessmentPage() {
       setForm((prev) => ({ ...prev, field_worker_name: user.full_name }));
     }
   }, [user?.full_name]);
+
+  useEffect(() => {
+    if (!id) return;
+    familiesAPI.get(id).then((res) => {
+      const family = (res.data || {}) as FamilyWithIndividuals;
+      const people = Array.isArray(family.individuals) ? family.individuals : [];
+      const head = people.find((p) => p.relationship_to_head === 'head') || people[0];
+
+      if (head) {
+        const dob = head.dob ? new Date(head.dob) : null;
+        const now = new Date();
+        const age = dob && !Number.isNaN(dob.getTime())
+          ? now.getFullYear() - dob.getFullYear() - ((now.getMonth() < dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate())) ? 1 : 0)
+          : 0;
+
+        setForm((prev) => ({
+          ...prev,
+          head_full_name: head.full_name || prev.head_full_name,
+          head_cnic_number: head.cnic_or_bform || prev.head_cnic_number,
+          head_gender: head.gender || prev.head_gender,
+          head_age: age > 0 ? age : prev.head_age,
+          head_occupation: head.occupation || prev.head_occupation,
+          house_type: family.housing_type || prev.house_type,
+        }));
+        setHeadPrefilledFromIntake(true);
+      }
+
+      if (people.length > 0) {
+        setMembers(people.map((p) => ({
+          ...blankMember(),
+          full_name: p.full_name || '',
+          relationship: p.relationship_to_head || '',
+          gender: p.gender || '',
+          cnic_or_bform: p.cnic_or_bform || '',
+          occupation: p.occupation || '',
+          monthly_income: p.monthly_income || 0,
+          patient: Boolean(p.is_patient),
+          disabled: Boolean(p.is_disabled),
+        })));
+      }
+    }).catch(() => {
+      // keep default blank state if intake fetch fails
+    });
+  }, [id]);
 
   const [loans, setLoans] = useState<Loan[]>([]);
   const [inKindItems, setInKindItems] = useState<InKindItem[]>([]);
@@ -196,6 +268,16 @@ export default function NewAssessmentPage() {
       ...prev,
       [key]: prev[key].includes(value) ? prev[key].filter((x) => x !== value) : [...prev[key], value],
     }));
+  };
+
+  const handleFileUpload = async (file: File, field: string) => {
+    try {
+      const response = await storageAPI.uploadFile(file, 'assessments');
+      setForm((prev) => ({ ...prev, [field]: response.data.url }));
+    } catch (err) {
+      console.error('File upload failed:', err);
+      setError('Failed to upload file. Please try again.');
+    }
   };
 
   const buildSmartTags = () => {
@@ -235,6 +317,8 @@ export default function NewAssessmentPage() {
           field_worker_name: form.field_worker_name,
           gps_location: form.gps_lat && form.gps_lng ? { lat: form.gps_lat, lng: form.gps_lng } : null,
           field_worker_remarks: form.field_worker_remarks,
+          prefill_source: 'intake',
+          master_sync_choice: 'snapshot_only',
         },
         head_of_family: {
           full_name: form.head_full_name,
@@ -278,15 +362,15 @@ export default function NewAssessmentPage() {
         },
         in_kind_support_items: form.support_types.includes('in_kind_support') ? inKindItems : [],
         document_checklist: {
-          cnic_head: form.documents_head_cnic,
-          b_forms: form.documents_b_forms,
-          income_proof: form.documents_income_proof,
-          medical_documents: form.documents_medical,
+          cnic_head: form.documents_head_cnic || null,
+          b_forms: form.documents_b_forms || null,
+          income_proof: form.documents_income_proof || null,
+          medical_documents: form.documents_medical || null,
         },
         photo_checklist: {
-          house_exterior: form.photos_house_exterior,
-          living_conditions: form.photos_living_conditions,
-          family_photo: form.photos_family,
+          house_exterior: form.photos_house_exterior || null,
+          living_conditions: form.photos_living_conditions || null,
+          family_photo: form.photos_family || null,
         },
         smart_tags: buildSmartTags(),
       });
@@ -374,11 +458,11 @@ export default function NewAssessmentPage() {
             <div className="wizard-step-card">
               <div className="section-title">Head of Family</div>
               <div className="form-grid">
-                <div className="form-group"><label className="form-label">Full Name</label><input className="form-control" value={form.head_full_name} onChange={(e) => setForm({ ...form, head_full_name: e.target.value })} /></div>
-                <div className="form-group"><label className="form-label">CNIC Number</label><input className="form-control" value={form.head_cnic_number} onChange={(e) => setForm({ ...form, head_cnic_number: e.target.value })} /></div>
+                <div className="form-group"><label className="form-label">Full Name</label><input className="form-control" value={form.head_full_name} onChange={(e) => setForm({ ...form, head_full_name: e.target.value })} readOnly={headPrefilledFromIntake} /></div>
+                <div className="form-group"><label className="form-label">CNIC Number</label><input className="form-control" value={form.head_cnic_number} onChange={(e) => setForm({ ...form, head_cnic_number: e.target.value })} readOnly={headPrefilledFromIntake} /></div>
                 <div className="form-group"><label className="form-label">Contact Number</label><input className="form-control" value={form.head_contact_number} onChange={(e) => setForm({ ...form, head_contact_number: e.target.value })} /></div>
-                <div className="form-group"><label className="form-label">Gender</label><select className="form-control" value={form.head_gender} onChange={(e) => setForm({ ...form, head_gender: e.target.value })}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
-                <div className="form-group"><label className="form-label">Age</label><input className="form-control" type="number" min={0} value={form.head_age} onChange={(e) => setForm({ ...form, head_age: parseInt(e.target.value) || 0 })} /></div>
+                <div className="form-group"><label className="form-label">Gender</label><select className="form-control" value={form.head_gender} onChange={(e) => setForm({ ...form, head_gender: e.target.value })} disabled={headPrefilledFromIntake}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
+                <div className="form-group"><label className="form-label">Age</label><input className="form-control" type="number" min={0} value={form.head_age} onChange={(e) => setForm({ ...form, head_age: parseInt(e.target.value) || 0 })} readOnly={headPrefilledFromIntake} /></div>
                 <div className="form-group"><label className="form-label">Marital Status</label><input className="form-control" value={form.head_marital_status} onChange={(e) => setForm({ ...form, head_marital_status: e.target.value })} /></div>
                 <div className="form-group"><label className="form-label">Occupation</label><input className="form-control" value={form.head_occupation} onChange={(e) => setForm({ ...form, head_occupation: e.target.value })} /></div>
                 <div className="form-group"><label className="form-label">Education Level</label><input className="form-control" value={form.head_education_level} onChange={(e) => setForm({ ...form, head_education_level: e.target.value })} /></div>
@@ -409,8 +493,20 @@ export default function NewAssessmentPage() {
                     </div>
                     <div className="form-grid">
                       <input className="form-control" placeholder="Full Name" value={m.full_name} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, full_name: e.target.value } : x)))} />
-                      <input className="form-control" placeholder="Relationship" value={m.relationship} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, relationship: e.target.value } : x)))} />
-                      <input className="form-control" type="number" placeholder="Age" value={m.age} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, age: parseInt(e.target.value) || 0 } : x)))} />
+                      <select className="form-control" value={m.relationship} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, relationship: e.target.value } : x)))}>
+                        <option value="">Select relationship</option>
+                        {relationshipOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        className="form-control"
+                        type="number"
+                        min={0}
+                        step={1}
+                        placeholder="Age (years)"
+                        value={m.age ? m.age : ''}
+                        onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, age: parseInt(e.target.value) || 0 } : x)))} />
                       <select className="form-control" value={m.gender} onChange={(e) => setMembers((prev) => prev.map((x, i) => (i === idx ? { ...x, gender: e.target.value } : x)))}>
                         <option value="">Gender</option><option value="male">Male</option><option value="female">Female</option>
                       </select>
@@ -572,23 +668,72 @@ export default function NewAssessmentPage() {
 
           {activeStep === 8 && (
             <div className="wizard-step-card">
-              <div className="section-title">Documents & Photos Checklist</div>
+              <div className="section-title">Documents & Photos</div>
               <div className="form-grid">
                 <div>
                   <div className="form-label">Documents</div>
-                  <div style={{ display: 'grid', gap: 6 }}>
-                    <label><input type="checkbox" checked={form.documents_head_cnic} onChange={(e) => setForm({ ...form, documents_head_cnic: e.target.checked })} /> CNIC (Head)</label>
-                    <label><input type="checkbox" checked={form.documents_b_forms} onChange={(e) => setForm({ ...form, documents_b_forms: e.target.checked })} /> B-Forms</label>
-                    <label><input type="checkbox" checked={form.documents_income_proof} onChange={(e) => setForm({ ...form, documents_income_proof: e.target.checked })} /> Income Proof</label>
-                    <label><input type="checkbox" checked={form.documents_medical} onChange={(e) => setForm({ ...form, documents_medical: e.target.checked })} /> Medical Documents</label>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <div className="form-group">
+                      <label className="form-label">CNIC (Head)</label>
+                      <input className="form-control" type="file" accept="image/*,.pdf" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'documents_head_cnic');
+                      }} />
+                      {form.documents_head_cnic && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">B-Forms</label>
+                      <input className="form-control" type="file" accept="image/*,.pdf" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'documents_b_forms');
+                      }} />
+                      {form.documents_b_forms && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Income Proof</label>
+                      <input className="form-control" type="file" accept="image/*,.pdf" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'documents_income_proof');
+                      }} />
+                      {form.documents_income_proof && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Medical Documents</label>
+                      <input className="form-control" type="file" accept="image/*,.pdf" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'documents_medical');
+                      }} />
+                      {form.documents_medical && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
                   </div>
                 </div>
                 <div>
                   <div className="form-label">Photos</div>
-                  <div style={{ display: 'grid', gap: 6 }}>
-                    <label><input type="checkbox" checked={form.photos_house_exterior} onChange={(e) => setForm({ ...form, photos_house_exterior: e.target.checked })} /> House Exterior</label>
-                    <label><input type="checkbox" checked={form.photos_living_conditions} onChange={(e) => setForm({ ...form, photos_living_conditions: e.target.checked })} /> Living Conditions</label>
-                    <label><input type="checkbox" checked={form.photos_family} onChange={(e) => setForm({ ...form, photos_family: e.target.checked })} /> Family Photo</label>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <div className="form-group">
+                      <label className="form-label">House Exterior</label>
+                      <input className="form-control" type="file" accept="image/*" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'photos_house_exterior');
+                      }} />
+                      {form.photos_house_exterior && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Living Conditions</label>
+                      <input className="form-control" type="file" accept="image/*" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'photos_living_conditions');
+                      }} />
+                      {form.photos_living_conditions && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Family Photo</label>
+                      <input className="form-control" type="file" accept="image/*" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'photos_family');
+                      }} />
+                      {form.photos_family && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Uploaded</div>}
+                    </div>
                   </div>
                 </div>
               </div>

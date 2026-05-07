@@ -129,8 +129,8 @@ export default function NewFamilyPage() {
             <Link href="/families" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 5 }}>
               <ArrowLeft size={14} /> Back to Families
             </Link>
-            <h1 style={{ marginTop: 8 }}>Register New Beneficiary</h1>
-            <p>Enter family details to register the household. Program classification (e.g. Saiban guardianship) can be updated later where needed.</p>
+            <h1 style={{ marginTop: 8 }}>New Family Intake</h1>
+            <p>Capture initial household data for intake. Comprehensive needs should be completed in assessment.</p>
           </div>
         </div>
       </div>
@@ -289,7 +289,7 @@ export default function NewFamilyPage() {
             </button>
           ) : (
             <button className="btn btn-primary" onClick={submit} disabled={loading}>
-              {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Registering…</> : <><CheckCircle size={14} /> Register Beneficiary</>}
+              {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Saving intake…</> : <><CheckCircle size={14} /> Create Intake</>}
             </button>
           )}
         </div>

@@ -5,6 +5,7 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { familiesAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { getFamilyStatusLabel } from '@/lib/familyLifecycle';
 import FamilySubPageSkeleton from '@/components/families/FamilySubPageSkeleton';
 import { Users, User, ClipboardList, Star, CheckSquare, Heart, Wallet, FileText, ArrowLeft } from 'lucide-react';
 
@@ -65,7 +66,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', rowGap: 6 }}>
               <h1 style={{ fontFamily: 'JetBrains Mono, monospace', wordBreak: 'break-all', overflowWrap: 'anywhere', minWidth: 0 }}>{family.registration_number}</h1>
               <span className={`badge badge-${family.category === 'FA' ? 'blue' : 'purple'}`}>{family.category}</span>
-              <span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{family.status?.replace(/_/g, ' ')}</span>
+              <span className={`badge badge-${statusColor[family.status] || 'gray'}`}>{getFamilyStatusLabel(family.status)}</span>
             </div>
             {finalDecisionStatuses.includes(family.status) && (
               <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>

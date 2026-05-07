@@ -82,9 +82,9 @@ export default function DashboardPage() {
   }, []);
 
   const statCards = [
-    { label: 'Total Families', value: stats.totalFamilies, icon: <Users size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Registered cases' },
+    { label: 'Total Families', value: stats.totalFamilies, icon: <Users size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Active cases' },
     { label: 'Total Individuals', value: stats.totalIndividuals, icon: <Users size={20} />, color: 'var(--purple)', bg: 'var(--purple-bg)', change: 'All individuals' },
-    { label: 'Total Orphans', value: stats.totalOrphans, icon: <Baby size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Registered orphans' },
+    { label: 'Total Orphans', value: stats.totalOrphans, icon: <Baby size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Orphan profiles' },
     { label: 'Active Donors', value: stats.totalDonors, icon: <Heart size={20} />, color: 'var(--red)', bg: 'var(--red-bg)', change: 'Supporting cases' },
     { label: 'Total Payments', value: stats.totalPayments, icon: <Wallet size={20} />, color: 'var(--green)', bg: 'var(--green-bg)', change: 'Recorded payments' },
     { label: 'Monthly Amount (PKR)', value: `${(stats.monthlyAmount / 1000).toFixed(0)}k`, icon: <TrendingUp size={20} />, color: 'var(--accent)', bg: 'var(--accent-glow)', change: 'Total disbursed' },
@@ -97,7 +97,7 @@ export default function DashboardPage() {
     : statCards;
 
   const quickActions = [
-    { label: 'Register Beneficiary', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
+    { label: 'New Intake', href: '/families/new', icon: <Users size={18} />, color: 'var(--accent)', bg: 'var(--accent-glow)' },
     { label: 'Assessments', href: '/assessments', icon: <CheckCircle size={18} />, color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
     { label: 'View Alerts', href: '/alerts', icon: <Bell size={18} />, color: 'var(--purple)', bg: 'var(--purple-bg)' },
     { label: 'Add Donor', href: '/donors', icon: <Heart size={18} />, color: 'var(--red)', bg: 'var(--red-bg)' },
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <Link href="/families/new" className="btn btn-primary">
-              <Users size={14} /> Register Beneficiary
+              <Users size={14} /> New Intake
             </Link>
           </div>
         </div>
