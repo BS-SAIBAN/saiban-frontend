@@ -1,6 +1,7 @@
 'use client';
 
 import { Calendar, ClipboardList, FileText, MapPin, User, Home, Wallet, FileCheck, Users } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
 export interface AssessmentDetailRecord {
   assessment_id: string;
@@ -84,7 +85,7 @@ interface AssessmentDetailContentProps {
 export function AssessmentDetailContent({ assessment, heading = 'default' }: AssessmentDetailContentProps) {
   const isCompact = heading === 'compact';
   
-  const sectionStyle = {
+  const sectionStyle: CSSProperties = {
     marginBottom: 20,
     padding: 20,
     border: '1px solid var(--border)',
@@ -92,7 +93,7 @@ export function AssessmentDetailContent({ assessment, heading = 'default' }: Ass
     background: 'var(--bg-secondary)',
   };
   
-  const sectionHeaderStyle = {
+  const sectionHeaderStyle: CSSProperties = {
     fontSize: '14px',
     fontWeight: 600,
     marginBottom: 16,
@@ -104,25 +105,25 @@ export function AssessmentDetailContent({ assessment, heading = 'default' }: Ass
     letterSpacing: '0.5px',
   };
   
-  const gridStyle = {
+  const gridStyle: CSSProperties = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: 16,
   };
   
-  const fieldStyle = {
+  const fieldStyle: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
   };
   
-  const labelStyle = {
+  const labelStyle: CSSProperties = {
     fontSize: '12px',
     color: 'var(--text-muted)',
     fontWeight: 500,
   };
   
-  const valueStyle = {
+  const valueStyle: CSSProperties = {
     fontSize: '14px',
     color: 'var(--text-primary)',
     fontWeight: 600,
