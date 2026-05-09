@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, Users, User, Baby, ClipboardList,
   Star, CheckSquare, Heart, Wallet, FileText,
-  Bell, Settings, LogOut, ShieldCheck, BookOpen, X,
+  Bell, Settings, LogOut, ShieldCheck, BookOpen, X, FileInput,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +29,8 @@ const navItems = [
     section: 'Workflow',
     items: [
       { label: 'Assessments', href: '/assessments', icon: ClipboardList },
+      { label: 'Dynamic Forms', href: '/dynamic-form', icon: FileInput },
+      { label: 'Template Manager', href: '/template-manager', icon: FileInput },
       { label: 'Scoring', href: '/scoring', icon: Star },
       { label: 'Approvals', href: '/approvals', icon: CheckSquare },
     ],
