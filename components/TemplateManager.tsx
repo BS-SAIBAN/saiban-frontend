@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import TemplateUpload from './TemplateUpload';
 import {
   Search, Filter, Eye, Download, Trash2, Calendar, FileText,
   CheckCircle, XCircle, Clock, Plus, Grid, List, MoreVertical
@@ -31,13 +32,20 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
   }, []);
 
   useEffect(() => {
-    const handleClick = () => setShowDropdown(null);
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown-trigger]') && !target.closest('[data-dropdown-menu]')) {
+        setShowDropdown(null);
+      }
+    };
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, []);
@@ -64,12 +72,19 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
+    setShowDeleteModal(templateId);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    const templateId = showDeleteModal;
+    if (!templateId) return;
+
     try {
       await api.delete(`/donor-form-templates/${templateId}`);
       setTemplates(templates.filter(t => t.id !== templateId));
       if (selectedTemplate === templateId) setSelectedTemplate(null);
       if (previewTemplate?.id === templateId) setPreviewTemplate(null);
+      setShowDeleteModal(null);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Failed to delete template');
     }
@@ -92,6 +107,11 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
     }
   };
 
+  const handleUploadSuccess = (templateId: string) => {
+    setShowUploadModal(false);
+    fetchTemplates();
+  };
+
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -111,36 +131,38 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
 
       {/* ── Header ── */}
       <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e5e3', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, backgroundColor: '#1a1a1a', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={18} color="#fff" />
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 40, height: 40, backgroundColor: '#1a1a1a', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FileText size={20} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: 17, fontWeight: 600, color: '#1a1a1a', margin: 0 }}>Form Templates</h1>
-              <p style={{ fontSize: 12, color: '#888', margin: 0 }}>{filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}</p>
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1a', margin: 0, lineHeight: 1.2 }}>Form Templates</h1>
+              <p style={{ fontSize: 13, color: '#888', margin: 0, marginTop: 2 }}>{filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
 
-          <a
-            href="/template-manager?tab=upload"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}
+          <button
+            onClick={() => setShowUploadModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
           >
-            <Plus size={15} />
+            <Plus size={16} />
             New Template
-          </a>
+          </button>
         </div>
       </div>
 
       {/* ── Body ── */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 48px' }}>
 
         {/* ── Toolbar ── */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
 
           {/* Search */}
-          <div style={{ flex: 1, minWidth: 220, position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
+          <div style={{ flex: 1, minWidth: 280, maxWidth: 400, position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
             <input
               type="text"
               placeholder="Search templates…"
@@ -148,9 +170,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
               onChange={e => setSearchQuery(e.target.value)}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                padding: '9px 12px 9px 36px',
+                padding: '11px 14px 11px 42px',
                 border: '1px solid #e0e0de',
-                borderRadius: 8,
+                borderRadius: 10,
                 fontSize: 14,
                 color: '#1a1a1a',
                 backgroundColor: '#fff',
@@ -163,36 +185,38 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
           <button
             onClick={() => setShowFilters(!showFilters)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '9px 14px',
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '11px 16px',
               border: `1px solid ${showFilters || filterStatus !== 'all' ? '#1a1a1a' : '#e0e0de'}`,
-              borderRadius: 8,
+              borderRadius: 10,
               backgroundColor: showFilters || filterStatus !== 'all' ? '#1a1a1a' : '#fff',
               color: showFilters || filterStatus !== 'all' ? '#fff' : '#555',
               fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              transition: 'all 0.2s ease',
             }}
           >
-            <Filter size={14} />
+            <Filter size={15} />
             Filter
             {filterStatus !== 'all' && (
-              <span style={{ backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 99, padding: '1px 7px', fontSize: 11 }}>1</span>
+              <span style={{ backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>1</span>
             )}
           </button>
 
           {/* View toggle */}
-          <div style={{ display: 'flex', border: '1px solid #e0e0de', borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff' }}>
+          <div style={{ display: 'flex', border: '1px solid #e0e0de', borderRadius: 10, overflow: 'hidden', backgroundColor: '#fff' }}>
             {(['grid', 'list'] as const).map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 style={{
-                  padding: '9px 12px', border: 'none', cursor: 'pointer',
-                  backgroundColor: viewMode === mode ? '#f0f0ee' : 'transparent',
+                  padding: '11px 14px', border: 'none', cursor: 'pointer',
+                  backgroundColor: viewMode === mode ? '#f8f8f7' : 'transparent',
                   color: viewMode === mode ? '#1a1a1a' : '#999',
                   display: 'flex', alignItems: 'center',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                {mode === 'grid' ? <Grid size={15} /> : <List size={15} />}
+                {mode === 'grid' ? <Grid size={16} /> : <List size={16} />}
               </button>
             ))}
           </div>
@@ -200,17 +224,18 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
 
         {/* Filter bar */}
         {showFilters && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, padding: '12px 16px', backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 8 }}>
-            <span style={{ fontSize: 13, color: '#666', marginRight: 4 }}>Status:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, padding: '16px 20px', backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 10 }}>
+            <span style={{ fontSize: 14, color: '#666', fontWeight: 500, marginRight: 8 }}>Status:</span>
             {(['all', 'active', 'inactive'] as const).map(s => (
               <button
                 key={s}
                 onClick={() => setFilterStatus(s)}
                 style={{
-                  padding: '5px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  padding: '8px 18px', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
                   border: `1px solid ${filterStatus === s ? '#1a1a1a' : '#e0e0de'}`,
                   backgroundColor: filterStatus === s ? '#1a1a1a' : '#fff',
                   color: filterStatus === s ? '#fff' : '#555',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -237,39 +262,37 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
 
         {/* Loading */}
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 12 }}>
-            <div style={{ width: 32, height: 32, border: '2px solid #e0e0de', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ color: '#888', fontSize: 14 }}>Loading templates…</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 0', gap: 16 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #e0e0de', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ color: '#888', fontSize: 15, fontWeight: 500 }}>Loading templates…</span>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
-
-        /* Empty state */
         ) : filteredTemplates.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ width: 56, height: 56, backgroundColor: '#eee', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <FileText size={24} color="#aaa" />
+          <div style={{ textAlign: 'center', padding: '120px 0' }}>
+            <div style={{ width: 64, height: 64, backgroundColor: '#f5f5f5', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <FileText size={28} color="#aaa" />
             </div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a', margin: '0 0 6px' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1a', margin: '0 0 8px' }}>
               {templates.length === 0 ? 'No templates yet' : 'No matching templates'}
             </h3>
-            <p style={{ fontSize: 14, color: '#888', margin: '0 0 20px' }}>
+            <p style={{ fontSize: 15, color: '#888', margin: '0 0 24px', lineHeight: 1.5 }}>
               {templates.length === 0
-                ? 'Create your first template to get started.'
-                : 'Try adjusting your search or filters.'}
+                ? 'Create your first template to get started with dynamic forms.'
+                : 'Try adjusting your search or filters to find what you\'re looking for.'}
             </p>
             {templates.length === 0 && (
-              <a
-                href="/template-manager?tab=upload"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}
+              <button
+                onClick={() => setShowUploadModal(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 10, fontSize: 15, fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
               >
-                <Plus size={15} /> Create Template
-              </a>
+                <Plus size={16} /> Create Your First Template
+              </button>
             )}
           </div>
-
-        /* Grid / List */
         ) : viewMode === 'grid' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
             {filteredTemplates.map(template => (
               <TemplateCard
                 key={template.id}
@@ -286,7 +309,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filteredTemplates.map(template => (
               <TemplateRow
                 key={template.id}
@@ -375,6 +398,71 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
           </div>
         </div>
       )}
+
+      {/* ── Upload Modal ── */}
+      {showUploadModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            style={{ backgroundColor: '#fff', borderRadius: 12, width: '100%', maxWidth: 640, maxHeight: '90vh', overflow: 'auto', border: '1px solid #e0e0de' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e5e3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1a', margin: 0 }}>Upload New Template</h3>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 4 }}
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <TemplateUpload onUploadSuccess={handleUploadSuccess} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      {showDeleteModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}
+          onClick={() => setShowDeleteModal(null)}
+        >
+          <div
+            style={{ backgroundColor: '#fff', borderRadius: 12, width: '100%', maxWidth: 420, overflow: 'hidden', border: '1px solid #e0e0de' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 40, height: 40, backgroundColor: '#fef2f2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Trash2 size={20} color="#dc2626" />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1a', margin: 0 }}>Delete Template</h3>
+              </div>
+              <p style={{ fontSize: 14, color: '#666', margin: '0 0 24px', lineHeight: 1.5 }}>
+                Are you sure you want to delete this template? This action cannot be undone.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <button
+                  onClick={() => setShowDeleteModal(null)}
+                  style={{ padding: '10px 20px', border: '1px solid #e0e0de', borderRadius: 8, backgroundColor: '#fff', color: '#555', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteTemplate}
+                  style={{ padding: '10px 20px', border: 'none', borderRadius: 8, backgroundColor: '#dc2626', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -442,6 +530,7 @@ const TemplateCard: React.FC<CardProps> = ({ template, selected, showDropdown, o
       <div style={{ position: 'relative' }}>
         <button
           onClick={onToggleDropdown}
+          data-dropdown-trigger="true"
           style={{ background: 'none', border: '1px solid transparent', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', color: '#aaa', display: 'flex', alignItems: 'center' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
@@ -450,7 +539,11 @@ const TemplateCard: React.FC<CardProps> = ({ template, selected, showDropdown, o
         </button>
 
         {showDropdown && (
-          <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, width: 160, backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 50, overflow: 'hidden' }}>
+          <div
+            data-dropdown-menu="true"
+            style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, width: 160, backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 50, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
             {[
               { icon: <Eye size={13} />, label: 'Preview', action: onPreview },
               { icon: <Download size={13} />, label: 'Download', action: onDownload },
@@ -543,12 +636,18 @@ const TemplateRow: React.FC<CardProps> = ({ template, selected, showDropdown, on
 
       {/* Dropdown */}
       <div style={{ position: 'relative' }}>
-        <button onClick={onToggleDropdown}
+        <button
+          onClick={onToggleDropdown}
+          data-dropdown-trigger="true"
           style={{ background: 'none', border: '1px solid #e0e0de', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: '#666', display: 'flex', alignItems: 'center' }}
         ><MoreVertical size={13} /></button>
 
         {showDropdown && (
-          <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, width: 140, backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 50, overflow: 'hidden' }}>
+          <div
+            data-dropdown-menu="true"
+            style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, width: 140, backgroundColor: '#fff', border: '1px solid #e0e0de', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 50, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
             <button onClick={e => { e.stopPropagation(); onDelete(); }}
               style={{ width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fff5f5')}
