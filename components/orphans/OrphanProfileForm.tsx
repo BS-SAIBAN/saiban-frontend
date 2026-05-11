@@ -356,7 +356,8 @@ export default function OrphanProfileForm({ familyId }: { familyId: string }) {
               height: 4,
               background: step <= currentStep ? 'var(--accent)' : 'var(--border)',
               borderRadius: 2,
-              transition: 'background 0.3s',
+              transition: 'background-color 0.2s ease-in-out',
+              willChange: 'background-color',
             }}
           />
         ))}
