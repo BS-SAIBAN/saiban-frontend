@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
 import TemplateUpload from './TemplateUpload';
+import { useAuth } from '@/lib/auth-context';
 import {
   Search, Filter, Eye, Download, Trash2, Calendar, FileText,
   CheckCircle, XCircle, Clock, Plus, Grid, List, MoreVertical
@@ -22,6 +23,7 @@ interface TemplateManagerProps {
 }
 
 const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) => {
+  const { user, loading: authLoading } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,31 +40,49 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
 
   useEffect(() => {
     console.log('TemplateManager component mounted');
+    console.log('Auth loading:', authLoading);
+    console.log('User:', user);
     
-    // Check authentication status first
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      const user = localStorage.getItem('user');
-      console.log('Auth check - Token exists:', !!token);
-      console.log('Auth check - User exists:', !!user);
-      
-      if (!token || !user) {
-        console.log('No authentication found, setting error');
-        setError('Please log in to access templates.');
-        setLoading(false);
-        return;
-      }
+    // Wait for auth to load, then check if user is authenticated
+    if (authLoading) {
+      console.log('Auth still loading, waiting...');
+      return;
     }
     
-    console.log('Authentication found, fetching templates');
+    if (!user) {
+      console.log('No user found, setting error');
+      setError('Please log in to access templates.');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('User authenticated, fetching templates');
     fetchTemplates();
 
     return () => {
       console.log('TemplateManager component unmounting');
       isMountedRef.current = false;
-      setLoading(false);
     };
-  }, []);
+  }, [user, authLoading]);
+
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (loading) {
+      timeoutId = setTimeout(() => {
+        console.log('Loading timeout reached, forcing error state');
+        setError('Loading timeout. Please refresh the page and try again.');
+        setLoading(false);
+      }, 10000); // 10 second timeout
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [loading]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -75,29 +95,64 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  const fetchTemplates = async () => {
-    console.log('fetchTemplates called');
+  const fetchTemplates = async (retryCount = 0) => {
+    console.log('fetchTemplates called, retry count:', retryCount);
     try {
       console.log('Setting loading to true');
       setLoading(true);
       setError(null);
+      
+      // Check if token exists in localStorage for debugging
+      const token = localStorage.getItem('access_token');
+      console.log('Token exists in localStorage:', !!token);
+      console.log('Token length:', token?.length || 0);
+      
+      if (!token && retryCount === 0) {
+        console.log('No token found, attempting to refresh auth');
+        // Try to trigger auth refresh by waiting a bit and retrying
+        setTimeout(() => fetchTemplates(1), 1000);
+        return;
+      }
+      
       console.log('Making API call to /donor-form-templates/');
       const response = await api.get('/donor-form-templates/');
       console.log('API response received:', response.status, response.data);
-      if (isMountedRef.current) {
-        // The API returns an array directly (List[DonorFormTemplateSchema])
-        const templatesData = Array.isArray(response.data) ? response.data : [];
-        console.log('Setting templates:', templatesData.length, 'items');
-        setTemplates(templatesData);
-      }
+      console.log('Response data type:', typeof response.data);
+      console.log('Is array?', Array.isArray(response.data));
+      console.log('Response data keys:', response.data ? Object.keys(response.data) : 'No data');
+      
+      // The API returns an array directly (List[DonorFormTemplateSchema])
+      const templatesData = Array.isArray(response.data) ? response.data : [];
+      console.log('Templates data:', templatesData);
+      console.log('First template sample:', templatesData[0]);
+      console.log('Setting templates:', templatesData.length, 'items');
+      setTemplates(templatesData);
     } catch (err: any) {
       console.log('API call failed:', err);
+      console.log('Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        config: err.config
+      });
       if (!isMountedRef.current) return;
       const status = err.response?.status;
       console.log('Error status:', status);
+      
+      // Retry on network errors or 500 errors
+      if (retryCount < 2 && (!status || status >= 500)) {
+        console.log('Retrying due to network/server error...');
+        setTimeout(() => fetchTemplates(retryCount + 1), 2000 * (retryCount + 1));
+        return;
+      }
+      
       if (status === 401) {
         setError('Authentication required. Please log in again.');
-        // Redirect to login if not authenticated
+        // Clear invalid tokens and redirect to login
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
@@ -110,9 +165,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
       }
     } finally {
       console.log('Finally block, setting loading to false');
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
+      setLoading(false); // Always set loading to false in finally block
     }
   };
 
@@ -173,6 +226,15 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
       filterStatus === 'all' ||
       (filterStatus === 'active' && template.is_active) ||
       (filterStatus === 'inactive' && !template.is_active);
+    
+    console.log('Filtering template:', template.donor_name, {
+      searchQuery,
+      filterStatus,
+      matchesSearch,
+      matchesFilter,
+      template_is_active: template.is_active
+    });
+    
     return matchesSearch && matchesFilter;
   });
 
@@ -302,7 +364,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
               <p style={{ color: '#c53030', margin: 0, fontSize: 13 }}>{error}</p>
             </div>
             <button
-              onClick={fetchTemplates}
+              onClick={() => fetchTemplates()}
               style={{ padding: '6px 14px', backgroundColor: '#b91c1c', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
             >
               Retry
