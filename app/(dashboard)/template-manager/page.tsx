@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { FileText } from 'lucide-react';
 import TemplateManager from '@/components/TemplateManager';
 
 const TemplateManagerPage = () => {
@@ -12,54 +13,30 @@ const TemplateManagerPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-12">
-          {/* Header Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-3">
-              Dynamic Form Templates
-            </h1>
-            <p className="text-base text-slate-600 max-w-2xl mx-auto">
-              Manage and upload donor-specific form templates for dynamic form generation.
-            </p>
-          </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f7f7f6', fontFamily: '"DM Sans", "Helvetica Neue", sans-serif' }}>
+      <TemplateManager onSelectTemplate={handleTemplateSelect} />
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 mb-8">
-            <button
-              className="px-6 py-3 rounded-lg text-sm font-medium bg-slate-900 text-white"
-            >
-              Manage Templates
-            </button>
-          </div>
-
-        <div className="mb-8">
-          <TemplateManager onSelectTemplate={handleTemplateSelect} />
-        </div>
-
-        {selectedTemplate && (
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-semibold text-blue-900">
-                  Template Ready for Use
-                </h3>
-                <p className="text-blue-700 text-sm">
-                  Selected template is ready for dynamic form generation
-                </p>
+      {selectedTemplate && (
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 48px' }}>
+          <div style={{ padding: '16px 20px', backgroundColor: '#fff', border: '1px solid #1a1a1a', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, backgroundColor: '#f0faf4', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FileText size={20} color="#16a34a" />
               </div>
-              <a
-                href={`/dynamic-form?template=${selectedTemplate}`}
-                className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Generate Form
-              </a>
+              <div>
+                <p style={{ fontWeight: 600, color: '#1a1a1a', margin: 0, fontSize: 14 }}>Template selected</p>
+                <p style={{ color: '#888', margin: 0, fontSize: 13 }}>Ready to generate your dynamic form</p>
+              </div>
             </div>
+            <a
+              href={`/dynamic-form?template=${selectedTemplate}`}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}
+            >
+              Generate Form
+            </a>
           </div>
-        )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

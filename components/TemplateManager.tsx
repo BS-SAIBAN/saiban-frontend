@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
 import TemplateUpload from './TemplateUpload';
 import {
@@ -34,9 +34,34 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    console.log('TemplateManager component mounted');
+    
+    // Check authentication status first
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      const user = localStorage.getItem('user');
+      console.log('Auth check - Token exists:', !!token);
+      console.log('Auth check - User exists:', !!user);
+      
+      if (!token || !user) {
+        console.log('No authentication found, setting error');
+        setError('Please log in to access templates.');
+        setLoading(false);
+        return;
+      }
+    }
+    
+    console.log('Authentication found, fetching templates');
     fetchTemplates();
+
+    return () => {
+      console.log('TemplateManager component unmounting');
+      isMountedRef.current = false;
+      setLoading(false);
+    };
   }, []);
 
   useEffect(() => {
@@ -51,18 +76,43 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
   }, []);
 
   const fetchTemplates = async () => {
+    console.log('fetchTemplates called');
     try {
+      console.log('Setting loading to true');
       setLoading(true);
       setError(null);
+      console.log('Making API call to /donor-form-templates/');
       const response = await api.get('/donor-form-templates/');
-      setTemplates(response.data);
+      console.log('API response received:', response.status, response.data);
+      if (isMountedRef.current) {
+        // The API returns an array directly (List[DonorFormTemplateSchema])
+        const templatesData = Array.isArray(response.data) ? response.data : [];
+        console.log('Setting templates:', templatesData.length, 'items');
+        setTemplates(templatesData);
+      }
     } catch (err: any) {
+      console.log('API call failed:', err);
+      if (!isMountedRef.current) return;
       const status = err.response?.status;
-      if (status === 401) setError('Authentication required. Please log in again.');
-      else if (status === 404) setError('Template API endpoint not found.');
-      else setError(err.response?.data?.detail || err.message || 'Failed to load templates');
+      console.log('Error status:', status);
+      if (status === 401) {
+        setError('Authentication required. Please log in again.');
+        // Redirect to login if not authenticated
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      } else if (status === 404) {
+        setError('Template API endpoint not found.');
+      } else if (status === 403) {
+        setError('Access denied. You do not have permission to view templates.');
+      } else {
+        setError(err.response?.data?.detail || err.message || 'Failed to load templates');
+      }
     } finally {
-      setLoading(false);
+      console.log('Finally block, setting loading to false');
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
