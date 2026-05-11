@@ -439,25 +439,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({ onSelectTemplate }) =
           </div>
         )}
 
-        {/* Selected banner */}
-        {selectedTemplate && !loading && (
-          <div style={{ marginTop: 24, padding: '16px 20px', backgroundColor: '#fff', border: '1px solid #1a1a1a', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <CheckCircle size={20} color="#1a1a1a" />
-              <div>
-                <p style={{ fontWeight: 600, color: '#1a1a1a', margin: 0, fontSize: 14 }}>Template selected</p>
-                <p style={{ color: '#888', margin: 0, fontSize: 13 }}>Ready to generate your dynamic form</p>
               </div>
-            </div>
-            <a
-              href={`/dynamic-form?template=${selectedTemplate}`}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}
-            >
-              <FileText size={15} /> Generate Form
-            </a>
-          </div>
-        )}
-      </div>
 
       {/* ── Preview Modal ── */}
       {previewTemplate && (
@@ -695,6 +677,30 @@ const TemplateCard: React.FC<CardProps> = ({ template, selected, showDropdown, o
         </div>
       )}
     </div>
+
+    {/* Generate Form button when selected */}
+    {selected && (
+      <button
+        onClick={() => window.location.href = `/dynamic-form?template=${template.id}`}
+        style={{
+          padding: '8px 0',
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: 'pointer',
+          border: `1px solid ${selected ? '#1a1a1a' : '#e0e0de'}`,
+          backgroundColor: selected ? '#1a1a1a' : '#fff',
+          color: selected ? '#fff' : '#555',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          marginTop: 8
+        }}
+      >
+        <FileText size={13} /> Generate Form
+      </button>
+    )}
 
     {/* Action */}
     <button

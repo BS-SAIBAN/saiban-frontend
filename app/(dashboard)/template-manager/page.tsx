@@ -14,10 +14,8 @@ const TemplateManagerPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f7f7f6', fontFamily: '"DM Sans", "Helvetica Neue", sans-serif' }}>
-      <TemplateManager onSelectTemplate={handleTemplateSelect} />
-
       {selectedTemplate && (
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 48px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 0' }}>
           <div style={{ padding: '16px 20px', backgroundColor: '#fff', border: '1px solid #1a1a1a', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, backgroundColor: '#f0faf4', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -28,15 +26,11 @@ const TemplateManagerPage = () => {
                 <p style={{ color: '#888', margin: 0, fontSize: 13 }}>Ready to generate your dynamic form</p>
               </div>
             </div>
-            <a
-              href={`/dynamic-form?template=${selectedTemplate}`}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}
-            >
-              Generate Form
-            </a>
           </div>
         </div>
       )}
+      
+      <TemplateManager onSelectTemplate={handleTemplateSelect} />
     </div>
   );
 };
