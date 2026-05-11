@@ -134,8 +134,11 @@ export default function OrphansPage() {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div><h1>Orphans</h1><p>SB Program — orphan profiles and eligibility tracking</p></div>
+        <Link href="/orphans/intake" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <Baby size={14} /> SB Intake Process
+        </Link>
       </div>
 
       {/* Priority count */}
